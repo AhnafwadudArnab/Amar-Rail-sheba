@@ -4,9 +4,11 @@ import 'package:get/get.dart';
 import 'package:sidebarx/sidebarx.dart';
 import 'package:trackers/All%20Feautures/Maintainence/about.dart';
 import 'package:trackers/All%20Feautures/second%20pagee/Book_page_after_search.dart';
+import 'package:trackers/Info%20page/TrainInfo.dart';
 import 'All Feautures/Dynamic Tickets/TicketDetails.dart';
 import 'All Feautures/Emergencies/emergencies.dart';
 import 'All Feautures/Maintainence/LostAndFound.dart';
+import 'All Feautures/Maintainence/privacy & policy.dart';
 import 'All Feautures/Tracking or live locations/Live_location.dart';
 import 'Info page/Announcement.dart';
 import 'Info page/ratings&review.dart';
@@ -210,7 +212,7 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                 leading: const Icon(Icons.privacy_tip),
                 title: const Text('Train Information'),
                 onTap: () {
-                  // Navigate to Privacy & Policy page
+                  Get.offAll(() =>  TrainDetailsPage());
                 },
               ),
             ),
@@ -219,7 +221,7 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                 leading: const Icon(Icons.not_interested_rounded),
                 title: const Text('Lost & Found'),
                 onTap: () {
-                  Get.offAll(() => const LostAndFoundHomePage());
+                  Get.offAll(() =>  LostAndFoundPage());
                 },
               ),
             ),
@@ -246,7 +248,7 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                 leading: const Icon(Icons.privacy_tip),
                 title: const Text('Privacy & Policy'),
                 onTap: () {
-                  // Navigate to Privacy & Policy page
+                  Get.offAll(() =>PrivacyPolicyPage());
                 },
               ),
             ),
