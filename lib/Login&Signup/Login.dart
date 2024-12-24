@@ -220,7 +220,7 @@ class LoginFormWidgetState extends State<LoginFormWidget> {
 
 Future<dynamic> userLogin(String name, String email, String password) async {
   try {
-    final Uri url = Uri.parse('http://192.168.68.103:3000/user/login');
+    final Uri url = Uri.parse('http://localhost:3000/user/login');
 
     final response = await http.post(
       url,

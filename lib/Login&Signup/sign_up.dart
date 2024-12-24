@@ -241,7 +241,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
                   fontSize: 16.0,
                 );
               }
-              Get.to(const Login());//
+              Get.to(const Login()); //
             },
             child: const Text(
               'Register',
@@ -297,7 +297,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
 Future userSignup(
     String name, String email, String phone, String password) async {
   final response = await http.post(
-    Uri.parse('http://192.168.68.103:3000/user/register'),
+    Uri.parse('http://localhost:3000/user/register'),
     headers: {'Accept': 'application/json'},
     body: {
       'name': name,
@@ -315,21 +315,20 @@ doRegister(BuildContext context, String name, String email, String phone,
     String password) async {
   if (kDebugMode) {
     print('Successfully registered: $name, $email, $password, $phone');
-     print("New User registered successfully");
+    print("New User registered successfully");
   }
 
   var res = await userSignup(
       name.trim(), email.trim(), phone.trim(), password.trim());
-      if (kDebugMode) {
-     print("New User registered successfully");
+  if (kDebugMode) {
+    print("New User registered successfully");
   }
- Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const MainHomeScreen(), // Replace this with your main page class
-      ),
-      (route) => false, // Removes all previous routes
-    );
- 
-
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (context) =>
+          const MainHomeScreen(), // Replace this with your main page class
+    ),
+    (route) => false, // Removes all previous routes
+  );
 }

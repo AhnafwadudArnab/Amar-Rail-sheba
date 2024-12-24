@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:trackers/Login&Signup/Login.dart';
 import 'package:trackers/Login&Signup/sign_up.dart';
+import 'package:trackers/booking.dart';
 
 
 void main() {
@@ -14,7 +15,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Bangladesh Railway',
+      title: 'Amar Rail Sheba',
       // home: MainTicketPage(
       //   name: 'John Doe',
       //   from: 'Dhaka',
@@ -24,8 +25,8 @@ class MyApp extends StatelessWidget {
       //   departTime: '10:00 AM',
       //   seat: 'A1',
       // ),
-      //home: booking.MainHomeScreen(),
-      home: SignUp(),
+      
+      home: MainHomeScreen(),
       // home: TrainSearchPage(
       //   fromStation: 'Dhaka',
       //   toStation: 'Chittagong',
