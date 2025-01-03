@@ -1,9 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:logger/logger.dart';
+import 'package:trackers/Login&Signup/sign_up.dart';
 import 'package:trackers/booking.dart';
-import 'sign_up.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -153,129 +151,114 @@ class LoginFormWidgetState extends State<LoginFormWidget> {
             },
           ),
           const SizedBox(height: 24.0),
-          ElevatedButton(
+            ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 96, 180, 219),
             ),
             onPressed: () async {
               if (formKey.currentState!.validate()) {
-                await doLogin(
-                  context,
-                  nameController.text,
-                  emailController.text,
-                  passwordController.text,
+              bool success = await ApiService().loginUser(
+                name: nameController.text,
+                email: emailController.text,
+                password: passwordController.text,
+              );
+              if (success) {
+                Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MainHomeScreen(),
+                ),
+                (route) => false,
                 );
               } else {
                 Fluttertoast.showToast(
-                  msg: "Please fill all the fields correctly",
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 1,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
-                  fontSize: 16.0,
+                msg: "Login failed, please try again",
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                timeInSecForIosWeb: 1,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
+                fontSize: 16.0,
                 );
+              }
+              } else {
+              Fluttertoast.showToast(
+                msg: "Please fill all the fields correctly",
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                timeInSecForIosWeb: 1,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
+                fontSize: 16.0,
+              );
               }
             },
             child: const Text(
               'Login',
               style: TextStyle(color: Colors.white, fontSize: 18),
             ),
-          ),
-          TextButton(
+            ),
+            TextButton(
             onPressed: () {
               Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SignUp(),
-                ),
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SignUp(),
+              ),
               );
             },
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  "Don't have an account? ",
-                  style: TextStyle(
-                    color: Colors.black,
-                  ),
+              Text(
+                "Don't have an account? ",
+                style: TextStyle(
+                color: Colors.black,
                 ),
-                SizedBox(width: 4),
-                Text(
-                  "Register",
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
+              ),
+              SizedBox(width: 4),
+              Text(
+                "Register",
+                style: TextStyle(
+                fontSize: 18.0,
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
                 ),
+              ),
               ],
             ),
-          ),
+            ),
+
         ],
-      ),
+        ),
     );
   }
 }
 
-Future<dynamic> userLogin(String name, String email, String password) async {
-  try {
-    final Uri url = Uri.parse('http://localhost:3000/user/login');
+class ApiService {
+  final String baseUrl =
+      "http://192.168.68.103:3000"; // Replace with your server's address
+//remember there is no 'S' in the http//
+  Future<bool> loginUser({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    Map<String, String> requestheaders = {
+      "Content-Type": "application/json",
+    };
+    Map<String, String> requestBody = {
+      "name": name,
+      "email": email,
+      "password": password,
+    };
+    var response = await http.post(Uri.parse("$baseUrl/user/login"),
+        headers: requestheaders, body: jsonEncode(requestBody));
 
-    final response = await http.post(
-      url,
-      headers: {'Accept': 'application/json'},
-      body: {
-        'name': name,
-        'email': email,
-        'password': password,
-      },
-    );
-
-    // Check if the response status code indicates success
     if (response.statusCode == 200) {
-      final decodedData = jsonDecode(response.body);
-      // Safely access the "data" field
-      return {
-        'status': 'success',
-        'data': decodedData["data"] ?? 'No data available'
-      };
+      return true;
     } else {
-      Logger()
-          .e('Server Error: ${response.statusCode} - ${response.reasonPhrase}');
-      Logger()
-          .e('Server Error: ${response.statusCode} - ${response.reasonPhrase}');
-      return {'error': 'Failed to log in, server error'};
-    }
-  } catch (e) {
-    Logger().e('Exception: $e');
-    Logger().e('Exception: $e');
-    return {'error': 'Network error or invalid response'};
-  }
-}
-
-Future<void> doLogin(
-    BuildContext context, String name, String email, String password) async {
-  if (kDebugMode) {
-    print('Attempting login: $name, $email, $password');
-  }
-
-  var res = await userLogin(name.trim(), email.trim(), password.trim());
-  if (res != null && res['status'] == 'success') {
-    if (kDebugMode) {
-      print("User logged in successfully");
-    }
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            const MainHomeScreen(), // Replace this with your main page class
-      ),
-      (route) => false, // Removes all previous routes
-    );
-  } else {
-    if (kDebugMode) {
-      print("Login failed: ${res != null ? res['message'] : 'Unknown error'}");
+      return false;
     }
   }
 }
