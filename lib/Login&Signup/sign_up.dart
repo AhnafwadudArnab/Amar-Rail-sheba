@@ -218,18 +218,37 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
               backgroundColor: const Color.fromARGB(255, 96, 180, 219),
             ),
             onPressed: () async {
-              if (nameController.text.isNotEmpty &&
-                  emailController.text.isNotEmpty &&
-                  phoneController.text.isNotEmpty &&
-                  passwordController.text.isNotEmpty) {
-                await doRegister(
-                  context,
-                  nameController.text,
-                  emailController.text,
-                  phoneController.text,
-                  passwordController.text,
+              if (_formKey.currentState!.validate()) {
+                bool isRegistered = await ApiService().registerUser(
+                  name: nameController.text,
+                  email: emailController.text,
+                  phone: phoneController.text,
+                  password: passwordController.text,
                 );
-                Get.to(() => const Login());
+
+                if (isRegistered) {
+                  Fluttertoast.showToast(
+                    msg: "User registered successfully",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    timeInSecForIosWeb: 1,
+                    backgroundColor: Colors.green,
+                    textColor: Colors.white,
+                    fontSize: 16.0,
+                  );
+                  // working this one//
+                  Get.offAll(() => const MainHomeScreen());
+                } else {
+                  Fluttertoast.showToast(
+                    msg: "Registration failed",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    timeInSecForIosWeb: 1,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    fontSize: 16.0,
+                  );
+                }
               } else {
                 Fluttertoast.showToast(
                   msg: "Please fill all the fields",
@@ -241,33 +260,15 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
                   fontSize: 16.0,
                 );
               }
-              Get.to(const Login()); //
             },
             child: const Text(
               'Register',
               style: TextStyle(color: Colors.white, fontSize: 18),
             ),
           ),
-          if (responseMessage != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: Text(
-                responseMessage!,
-                style: TextStyle(
-                  color: responseMessage == "User registered successfully"
-                      ? Colors.green
-                      : Colors.red,
-                ),
-              ),
-            ),
           TextButton(
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const Login(),
-                ),
-              );
+              Get.to(() => const Login());
             },
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -294,41 +295,32 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
   }
 }
 
-Future userSignup(
-    String name, String email, String phone, String password) async {
-  final response = await http.post(
-    Uri.parse('http://localhost:3000/user/register'),
-    headers: {'Accept': 'application/json'},
-    body: {
-      'name': name,
-      'email': email,
-      'password': password,
-      'phone': phone,
-    },
-  );
+class ApiService {
+  final String baseUrl =
+      "http://192.168.68.103:3000"; // Replace with your server's address
 
-  var decodeData = jsonDecode(response.body);
-  return decodeData['Success'];
-}
+  Future<bool> registerUser({
+    required String name,
+    required String email,
+    required String phone,
+    required String password,
+  }) async {
+    Map<String, String> requestheaders = {
+      "Content-Type": "application/json",
+    };
+    Map<String, String> requestBody = {
+      "name": name,
+      "email": email,
+      "phone": phone,
+      "password": password,
+    };
+    var response = await http.post(Uri.parse("$baseUrl/user/register"),
+        headers: requestheaders, body: jsonEncode(requestBody));
 
-doRegister(BuildContext context, String name, String email, String phone,
-    String password) async {
-  if (kDebugMode) {
-    print('Successfully registered: $name, $email, $password, $phone');
-    print("New User registered successfully");
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      return false;
+    }
   }
-
-  var res = await userSignup(
-      name.trim(), email.trim(), phone.trim(), password.trim());
-  if (kDebugMode) {
-    print("New User registered successfully");
-  }
-  Navigator.pushAndRemoveUntil(
-    context,
-    MaterialPageRoute(
-      builder: (context) =>
-          const MainHomeScreen(), // Replace this with your main page class
-    ),
-    (route) => false, // Removes all previous routes
-  );
 }
