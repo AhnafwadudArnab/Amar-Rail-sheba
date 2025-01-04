@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:trackers/Login&Signup/sign_up.dart';
@@ -157,40 +158,21 @@ class LoginFormWidgetState extends State<LoginFormWidget> {
             ),
             onPressed: () async {
               if (formKey.currentState!.validate()) {
-              bool success = await ApiService().loginUser(
-                name: nameController.text,
-                email: emailController.text,
-                password: passwordController.text,
-              );
-              if (success) {
-                Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const MainHomeScreen(),
-                ),
-                (route) => false,
+                final response = await loginUser(
+                  nameController.text,
+                  emailController.text,
+                  passwordController.text,
                 );
-              } else {
-                Fluttertoast.showToast(
-                msg: "Login failed, please try again",
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.BOTTOM,
-                timeInSecForIosWeb: 1,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
-                fontSize: 16.0,
-                );
-              }
-              } else {
-              Fluttertoast.showToast(
-                msg: "Please fill all the fields correctly",
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.BOTTOM,
-                timeInSecForIosWeb: 1,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
-                fontSize: 16.0,
-              );
+                if (response.statusCode == 200) {
+                  Fluttertoast.showToast(msg: 'Login successful');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MainHomeScreen()),
+                  );
+                } else {
+                  final errorMessage = jsonDecode(response.body)['message'] ?? 'Failed to login';
+                  Fluttertoast.showToast(msg: errorMessage);
+                }
               }
             },
             child: const Text(
@@ -203,7 +185,7 @@ class LoginFormWidgetState extends State<LoginFormWidget> {
               Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const SignUp(),
+              builder: (context) => const SignUp(),
               ),
               );
             },
@@ -211,54 +193,50 @@ class LoginFormWidgetState extends State<LoginFormWidget> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
               Text(
-                "Don't have an account? ",
-                style: TextStyle(
-                color: Colors.black,
-                ),
+              "Don't have an account? ",
+              style: TextStyle(
+              color: Colors.black,
+              ),
               ),
               SizedBox(width: 4),
               Text(
-                "Register",
-                style: TextStyle(
-                fontSize: 18.0,
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                ),
+              "Register",
+              style: TextStyle(
+              fontSize: 18.0,
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+              ),
               ),
               ],
             ),
             ),
-
         ],
-        ),
+      ),
     );
   }
 }
 
-class ApiService {
-  final String baseUrl =
-      "http://192.168.68.103:3000"; // Replace with your server's address
-//remember there is no 'S' in the http//
-  Future<bool> loginUser({
-    required String name,
-    required String email,
-    required String password,
-  }) async {
-    Map<String, String> requestheaders = {
-      "Content-Type": "application/json",
-    };
-    Map<String, String> requestBody = {
-      "name": name,
-      "email": email,
-      "password": password,
-    };
-    var response = await http.post(Uri.parse("$baseUrl/user/login"),
-        headers: requestheaders, body: jsonEncode(requestBody));
+Future<http.Response> loginUser(String name, String email, String password) async {
+  final url = Uri.parse('http://10.15.11.216:3000/user/login');
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'name': name,
+      'email': email,
+      'password': password,
+    }),
+  );
 
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      return false;
+  if (response.statusCode == 200) {
+    if (kDebugMode) {
+      print('Login successful');
     }
+    return response;
+  } else {
+    if (kDebugMode) {
+      print('Failed to login: ${response.body}');
+    }
+    return response;
   }
 }
