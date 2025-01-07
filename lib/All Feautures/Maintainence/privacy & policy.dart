@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:trackers/booking.dart';
 
 class PrivacyPolicyPage extends StatelessWidget {
+  const PrivacyPolicyPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

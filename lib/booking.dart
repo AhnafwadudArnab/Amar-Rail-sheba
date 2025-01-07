@@ -1,6 +1,9 @@
 // ignore_for_file: camel_case_types, library_private_types_in_public_api
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:sidebarx/sidebarx.dart';
 import 'package:trackers/All%20Feautures/Maintainence/about.dart';
 import 'package:trackers/All%20Feautures/second%20pagee/Book_page_after_search.dart';
@@ -12,7 +15,6 @@ import 'All Feautures/Maintainence/privacy & policy.dart';
 import 'All Feautures/Tracking or live locations/Live_location.dart';
 import 'Info page/Announcement.dart';
 import 'Info page/ratings&review.dart';
-import 'Login&Signup/sign_up.dart';
 import 'profileBar.dart';
 
 class MainHomeScreen extends StatefulWidget {
@@ -28,14 +30,28 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   final List<Widget> _pages = [
     const RailwayBookingPage(),
     const MainTicketPage(
-      name: '',
-      from: '',
-      to: '',
-      travelClass: '',
-      date: '',
-      departTime: '',
-      seat: '',
+      name: 'Ahnaf arnab',
+      from: 'Dhaka',
+      to: 'Chattogram',
+      travelClass: 'AC',
+      date: '2023-10-10',
+      departTime: '10:00 AM',
+      seat: 'A1',
+      trainCode: 'Dhaka-CTG-101',
+      totalAmount: '750',
+      train_code: 'TR-703',
     ),
+
+    // const MainTicketPage(
+    //   name: '',
+    //   from: '',
+    //   to: '',
+    //   travelClass: '',
+    //   date: '',
+    //   departTime: '',
+    //   seat: '',
+    //   train_code: '',
+    // ),
     const ProfileBar(
       loggedIn: true,
     ),
@@ -109,6 +125,22 @@ class RailwayBookingPage extends StatefulWidget {
   _RailwayBookingPageState createState() => _RailwayBookingPageState();
 }
 
+class NavButton extends StatelessWidget {
+  final String label;
+  const NavButton({super.key, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Text(
+        label,
+        style: const TextStyle(color: Colors.white, fontSize: 16),
+      ),
+    );
+  }
+}
+
 class _RailwayBookingPageState extends State<RailwayBookingPage> {
   final TextEditingController fromStationController = TextEditingController();
   final TextEditingController toStationController = TextEditingController();
@@ -123,27 +155,27 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
     'Airport',
     'Akhaura',
     'Bhairab-Bazar',
-    'Bhola',
     'Brahman_Baria',
     'Chandpur',
     'Chattogram',
     'Comilla',
-    'Dewanganj',
     'Dhaka',
     'Feni',
-    'Gafargaon',
-    'Jamalpur',
-    'Joydebpur',
-    'Khulna',
+    'Jessore',
+    'Kishoreganj',
     'Laksham',
-    'Madaripur',
-    'Mohonganj',
     'Munshiganj',
     'Mymensingh',
     'Narshingdi',
-    'Narayanganj',
-    'Shibchar',
-  ]; // Add your station names here
+    'Noakhali',
+    'Rajshahi',
+    'Rangpur',
+    'Sylhet',
+    'Dinajpur',
+    'Khulna',
+    'Bogra'
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -155,6 +187,19 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
     toStationFocusNode.addListener(() {
       // Add any additional logic if needed
     });
+  }
+
+  Future<void> doSearch(BuildContext context, String from, String to,
+      String travelClass, String date) async {
+    // Implement your search logic here
+    // For example, you can navigate to another page with the search results
+    Get.offAll(() => TrainSearchPage(
+          userId: 'user123', // Replace with actual user ID
+          fromStation: from,
+          toStation: to,
+          travelClass: travelClass,
+          journeyDate: date,
+        ));
   }
 
   @override
@@ -212,7 +257,7 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                 leading: const Icon(Icons.privacy_tip),
                 title: const Text('Train Information'),
                 onTap: () {
-                  Get.offAll(() =>  TrainDetailsPage());
+                  Get.offAll(() => TrainDetailsPage());
                 },
               ),
             ),
@@ -221,7 +266,7 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                 leading: const Icon(Icons.not_interested_rounded),
                 title: const Text('Lost & Found'),
                 onTap: () {
-                  Get.offAll(() =>  LostAndFoundPage());
+                  Get.offAll(() => const LostAndFoundPage());
                 },
               ),
             ),
@@ -248,7 +293,7 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                 leading: const Icon(Icons.privacy_tip),
                 title: const Text('Privacy & Policy'),
                 onTap: () {
-                  Get.offAll(() =>PrivacyPolicyPage());
+                  Get.offAll(() => const PrivacyPolicyPage());
                 },
               ),
             ),
@@ -308,7 +353,9 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                       children: [
                         TextButton(
                           onPressed: () {
-                            Get.to(() => const LiveLocation());
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              Get.to(() => const LiveLocation());
+                            });
                           },
                           style: TextButton.styleFrom(
                             foregroundColor: Colors.transparent,
@@ -326,25 +373,30 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                           icon: const Icon(Icons.railway_alert,
                               color: Color.fromARGB(255, 245, 240, 240)),
                           onPressed: () {
-                            Get.to(() =>
-                                EmergencyScreen(user: User('defaultUser')));
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              Get.to(() =>
+                                  EmergencyScreen(user: User('defaultUser')));
+                            });
                           },
                         ),
-                        const SizedBox(width: 10),
-                        ElevatedButton(
-                          onPressed: () {
-                            Get.to(() => const SignUp());
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black12,
-                          ),
-                          child: const Text(
-                            'Register',
-                            style: TextStyle(
-                              color: Color.fromARGB(255, 245, 240, 240),
-                            ),
-                          ),
-                        ),
+                        // const SizedBox(width: 10),
+                        // //if (!loggedIn)
+                        // ElevatedButton(
+                        //   onPressed: () {
+                        //     WidgetsBinding.instance.addPostFrameCallback((_) {
+                        //       Get.to(() => const SignUp());
+                        //     });
+                        //   },
+                        //   style: ElevatedButton.styleFrom(
+                        //     backgroundColor: Colors.black12,
+                        //   ),
+                        //   child: const Text(
+                        //     'Register',
+                        //     style: TextStyle(
+                        //       color: Color.fromARGB(255, 245, 240, 240),
+                        //     ),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ],
@@ -361,7 +413,7 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                 ),
                 const SizedBox(height: 6.0),
                 Text(
-                  'Heartily enjoy every journey through our boundless hospitality.\nThrough Bangladesh railways, The Lifeline of the Nation.',
+                  'Heartily enjoy every journey through our boundless hospitality.\nThrough Bangladesh Railways, The Lifeline of the Nation.',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.9),
                     fontSize: 16,
@@ -437,6 +489,7 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                           onPressed: swapStation,
                         ),
                       ),
+                      //
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -531,26 +584,10 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                           ),
                         ],
                       ),
-                      /* const SizedBox(height: 16.0),
                       ElevatedButton(
-                        onPressed: () {
-                          Get.offAll(() => const TrainSchedulePage());
-                        },
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black),
-                        child: const Text(
-                          'Search Train',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ),*/
-                      ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           int emptyFields = 0;
-                          if (fromStationController.text.isEmpty ||
-                              fromStationController.text == 'to') {
+                          if (fromStationController.text.isEmpty) {
                             emptyFields++;
                           }
                           if (toStationController.text.isEmpty ||
@@ -568,12 +605,37 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                               ),
                             );
                           } else if (emptyFields == 0) {
-                            Get.offAll(() => TrainSearchPage(
-                                  fromStation: fromStationController.text,
-                                  toStation: toStationController.text,
-                                  travelClass: selectedClass,
-                                  journeyDate: _dateController.text,
-                                ));
+                            final bookingData = {
+                              'user_from': fromStationController.text,
+                              'user_to': toStationController.text,
+                              'user_class': selectedClass,
+                              'journey_date': _dateController.text,
+                              'user_id': 'user123',
+                            };
+                            if (kDebugMode) {
+                              print('Search Data: $bookingData');
+                            }
+                            final response = await ApiService().addBooking(
+                              userFrom: fromStationController.text,
+                              userTo: toStationController.text,
+                              journeyDate: _dateController.text,
+                              userClass: selectedClass,
+                            );
+                            if (response) {
+                              Get.offAll(() => TrainSearchPage(
+                                    fromStation: fromStationController.text,
+                                    toStation: toStationController.text,
+                                    travelClass: selectedClass,
+                                    journeyDate: _dateController.text,
+                                    userId: 'user123',
+                                  ));
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Booking failed.'),
+                                ),
+                              );
+                            }
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -605,18 +667,52 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
   }
 }
 
-class NavButton extends StatelessWidget {
-  final String label;
-  const NavButton({super.key, required this.label});
+class ApiService {
+  final String baseUrl = "http://192.168.68.103:3000";
+  // final String baseUrl = "http://10.15.11.216:3000";//university wifi ip//
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Text(
-        label,
-        style: const TextStyle(color: Colors.white, fontSize: 16),
-      ),
-    );
+  Future<bool> addBooking({
+    required String userFrom,
+    required String userTo,
+    required String userClass,
+    required String journeyDate,
+  }) async {
+    Map<String, String> requestHeaders = {
+      "Content-Type": "application/json",
+    };
+    Map<String, String> requestBody = {
+      "user_from": userFrom,
+      "user_to": userTo,
+      "user_class": userClass,
+      "journey_date": journeyDate,
+    };
+    var response = await http.post(Uri.parse("$baseUrl/firstPage"),
+        headers: requestHeaders, body: jsonEncode(requestBody));
+
+    if (response.statusCode == 201) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  Future<List<dynamic>> getAllBookings() async {
+    var response = await http.get(Uri.parse("$baseUrl/firstPage"));
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load bookings');
+    }
+  }
+
+  Future<Map<String, dynamic>> getBookingById(int bookingId) async {
+    var response = await http.get(Uri.parse("$baseUrl/firstPage/$bookingId"));
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load booking');
+    }
   }
 }

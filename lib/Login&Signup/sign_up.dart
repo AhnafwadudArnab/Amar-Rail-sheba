@@ -6,7 +6,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:trackers/Login&Signup/Login.dart';
-import 'package:trackers/booking.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -296,8 +295,8 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
 }
 
 class ApiService {
-  final String baseUrl =
-      "http://10.15.11.216:3000"; 
+  final String baseUrl = "http://192.168.68.103:3000";
+  // final String baseUrl = "http://10.15.11.216:3000";//university wifi ip//
 
   Future<bool> registerUser({
     required String name,

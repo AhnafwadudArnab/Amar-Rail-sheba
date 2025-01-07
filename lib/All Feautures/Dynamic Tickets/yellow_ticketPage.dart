@@ -1,175 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-class MainTicketPage extends StatefulWidget {
-  const MainTicketPage({
-    super.key,
-    required this.name,
-    required this.from,
-    required this.to,
-    required this.travelClass,
-    required this.date,
-    required this.departTime,
-    required this.seat, 
-    required this.trainCode, 
-    // ignore: non_constant_identifier_names
-    required this.totalAmount, required String train_code,
-  });
-
-  final String name;
-  final String from;
-  final String to;
-  final String travelClass;
-  final String date;
-  final String departTime;
-  final String seat;
-  final String totalAmount;
-  final String trainCode;
-
-  @override
-  _MainTicketPageState createState() => _MainTicketPageState();
-}
-
-class _MainTicketPageState extends State<MainTicketPage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  List<Ticket> pastTickets = [];
-  List<Ticket> upcomingTickets = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    List<Ticket> tickets = getTicketsFromUserPaymentsAndOtherPages();
-
-    DateTime now = DateTime.now();
-    for (var ticket in tickets) {
-      if (ticket.date.isBefore(now)) {
-        pastTickets.add(ticket);
-      } else {
-        upcomingTickets.add(ticket);
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  List<Ticket> getTicketsFromUserPaymentsAndOtherPages() {
-    // This method should return the list of tickets from user payments and other pages
-    return [];
-  }
-
-  void addTicket(Ticket ticket) {
-    setState(() {
-      DateTime now = DateTime.now();
-      if (ticket.date.isBefore(now)) {
-        pastTickets.add(ticket);
-      } else {
-        upcomingTickets.add(ticket);
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text(
-          'My Tickets',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Upcoming Tickets'),
-            Tab(text: 'Past Tickets'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          TicketListView(
-            title: 'Upcoming Tickets',
-            tickets: upcomingTickets,
-          ),
-          TicketListView(
-            title: 'Past Tickets',
-            tickets: pastTickets,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class TicketListView extends StatelessWidget {
-  final String title;
-  final List<Ticket> tickets;
-
-  const TicketListView({super.key, required this.title, required this.tickets});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(10),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: tickets.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(tickets[index].title),
-                  subtitle: Text(tickets[index].date.toString()),
-                  onTap: () {
-                    Get.to(() => TrainTicketPage(
-                      name: tickets[index].title,
-                      from: 'From Location',
-                      to: 'To Location',
-                      travelClass: 'Class',
-                      date: tickets[index].date.toString(),
-                      departTime: 'Departure Time',
-                      seat: 'Seat Number', 
-                       totalAmount: '',
-                         trainCode: '',
-                    ));
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-
-
-class Ticket {
-  final String title;
-  final DateTime date;
-
-  Ticket(this.title, this.date);
-}
+import 'package:trackers/booking.dart';
 
 class TrainTicketPage extends StatelessWidget {
   final String name;
@@ -179,8 +11,6 @@ class TrainTicketPage extends StatelessWidget {
   final String date;
   final String departTime;
   final String seat;
-  final String totalAmount;
-  final String trainCode;
 
   const TrainTicketPage({
     super.key,
@@ -191,8 +21,6 @@ class TrainTicketPage extends StatelessWidget {
     required this.date,
     required this.departTime,
     required this.seat,
-    required this.totalAmount,
-    required this.trainCode, 
   });
 
   @override
@@ -205,18 +33,7 @@ class TrainTicketPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.redAccent),
           onPressed: () {
-            Get.to(() => const MainTicketPage(
-              name: '',
-              from: '',
-              to: '',
-              travelClass: '',
-              date: '',
-              departTime: '',
-              seat: '', 
-               train_code: '',
-                trainCode: '', totalAmount: '',
-
-            ));
+            Get.to(() => const MainHomeScreen());
           },
         ),
         centerTitle: true,
@@ -242,6 +59,7 @@ class TrainTicketPage extends StatelessWidget {
             ),
             child: Column(
               children: [
+                // Top Section
                 Container(
                   padding: const EdgeInsets.all(16.0),
                   decoration: const BoxDecoration(
@@ -274,12 +92,15 @@ class TrainTicketPage extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                // Middle Section
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.all(12.0),
                     color: Colors.white,
                     child: Row(
                       children: [
+                        // Left Part
                         Expanded(
                           flex: -2,
                           child: Container(
@@ -354,6 +175,8 @@ class TrainTicketPage extends StatelessWidget {
                             ),
                           ),
                         ),
+
+                        // Barcode Section
                         Expanded(
                           flex: 1,
                           child: Column(
@@ -374,6 +197,8 @@ class TrainTicketPage extends StatelessWidget {
                             ],
                           ),
                         ),
+
+                        // Right Middle Part
                         Expanded(
                           flex: 2,
                           child: Column(
@@ -434,13 +259,15 @@ class TrainTicketPage extends StatelessWidget {
                             ],
                           ),
                         ),
+
+                        // Seat and QR Section
                         Expanded(
                           flex: 1,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               const SizedBox(height: 8),
-                              const Text('SEAT NO', style: TextStyle(fontSize: 8)),
+                              const Text('SEAT', style: TextStyle(fontSize: 8)),
                               const SizedBox(height: 4),
                               Text(
                                 seat,
@@ -449,15 +276,6 @@ class TrainTicketPage extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                                const Text('Train code', style: TextStyle(fontSize: 8)),
-                                const SizedBox(height: 4),
-                                Text(
-                                trainCode,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                ),
                               const SizedBox(height: 70),
                               Container(
                                 height: 60,
@@ -506,110 +324,5 @@ class TrainTicketPage extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class ApiService {
-  final String baseUrl = "http://192.168.68.103:3000";
-
-  Future<bool> addBooking({
-    required String name,
-    required String fromStation,
-    required String toStation,
-    required String travelClass,
-    required String date,
-    required String departTime,
-    required String seat,
-    required double totalAmount,
-    required String trainCode,
-  }) async {
-    Map<String, String> requestHeaders = {
-      "Content-Type": "application/json",
-    };
-    Map<String, dynamic> requestBody = {
-      "name": name,
-      "from_station": fromStation,
-      "to_station": toStation,
-      "travel_class": travelClass,
-      "date": date,
-      "depart_time": departTime,
-      "seat": seat,
-      "total_amount": totalAmount,
-      "train_code": trainCode,
-    };
-    var response = await http.post(Uri.parse("$baseUrl/ticket"),
-        headers: requestHeaders, body: jsonEncode(requestBody));
-
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  Future<List<dynamic>> getAllBookings() async {
-    var response = await http.get(Uri.parse("$baseUrl/tickets"));
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Failed to load bookings');
-    }
-  }
-
-  Future<Map<String, dynamic>> getBookingById(int bookingId) async {
-    var response = await http.get(Uri.parse("$baseUrl/ticket/$bookingId"));
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Failed to load booking');
-    }
-  }
-
-  Future<bool> updateBooking({
-    required int id,
-    required String name,
-    required String fromStation,
-    required String toStation,
-    required String travelClass,
-    required String date,
-    required String departTime,
-    required String seat,
-    required double totalAmount,
-    required String trainCode,
-  }) async {
-    Map<String, String> requestHeaders = {
-      "Content-Type": "application/json",
-    };
-    Map<String, dynamic> requestBody = {
-      "name": name,
-      "from_station": fromStation,
-      "to_station": toStation,
-      "travel_class": travelClass,
-      "date": date,
-      "depart_time": departTime,
-      "seat": seat,
-      "total_amount": totalAmount,
-      "train_code": trainCode,
-    };
-    var response = await http.put(Uri.parse("$baseUrl/ticket/$id"),
-        headers: requestHeaders, body: jsonEncode(requestBody));
-
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  Future<bool> deleteBooking(int bookingId) async {
-    var response = await http.delete(Uri.parse("$baseUrl/ticket/$bookingId"));
-
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      return false;
-    }
   }
 }
