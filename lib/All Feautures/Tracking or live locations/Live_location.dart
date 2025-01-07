@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'package:trackers/All%20Feautures/Tracking%20or%20live%20locations/polyLines.dart';
+import 'package:trackers/All%20Feautures/Tracking%20or%20live%20locations/polyLines2.dart';
+import 'package:trackers/All%20Feautures/Tracking%20or%20live%20locations/polylines3.dart';
 import 'package:trackers/booking.dart';
-
 
 class LiveLocation extends StatefulWidget {
   const LiveLocation({super.key});
@@ -46,7 +48,8 @@ class _LiveLocationState extends State<LiveLocation> {
     _currentLocation = await _location!.getLocation();
     if (_currentLocation != null) {
       _cameraPosition = CameraPosition(
-        target: LatLng(_currentLocation!.latitude!, _currentLocation!.longitude!),
+        target:
+            LatLng(_currentLocation!.latitude!, _currentLocation!.longitude!),
         zoom: 15,
       );
       setState(() {});
@@ -61,7 +64,8 @@ class _LiveLocationState extends State<LiveLocation> {
 
   Future<void> moveToPosition(LatLng latLng) async {
     if (_googleMapController.isCompleted) {
-      final GoogleMapController mapController = await _googleMapController.future;
+      final GoogleMapController mapController =
+          await _googleMapController.future;
       mapController.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(target: latLng, zoom: 15),
@@ -73,20 +77,24 @@ class _LiveLocationState extends State<LiveLocation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        extendBodyBehindAppBar: true,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-      elevation: 0,
-      backgroundColor: const Color.fromARGB(0, 240, 232, 232),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.black),
-        onPressed: () {
-          Get.to(() => const MainHomeScreen());
-        },
+        elevation: 0,
+        backgroundColor: const Color.fromARGB(0, 240, 232, 232),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Get.to(() => const MainHomeScreen());
+          },
+        ),
       ),
-    ),
-      body: _buildBody()
-
-      );
+      body: Stack(
+        children: [
+          _buildBody(),
+          _buildDropdowns(),
+        ],
+      ),
+    );
   }
 
   Widget _buildBody() {
@@ -117,6 +125,7 @@ class _LiveLocationState extends State<LiveLocation> {
       ),
     );
   }
+
   Widget _getMap() {
     return Stack(
       children: [
@@ -140,4 +149,87 @@ class _LiveLocationState extends State<LiveLocation> {
       ],
     );
   }
+
+  Widget _buildDropdowns() {
+    return Positioned(
+      bottom: 5,
+      left: 0.1,
+      right: 50,
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          Card(
+            //color: Colors.orange,
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Center(
+                    child: Text(
+                      'My location',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'You can See the live location of the train here',
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      DropdownButton<String>(
+                        items: <String>['Option 1', 'Option 2', 'Option 3']
+                            .map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          // Handle dropdown change
+                        },
+                        hint: const Text("Train Locations"),
+                      ),
+                        DropdownButton<String>(
+                        items: <String>['DHA to CTG', 'DHA to SYL', 'SLY to CTG']
+                          .map((String value) {
+                          return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          if (newValue == 'DHA to CTG') {
+                          Get.to(() => const Polylines());
+                          }
+                            else if (newValue == 'DHA to SYL') {
+                              Get.to(()=>const Polylines2());
+                            } else if (newValue == 'SLY to CTG') {
+                              Get.to(()=>const Polylines3());
+                            }
+                          // Handle other dropdown changes if needed
+                        },
+                        hint: const Text("Train Routes"),
+                        )
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
+

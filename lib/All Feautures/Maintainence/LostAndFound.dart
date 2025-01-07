@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:trackers/booking.dart';
 
 class LostAndFoundPage extends StatefulWidget {
+  const LostAndFoundPage({super.key});
+
   @override
   _LostAndFoundPageState createState() => _LostAndFoundPageState();
 }
@@ -35,13 +37,13 @@ class _LostAndFoundPageState extends State<LostAndFoundPage> {
                 borderRadius: BorderRadius.circular(16.0),
                 ),
                 child: ListTile(
-                title: const Text('Report Lost \nItem', style: TextStyle(fontSize: 19)),
+                title: const Text('Report \nLost \nItem', style: TextStyle(fontSize: 19)),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 30.0),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20.0),
                 onTap: () {
                   Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ReportLostItemPage()),
+                  MaterialPageRoute(builder: (context) => const ReportLostItemPage()),
                   );
                 },
                 ),
@@ -60,7 +62,7 @@ class _LostAndFoundPageState extends State<LostAndFoundPage> {
                 onTap: () {
                   Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SearchFoundItemsPage()),
+                  MaterialPageRoute(builder: (context) => const SearchFoundItemsPage()),
                   );
                 },
                 ),
@@ -73,13 +75,13 @@ class _LostAndFoundPageState extends State<LostAndFoundPage> {
                 borderRadius: BorderRadius.circular(16.0),
                 ),
                 child: ListTile(
-                title: const Text('Report Found Item', style: TextStyle(fontSize: 17)),
+                title: const Text('Report \nFound \nItem', style: TextStyle(fontSize: 17)),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 30.0),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20.0),
                 onTap: () {
                   Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ReportFoundItemPage()),
+                  MaterialPageRoute(builder: (context) => const ReportFoundItemPage()),
                   );
                 },
                 ),
@@ -92,13 +94,13 @@ class _LostAndFoundPageState extends State<LostAndFoundPage> {
                 borderRadius: BorderRadius.circular(16.0),
                 ),
                 child: ListTile(
-                title: const Text('Security Measures', style: TextStyle(fontSize: 17)),
+                title: const Text('\nSecurity Measures', style: TextStyle(fontSize: 17)),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 30.0),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20.0),
                 onTap: () {
                   Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => UserAuthenticationPage()),
+                  MaterialPageRoute(builder: (context) => const UserAuthenticationPage()),
                   );
                 },
                 ),
@@ -114,13 +116,13 @@ class _LostAndFoundPageState extends State<LostAndFoundPage> {
                   borderRadius: BorderRadius.circular(16.0),
                 ),
                 child: ListTile(
-                  title: const Text('Claim Process', style: TextStyle(fontSize: 17)),
+                  title: const Text('\nClaim Process', style: TextStyle(fontSize: 17)),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 30.0),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20.0),
                   onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ClaimProcessPage()),
+                    MaterialPageRoute(builder: (context) => const ClaimProcessPage()),
                   );
                   },
                 ),
@@ -134,6 +136,8 @@ class _LostAndFoundPageState extends State<LostAndFoundPage> {
 }
 
 class ReportLostItemPage extends StatefulWidget {
+  const ReportLostItemPage({super.key});
+
   @override
   _ReportLostItemPageState createState() => _ReportLostItemPageState();
 }
@@ -217,6 +221,8 @@ class _ReportLostItemPageState extends State<ReportLostItemPage> {
 }
 
 class SearchFoundItemsPage extends StatelessWidget {
+  const SearchFoundItemsPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -230,6 +236,8 @@ class SearchFoundItemsPage extends StatelessWidget {
 
 class SearchBar extends StatelessWidget implements PreferredSizeWidget {
   final TextEditingController _searchController = TextEditingController();
+
+  SearchBar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -260,6 +268,8 @@ class SearchBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class ReportFoundItemPage extends StatefulWidget {
+  const ReportFoundItemPage({super.key});
+
   @override
   _ReportFoundItemPageState createState() => _ReportFoundItemPageState();
 }
@@ -367,6 +377,8 @@ class _ReportFoundItemPageState extends State<ReportFoundItemPage> {
 }
 
 class ClaimProcessPage extends StatefulWidget {
+  const ClaimProcessPage({super.key});
+
   @override
   _ClaimProcessPageState createState() => _ClaimProcessPageState();
 }
@@ -446,6 +458,8 @@ class _ClaimProcessPageState extends State<ClaimProcessPage> {
 }
 
 class UserDashboardPage extends StatelessWidget {
+  const UserDashboardPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -480,6 +494,8 @@ class UserDashboardPage extends StatelessWidget {
 }
 
 class NotificationsPage extends StatelessWidget {
+  const NotificationsPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -541,6 +557,8 @@ class NotificationsPage extends StatelessWidget {
 }
 
 class UserAuthenticationPage extends StatelessWidget {
+  const UserAuthenticationPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

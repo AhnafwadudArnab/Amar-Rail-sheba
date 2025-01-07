@@ -126,6 +126,8 @@ class _RatingsReviewsPageState extends State<RatingsReviewsPage> {
 class WriteReviewPage extends StatelessWidget {
   final TextEditingController _reviewController = TextEditingController();
 
+  WriteReviewPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -182,7 +184,7 @@ class ReviewCard extends StatelessWidget {
   final String review;
   final String userName;
 
-  const ReviewCard({required this.review, required this.userName, Key? key}) : super(key: key);
+  const ReviewCard({required this.review, required this.userName, super.key});
 
   @override
   Widget build(BuildContext context) {

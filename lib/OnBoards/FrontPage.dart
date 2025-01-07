@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../Widgets/Big_Contents_models.dart';
+import 'package:trackers/Login&Signup/sign_up.dart';
+import 'Big_Contents_models.dart';
 import '../../utils/dimensions.dart';
 class Onboard extends StatefulWidget {
 
@@ -74,8 +75,8 @@ class _OnboardState extends State<Onboard> {
           GestureDetector(
             onTap: (){
               if(currentIndex==contents.length-1){
-                //signup add here//
-                //Navigator.pushReplacement(context,MaterialPageRoute(builder: (context)=>const SignUp()));
+               
+                Navigator.pushReplacement(context,MaterialPageRoute(builder: (context)=>const SignUp()));
               }
               _controller.nextPage(duration: const Duration(microseconds: 100), curve: Curves.bounceIn);
             },

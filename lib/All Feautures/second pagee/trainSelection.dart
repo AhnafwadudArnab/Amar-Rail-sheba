@@ -1,6 +1,63 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../Seat management/Train_Seat.dart';
+import 'package:http/http.dart' as http;
+import 'package:trackers/All%20Feautures/Seat%20management/Train_Seat.dart';
+
+class Train {
+  final String trainName;
+  final String departureCity;
+  final String arrivalCity;
+  final String departureTime;
+  final String arrivalTime;
+  final String duration;
+  final List<TicketType> tickets;
+
+  const Train({
+    required this.trainName,
+    required this.departureCity,
+    required this.arrivalCity,
+    required this.departureTime,
+    required this.arrivalTime,
+    required this.duration,
+    required this.tickets,
+  });
+
+  factory Train.fromJson(Map<String, dynamic> json) {
+    var list = json['tickets'] as List;
+    List<TicketType> ticketList = list.map((i) => TicketType.fromJson(i)).toList();
+
+    return Train(
+      trainName: json['trainName'],
+      departureCity: json['departureCity'],
+      arrivalCity: json['arrivalCity'],
+      departureTime: json['departureTime'],
+      arrivalTime: json['arrivalTime'],
+      duration: json['duration'],
+      tickets: ticketList,
+    );
+  }
+}
+
+class TicketType {
+  final String type;
+  final double price;
+  final int availableSeats;
+
+  const TicketType({
+    required this.type,
+    required this.price,
+    required this.availableSeats,
+  });
+
+  factory TicketType.fromJson(Map<String, dynamic> json) {
+    return TicketType(
+      type: json['type'],
+      price: json['price'].toDouble(),
+      availableSeats: json['availableSeats'],
+    );
+  }
+}
 
 class TrainCard extends StatelessWidget {
   final String trainName;
@@ -33,8 +90,8 @@ class TrainCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.24,
-      width: MediaQuery.of(context).size.width * 0.80,
+      height: MediaQuery.of(context).size.height * 0.26,
+      width: MediaQuery.of(context).size.width * 0.95,
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey),
         borderRadius: BorderRadius.circular(10),
@@ -166,57 +223,60 @@ class TrainCard extends StatelessWidget {
   }
 }
 
-class TicketType {
-  final String type;
-  final double price;
-  final int availableSeats;
-
-  const TicketType({
-    required this.type,
-    required this.price,
-    required this.availableSeats,
-  });
-}
-
 List<String> getStationsBetween(String fromStation, String toStation) {
   Map<String, List<String>> routes = {
     // Add more routes as needed
-  'DHAKA-CHITTAGONG': ['DHAKA', 'NARAYANGANJ', 'CHANDPUR', 'COMILLA', 'CHITTAGONG'],
-  'CHITTAGONG-DHAKA': ['CHITTAGONG', 'COMILLA', 'CHANDPUR', 'NARAYANGANJ', 'DHAKA'],
-  'DHAKA-KHULNA': ['DHAKA', 'JOYDEBPUR', 'JAMALPUR', 'KHULNA'],
-  'KHULNA-DHAKA': ['KHULNA', 'JAMALPUR', 'JOYDEBPUR', 'DHAKA'],
-  'DHAKA-MYMENSINGH': ['DHAKA', 'GAFARGAON', 'MYMENSINGH'],
-  'MYMENSINGH-DHAKA': ['MYMENSINGH', 'GAFARGAON', 'DHAKA'],
-  'DHAKA-MOHONGANJ': ['DHAKA', 'GAFARGAON', 'MYMENSINGH', 'MOHONGANJ'],
-  'MOHONGANJ-DHAKA': ['MOHONGANJ', 'MYMENSINGH', 'GAFARGAON', 'DHAKA'],
-  'DHAKA-JOYDEBPUR': ['DHAKA', 'JOYDEBPUR'],
-  'JOYDEBPUR-DHAKA': ['JOYDEBPUR', 'DHAKA'],
-  'DHAKA-JAMALPUR': ['DHAKA', 'JOYDEBPUR', 'JAMALPUR'],
-  'JAMALPUR-DHAKA': ['JAMALPUR', 'JOYDEBPUR', 'DHAKA'],
-  'DHAKA-FENI': ['DHAKA', 'NARAYANGANJ', 'CHANDPUR', 'COMILLA', 'FENI'],
-  'FENI-DHAKA': ['FENI', 'COMILLA', 'CHANDPUR', 'NARAYANGANJ', 'DHAKA'],
-  'DHAKA-MUNSHIGANJ': ['DHAKA', 'MUNSHIGANJ'],
-  'MUNSHIGANJ-DHAKA': ['MUNSHIGANJ', 'DHAKA'],
-  'DHAKA-MADARIPUR': ['DHAKA', 'MADARIPUR'],
-  'MADARIPUR-DHAKA': ['MADARIPUR', 'DHAKA'],
-  'DHAKA-SHIBCHAR': ['DHAKA', 'SHIBCHAR'],
-  'SHIBCHAR-DHAKA': ['SHIBCHAR', 'DHAKA'],
-  'DHAKA-NARAYANGANJ': ['DHAKA', 'NARAYANGANJ'],
-  'NARAYANGANJ-DHAKA': ['NARAYANGANJ', 'DHAKA'],
-  'DHAKA-NARSHINGDI': ['DHAKA', 'NARSHINGDI'],
-  'NARSHINGDI-DHAKA': ['NARSHINGDI', 'DHAKA'],
-  'DHAKA-GAFARGAON': ['DHAKA', 'GAFARGAON'],
-  'GAFARGAON-DHAKA': ['GAFARGAON', 'DHAKA'],
-  'DHAKA-DEWANGANJ': ['DHAKA', 'DEWANGANJ'],
-  'DEWANGANJ-DHAKA': ['DEWANGANJ', 'DHAKA'],
-  'DHAKA-BHOLA': ['DHAKA', 'BHOLA'],
-  'BHOLA-DHAKA': ['BHOLA', 'DHAKA'],
-  'DHAKA-AKHAURA': ['DHAKA', 'AKHAURA'],
-  'AKHAURA-DHAKA': ['AKHAURA', 'DHAKA'],
-  'DHAKA-AIRPORT': ['DHAKA', 'AIRPORT'],
-  'AIRPORT-DHAKA': ['AIRPORT', 'DHAKA'],
+    'DHAKA-CHITTAGONG': ['DHAKA', 'NARAYANGANJ', 'CHANDPUR', 'COMILLA', 'CHITTAGONG'],
+    'CHITTAGONG-DHAKA': ['CHITTAGONG', 'COMILLA', 'CHANDPUR', 'NARAYANGANJ', 'DHAKA'],
+    'DHAKA-KHULNA': ['DHAKA', 'JOYDEBPUR', 'JAMALPUR', 'KHULNA'],
+    'KHULNA-DHAKA': ['KHULNA', 'JAMALPUR', 'JOYDEBPUR', 'DHAKA'],
+    'DHAKA-MYMENSINGH': ['DHAKA', 'GAFARGAON', 'MYMENSINGH'],
+    'MYMENSINGH-DHAKA': ['MYMENSINGH', 'GAFARGAON', 'DHAKA'],
+    'DHAKA-MOHONGANJ': ['DHAKA', 'GAFARGAON', 'MYMENSINGH', 'MOHONGANJ'],
+    'MOHONGANJ-DHAKA': ['MOHONGANJ', 'MYMENSINGH', 'GAFARGAON', 'DHAKA'],
+    'DHAKA-JOYDEBPUR': ['DHAKA', 'JOYDEBPUR'],
+    'JOYDEBPUR-DHAKA': ['JOYDEBPUR', 'DHAKA'],
+    'DHAKA-JAMALPUR': ['DHAKA', 'JOYDEBPUR', 'JAMALPUR'],
+    'JAMALPUR-DHAKA': ['JAMALPUR', 'JOYDEBPUR', 'DHAKA'],
+    'DHAKA-FENI': ['DHAKA', 'NARAYANGANJ', 'CHANDPUR', 'COMILLA', 'FENI'],
+    'FENI-DHAKA': ['FENI', 'COMILLA', 'CHANDPUR', 'NARAYANGANJ', 'DHAKA'],
+    'DHAKA-MUNSHIGANJ': ['DHAKA', 'MUNSHIGANJ'],
+    'MUNSHIGANJ-DHAKA': ['MUNSHIGANJ', 'DHAKA'],
+    'DHAKA-MADARIPUR': ['DHAKA', 'MADARIPUR'],
+    'MADARIPUR-DHAKA': ['MADARIPUR', 'DHAKA'],
+    'DHAKA-SHIBCHAR': ['DHAKA', 'SHIBCHAR'],
+    'SHIBCHAR-DHAKA': ['SHIBCHAR', 'DHAKA'],
+    'DHAKA-NARAYANGANJ': ['DHAKA', 'NARAYANGANJ'],
+    'NARAYANGANJ-DHAKA': ['NARAYANGANJ', 'DHAKA'],
+    'DHAKA-NARSHINGDI': ['DHAKA', 'NARSHINGDI'],
+    'NARSHINGDI-DHAKA': ['NARSHINGDI', 'DHAKA'],
+    'DHAKA-GAFARGAON': ['DHAKA', 'GAFARGAON'],
+    'GAFARGAON-DHAKA': ['GAFARGAON', 'DHAKA'],
+    'DHAKA-DEWANGANJ': ['DHAKA', 'DEWANGANJ'],
+    'DEWANGANJ-DHAKA': ['DEWANGANJ', 'DHAKA'],
+    'DHAKA-BHOLA': ['DHAKA', 'BHOLA'],
+    'BHOLA-DHAKA': ['BHOLA', 'DHAKA'],
+    'DHAKA-AKHAURA': ['DHAKA', 'AKHAURA'],
+    'AKHAURA-DHAKA': ['AKHAURA', 'DHAKA'],
+    'DHAKA-AIRPORT': ['DHAKA', 'AIRPORT'],
+    'AIRPORT-DHAKA': ['AIRPORT', 'DHAKA'],
   };
 
   String routeKey = '${fromStation.toUpperCase()}-${toStation.toUpperCase()}';
   return routes[routeKey] ?? [];
+}
+
+Future<List<Train>> fetchTrainData(String? trainId) async {
+  final response = await http.post(
+    Uri.parse('http://localhost:3000/train.js'), // Replace with your API URL
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'train_id': trainId}),
+  );
+
+  if (response.statusCode == 200) {
+    List<dynamic> data = jsonDecode(response.body)['data'];
+    return data.map((trainJson) => Train.fromJson(trainJson)).toList();
+  } else {
+    throw Exception('Failed to load train data');
+  }
 }

@@ -152,7 +152,7 @@ class LoginFormWidgetState extends State<LoginFormWidget> {
             },
           ),
           const SizedBox(height: 24.0),
-            ElevatedButton(
+          ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 96, 180, 219),
             ),
@@ -167,10 +167,12 @@ class LoginFormWidgetState extends State<LoginFormWidget> {
                   Fluttertoast.showToast(msg: 'Login successful');
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const MainHomeScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const MainHomeScreen()),
                   );
                 } else {
-                  final errorMessage = jsonDecode(response.body)['message'] ?? 'Failed to login';
+                  final errorMessage =
+                      jsonDecode(response.body)['message'] ?? 'Failed to login';
                   Fluttertoast.showToast(msg: errorMessage);
                 }
               }
@@ -179,45 +181,48 @@ class LoginFormWidgetState extends State<LoginFormWidget> {
               'Login',
               style: TextStyle(color: Colors.white, fontSize: 18),
             ),
-            ),
-            TextButton(
+          ),
+          TextButton(
             onPressed: () {
               Navigator.push(
-              context,
-              MaterialPageRoute(
-              builder: (context) => const SignUp(),
-              ),
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SignUp(),
+                ),
               );
             },
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-              Text(
-              "Don't have an account? ",
-              style: TextStyle(
-              color: Colors.black,
-              ),
-              ),
-              SizedBox(width: 4),
-              Text(
-              "Register",
-              style: TextStyle(
-              fontSize: 18.0,
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-              ),
-              ),
+                Text(
+                  "Don't have an account? ",
+                  style: TextStyle(
+                    color: Colors.black,
+                  ),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  "Register",
+                  style: TextStyle(
+                    fontSize: 18.0,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
-            ),
+          ),
         ],
       ),
     );
   }
 }
 
-Future<http.Response> loginUser(String name, String email, String password) async {
-  final url = Uri.parse('http://10.15.11.216:3000/user/login');
+Future<http.Response> loginUser(
+    String name, String email, String password) async {
+  // final url = Uri.parse('http://10.15.11.216:3000/user/login'); //university wifi IP //
+  final url =
+      Uri.parse('http://192.168.68.103:3000/user/login'); //Bashar wifi IP //
   final response = await http.post(
     url,
     headers: {'Content-Type': 'application/json'},

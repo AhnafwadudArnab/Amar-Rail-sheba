@@ -1,3 +1,5 @@
+// ignore_for_file: unused_field
+
 import 'package:flutter/material.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 
@@ -35,5 +37,15 @@ class UserController extends ChangeNotifier {
     _email = newEmail;
     notifyListeners();
   }
+
   RxBool isLoggedIn = false.obs;
+}
+
+//another Usercontroller
+class UserController2 extends ChangeNotifier {
+  final String _username;
+  final String _email;
+  RxBool isLoggedIn = false.obs;
+
+  UserController2(this._username, this._email);
 }
