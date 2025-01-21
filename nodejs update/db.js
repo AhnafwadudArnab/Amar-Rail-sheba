@@ -7,7 +7,7 @@ const connection = mysql.createConnection({
     user: 'root',  // Default XAMPP MySQL user
     password: '',  // Your MySQL password
         database: 'bd_railways',
-        port: 3308  // XAMPP MySQL port
+        port: 3306  // XAMPP MySQL port
     });
     
 connection.connect((err) => {

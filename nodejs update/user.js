@@ -49,34 +49,8 @@ const route = express.Router();
 // });
 
 
-// Route for forgetting password
-route.route('/forget-password').post((req, res) => {
-    var email = req.body.email;
-    var password = req.body.password;
-    // Query to check if the user exists with the provided email
-    var sqlQuery = "SELECT * FROM users WHERE email = ?";
-
-    db.query(sqlQuery, [email], function(error, data){
-        if (error) {
-            return res.status(500).json({ success: false, message: 'Error in querying the database', error });
-        }
-        if (data.length === 0) {
-            return res.status(401).json({ success: false, message: 'Invalid email' });
-        }
-        // Update the user's password
-        var updateQuery = "UPDATE users SET password = ? WHERE email = ?";
-        db.query(updateQuery, [password, email], function(error){
-            if (error) {
-                return res.status(500).json({ success: false, message: 'Error in updating the password', error });
-            }
-            res.status(200).json({ success: true, message: 'Password updated successfully' });
-        }
-    );
-
-});
-}
-);
+// );
 
 
-export default route;
+// export default route;
 

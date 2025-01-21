@@ -13,7 +13,7 @@ const db = mysql.createConnection({
     user: 'root',      
     password: '', 
     database: 'bd_railways',
-    port: 3308 
+    port: 3306 
 });
 
 // Connect to MySQL database
@@ -22,28 +22,28 @@ db.connect((err) => {
         console.error('Error connecting to MySQL:', err);
         process.exit(1);
     }
-    console.log('Connected to MySQL database');
+    console.log('DB connected successfully!');
 });
 
 // Route to add a booking to the `firstPage` table
 app.post('/firstPage', (req, res) => {
-    const { user_id, user_from, user_to, user_class, journey_date } = req.body;
+    const { user_from, user_to, user_class, journey_date } = req.body;
 
-    if (!user_id || !user_from || !user_to || !user_class || !journey_date) {
-        return res.status(400).json({ error: 'All fields are required' });
+    if (!user_from || !user_to || !user_class || !journey_date) {
+        return res.status(200).json({ error: 'All fields are required' });
     }
 
-    const sql = `
-        INSERT INTO firstPage (user_id, user_from, user_to, user_class, journey_date)
-        VALUES (?, ?, ?, ?, ?)
+    // Insert booking into firstPage table
+    const insertSql = `
+        INSERT INTO firstPage (user_from, user_to, user_class, journey_date)
+        VALUES (?, ?, ?, ?)
     `;
-
-    db.query(sql, [user_id, user_from, user_to, user_class, journey_date], (err, result) => {
+    db.query(insertSql, [user_from, user_to, user_class, journey_date], (err, result) => {
         if (err) {
             console.error('Error inserting data:', err);
             return res.status(500).json({ error: 'Database error' });
         }
-        res.status(201).json({ message: 'Booking added successfully', bookingId: result.insertId });
+        res.status(201).json({ message: 'Searching trains now...', bookingId: result.insertId });
     });
 });
 
@@ -60,13 +60,13 @@ app.get('/firstPage', (req, res) => {
     });
 });
 
-// Route to get a specific booking by user_id
-app.get('/firstPage/:user_id', (req, res) => {
-    const { user_id } = req.params;
+// Route to get a specific booking by booking ID
+app.get('/firstPage/:bookingId', (req, res) => {
+    const { bookingId } = req.params;
 
-    const sql = `SELECT * FROM firstPage WHERE user_id = ?`;
+    const sql = `SELECT * FROM firstPage WHERE id = ?`;
 
-    db.query(sql, [user_id], (err, results) => {
+    db.query(sql, [bookingId], (err, results) => {
         if (err) {
             console.error('Error retrieving data:', err);
             return res.status(500).json({ error: 'Database error' });
