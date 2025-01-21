@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
+import 'package:shelf/shelf.dart';
+import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:trackers/All%20Feautures/Dynamic%20Tickets/TicketDetails.dart';
 import 'package:trackers/All%20Feautures/Seat%20management/Train_Seat.dart';
-import 'package:trackers/rest_API/API_utils.dart';
+
+import 'package:shelf/shelf.dart' as shelf;
 
 class Order {
   final String trainId;
@@ -26,15 +28,15 @@ class Order {
 
 class PaymentsPage extends StatefulWidget {
   final List<Order> orders;
-
-  const PaymentsPage(
-      {super.key,
-      required this.orders,
-      required this.totalPrice,
-      required this.selectedSeats});
-
   final String totalPrice;
   final List<int> selectedSeats;
+
+  const PaymentsPage({
+    super.key,
+    required this.orders,
+    required this.totalPrice,
+    required this.selectedSeats,
+  });
 
   @override
   PaymentsPageState createState() => PaymentsPageState();
@@ -50,7 +52,6 @@ class PaymentsPageState extends State<PaymentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate the total amount by summing up the total of each order
     double totalAmount =
         widget.orders.fold(0, (sum, order) => sum + order.total);
 
@@ -60,7 +61,7 @@ class PaymentsPageState extends State<PaymentsPage> {
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () {
             Get.to(() =>
-                const SeatSelectionApp(price: 250, ticketType: 'S-Chair'));
+                const SeatSelectionPage(price: 250, ticketType: 'S-Chair'));
           },
         ),
         centerTitle: true,
@@ -136,111 +137,112 @@ class PaymentsPageState extends State<PaymentsPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                    backgroundColor: selectedPaymentMethod == "bKash"
-                      ? Colors.red
-                      : Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(0),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: selectedPaymentMethod == "bKash"
+                            ? Colors.red
+                            : Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(0),
+                        ),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          selectedPaymentMethod = "bKash";
+                        });
+                      },
+                      child: Text(
+                        "bKash",
+                        style: TextStyle(
+                          color: selectedPaymentMethod == "bKash"
+                              ? Colors.white
+                              : Colors.blue,
+                        ),
+                      ),
                     ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: selectedPaymentMethod == "Card"
+                            ? Colors.red
+                            : Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(0),
+                        ),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          selectedPaymentMethod = "Card";
+                        });
+                      },
+                      child: Text(
+                        "Card",
+                        style: TextStyle(
+                          color: selectedPaymentMethod == "Card"
+                              ? Colors.white
+                              : Colors.blue,
+                        ),
+                      ),
                     ),
-                    onPressed: () {
-                    setState(() {
-                      selectedPaymentMethod = "bKash";
-                    });
-                    },
-                    child: Text(
-                    "bKash",
-                    style: TextStyle(
-                      color: selectedPaymentMethod == "bKash"
-                        ? Colors.white
-                        : Colors.blue,
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: selectedPaymentMethod == "Nagad"
+                            ? Colors.red
+                            : Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(0),
+                        ),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          selectedPaymentMethod = "Nagad";
+                        });
+                      },
+                      child: Text(
+                        "Nagad",
+                        style: TextStyle(
+                          color: selectedPaymentMethod == "Nagad"
+                              ? Colors.white
+                              : Colors.blue,
+                        ),
+                      ),
                     ),
-                    ),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                    backgroundColor: selectedPaymentMethod == "Card"
-                      ? Colors.red
-                      : Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(0),
-                    ),
-                    ),
-                    onPressed: () {
-                    setState(() {
-                      selectedPaymentMethod = "Card";
-                    });
-                    },
-                    child: Text(
-                    "Card",
-                    style: TextStyle(
-                      color: selectedPaymentMethod == "Card"
-                        ? Colors.white
-                        : Colors.blue,
-                    ),
-                    ),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                    backgroundColor: selectedPaymentMethod == "Nagad"
-                      ? Colors.red
-                      : Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(0),
-                    ),
-                    ),
-                    onPressed: () {
-                    setState(() {
-                      selectedPaymentMethod = "Nagad";
-                    });
-                    },
-                    child: Text(
-                    "Nagad",
-                    style: TextStyle(
-                      color: selectedPaymentMethod == "Nagad"
-                        ? Colors.white
-                        : Colors.blue,
-                    ),
-                    ),
-                  ),
                   ],
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.all(16.0),
-                  backgroundColor: Colors.orangeAccent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  ),
-                  onPressed: () async {
-                  if (selectedPaymentMethod == "None") {
-                    _showPaymentMethodError();
-                  } else {
-                    Get.off(() => TrainTicketPage(
-                      name: 'John Doe',
-                      from: 'Place Abu-1',
-                      to: 'Place Bali-1',
-                      travelClass: 'First Class',
-                      date: '2023-10-10',
-                      departTime: '10:00 AM',
-                      seat: widget.selectedSeats.join(', '),
-                      totalAmount: totalAmount.toStringAsFixed(2), trainCode: 'TR-703',
-                      ));
-                  }
-                  },
-                  child: const Center(
-                  child: Text(
-                    "Pay Now",
-                    style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    padding: const EdgeInsets.all(16.0),
+                    backgroundColor: Colors.orangeAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
+                  onPressed: () async {
+                    if (selectedPaymentMethod == "None") {
+                      _showPaymentMethodError();
+                    } else {
+                      Get.off(() => TrainTicketPage(
+                            name: 'John Doe',
+                            from: 'Place Abu-1',
+                            to: 'Place Bali-1',
+                            travelClass: 'First Class',
+                            date: '2023-10-10',
+                            departTime: '10:00 AM',
+                            seat: widget.selectedSeats.join(', '),
+                            totalAmount: totalAmount.toStringAsFixed(2),
+                            trainCode: 'TR-703',
+                          ));
+                    }
+                  },
+                  child: const Center(
+                    child: Text(
+                      "Pay Now",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -288,51 +290,6 @@ class PaymentsPageState extends State<PaymentsPage> {
       },
     );
   }
-
-  void _showPaymentError(String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Payment Error"),
-          content: Text(message),
-          actions: [
-            TextButton(
-              child: const Text("OK"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-Future makePayment({
-  required String ticketId,
-  required String paymentId,
-  required String paymentDate,
-  required String paymentStatus,
-  required String totalAmount,
-  required String paymentType,
-}) async {
-  final response = await http.post(
-    Uri.parse('${Utils.baseURL}/payments'),
-    headers: {'Accept': 'application/json'},
-    body: {
-      'ticket_id': ticketId,
-      'payment_id': paymentId,
-      'payment_date': paymentDate,
-      'payment_status': paymentStatus,
-      'total_amount': totalAmount,
-      'payment_type': paymentType,
-    },
-  );
-
-  var decodeData = jsonDecode(response.body);
-  return decodeData;
 }
 
 class OrderSummaryCard extends StatelessWidget {
@@ -425,5 +382,66 @@ class OrderSummaryCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+// Entry point for the server
+Future<void> main() async {
+  final app = const Pipeline().addMiddleware(logRequests()).addHandler(_router);
+  final port = 3000;
+
+  print('Server running on http://localhost:$port');
+  await shelf_io.serve(app, 'localhost', port);
+}
+
+// Router to handle different endpoints
+Future<shelf.Response> _router(shelf.Request request) async {
+  if (request.url.path == 'payments' && request.method == 'POST') {
+    return _savePayment(jsonDecode(await request.readAsString()));
+  } else if (request.url.path == 'orders' && request.method == 'GET') {
+    return _fetchOrders();
+  } else {
+    return shelf.Response.notFound('Not Found');
+  }
+}
+
+// Handler to save payment details
+
+Future<shelf.Response> _savePayment(Map<String, dynamic> requestBody) async {
+  try {
+    List<String> requiredFields = ['field1', 'field2', 'field3'];
+
+    // Check for missing fields
+    for (var field in requiredFields) {
+      if (!requestBody.containsKey(field) || requestBody[field] == null) {
+        return shelf.Response(400,
+            body: jsonEncode({'error': 'Missing required fields'}));
+      }
+    }
+
+    // Call your database operation here (abstracted)
+    // Example: await savePaymentToDatabase(requestBody);
+
+    return shelf.Response.ok(
+        jsonEncode({'message': 'Payment saved successfully'}));
+  } catch (e) {
+    print('Error: $e');
+    return shelf.Response(500,
+        body: jsonEncode({'error': 'Internal server error'}));
+  }
+}
+
+// Handler to fetch orders
+Future<shelf.Response> _fetchOrders() async {
+  try {
+    // Call your database operation here (abstracted)
+    // Example: final orders = await fetchOrdersFromDatabase();
+
+    final orders = []; // Placeholder for actual database data
+    return shelf.Response.ok(jsonEncode(orders));
+  } catch (e) {
+    print('Error: $e');
+    return shelf.Response(500,
+        body: jsonEncode({'error': 'Internal server error'}));
   }
 }

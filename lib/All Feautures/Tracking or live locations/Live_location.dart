@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -7,7 +6,7 @@ import 'package:location/location.dart';
 import 'package:trackers/All%20Feautures/Tracking%20or%20live%20locations/polyLines.dart';
 import 'package:trackers/All%20Feautures/Tracking%20or%20live%20locations/polyLines2.dart';
 import 'package:trackers/All%20Feautures/Tracking%20or%20live%20locations/polylines3.dart';
-import 'package:trackers/booking.dart';
+import 'package:trackers/All%20Feautures/firstpage/booking.dart';
 
 class LiveLocation extends StatefulWidget {
   const LiveLocation({super.key});
@@ -187,7 +186,7 @@ class _LiveLocationState extends State<LiveLocation> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       DropdownButton<String>(
-                        items: <String>['Option 1', 'Option 2', 'Option 3']
+                        items: <String>['TR-701', 'TR-703', 'TR-705']
                             .map((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
@@ -199,27 +198,29 @@ class _LiveLocationState extends State<LiveLocation> {
                         },
                         hint: const Text("Train Locations"),
                       ),
-                        DropdownButton<String>(
-                        items: <String>['DHA to CTG', 'DHA to SYL', 'SLY to CTG']
-                          .map((String value) {
+                      DropdownButton<String>(
+                        items: <String>[
+                          'DHA to CTG',
+                          'DHA to SYL',
+                          'SLY to CTG'
+                        ].map((String value) {
                           return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
+                            value: value,
+                            child: Text(value),
                           );
                         }).toList(),
                         onChanged: (String? newValue) {
                           if (newValue == 'DHA to CTG') {
-                          Get.to(() => const Polylines());
+                            Get.to(() => const Polylines());
+                          } else if (newValue == 'DHA to SYL') {
+                            Get.to(() => const Polylines2());
+                          } else if (newValue == 'SLY to CTG') {
+                            Get.to(() => const Polylines3());
                           }
-                            else if (newValue == 'DHA to SYL') {
-                              Get.to(()=>const Polylines2());
-                            } else if (newValue == 'SLY to CTG') {
-                              Get.to(()=>const Polylines3());
-                            }
                           // Handle other dropdown changes if needed
                         },
                         hint: const Text("Train Routes"),
-                        )
+                      )
                     ],
                   ),
                 ],
@@ -231,5 +232,3 @@ class _LiveLocationState extends State<LiveLocation> {
     );
   }
 }
-
-

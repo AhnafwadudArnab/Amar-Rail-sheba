@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
 import 'package:http/http.dart' as http;
-import '../../booking.dart';
+import '../firstpage/booking.dart';
 
 class User {
   final String role;
@@ -221,7 +221,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
 }
 
 class ApiService {
-  final String baseUrl = "http://192.168.68.103:3000";
+  final String baseUrl = "http://192.168.68.102:3000";
 
   Future<void> sendEmergencyAlert({
     required String seatNumber,

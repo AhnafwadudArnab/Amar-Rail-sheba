@@ -1,60 +1,40 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:get/get.dart';
-
+import 'package:http/http.dart' as http;
+import 'package:trackers/All%20Feautures/second%20pagee/Book_page_after_search.dart';
 import '../payments_Methods/Payments.dart';
-import '../second pagee/Book_page_after_search.dart';
 
-void navigateToPage(BuildContext context, String ticketType) {
-  if (ticketType == "AC_S") {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            const SeatSelectionApp(price: 350, ticketType: 'AC_S'),
-      ),
-    );
-  } else if (ticketType == "SNIGDHA") {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            const SeatSelectionApp(price: 400, ticketType: 'SNIGDHA'),
-      ),
-    );
-  } else if (ticketType == "S_CHAIR") {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            const SeatSelectionApp(price: 250, ticketType: 'S_CHAIR'),
-      ),
-    );
+class SeatController extends GetxController {
+  var seatStatus = <String, List<String>>{}.obs;
+
+  void initializeSeats(String coach, int seats) {
+    seatStatus.putIfAbsent(coach, () => List.filled(seats, 'available'));
   }
-}
 
-class SeatSelectionApp extends StatelessWidget {
-  const SeatSelectionApp(
-      {super.key, required int price, required String ticketType});
+  void updateSeatStatus(String coach, int index, String status) {
+    seatStatus[coach]?[index] = status;
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: SeatSelectionPage(),
-    );
+  List<String> getSeatStatus(String coach) {
+    return seatStatus[coach] ?? [];
   }
 }
 
 class SeatSelectionPage extends StatefulWidget {
-  const SeatSelectionPage({super.key});
+  final int price;
+  final String ticketType;
+
+  const SeatSelectionPage({super.key, required this.price, required this.ticketType});
 
   @override
-  _SeatSelectionPageState createState() => _SeatSelectionPageState();
+  SeatSelectionPageState createState() => SeatSelectionPageState();
 }
 
-class _SeatSelectionPageState extends State<SeatSelectionPage> {
-  List<String> seatStatus = [];
+class SeatSelectionPageState extends State<SeatSelectionPage> {
+  final SeatController seatController = Get.put(SeatController());
   List<int> selectedSeats = [];
   Timer? timer;
   int allowedSeats = 4;
@@ -72,9 +52,8 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
   @override
   void initState() {
     super.initState();
-    seatStatus = List.generate(
-        coaches.firstWhere((coach) => coach['name'] == selectedCoach)['seats'],
-        (index) => 'available');
+    seatController.initializeSeats(selectedCoach,
+        coaches.firstWhere((coach) => coach['name'] == selectedCoach)['seats']);
     startTimer();
   }
 
@@ -96,11 +75,11 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
     setState(() {
       if (selectedSeats.contains(index)) {
         selectedSeats.remove(index);
-        seatStatus[index] = 'available';
+        seatController.updateSeatStatus(selectedCoach, index, 'available');
       } else if (selectedSeats.length < allowedSeats &&
-          seatStatus[index] == 'available') {
+          seatController.getSeatStatus(selectedCoach)[index] == 'available') {
         selectedSeats.add(index);
-        seatStatus[index] = 'selected';
+        seatController.updateSeatStatus(selectedCoach, index, 'selected');
       }
     });
   }
@@ -123,7 +102,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
   void bookSeats() {
     setState(() {
       for (int index in selectedSeats) {
-        seatStatus[index] = 'booked';
+        seatController.updateSeatStatus(selectedCoach, index, 'booked');
       }
       selectedSeats.clear();
     });
@@ -152,7 +131,11 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                   fromStation: 'Station A',
                   toStation: 'Station B',
                   travelClass: 'AC_S',
-                  journeyDate: '2023-12-01', userId: '12',
+                  journeyDate: '2023-12-01',
+                  returnJourneyDate: '2023-12-02',
+                  returnFromStation: 'Station B',
+                  returnToStation: 'Station A',
+                  returnJourneyClass: 'AC_S',
                 ));
           },
           icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -179,13 +162,11 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
               children: [
                 Text(
                   'Selected Coach: $selectedCoach',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'Seats Available: ${coaches.firstWhere((coach) => coach['name'] == selectedCoach)['seats'] - seatStatus.where((status) => status == 'booked' || status == 'selected').length}',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
+                  'Seats Available: ${coaches.firstWhere((coach) => coach['name'] == selectedCoach)['seats'] - seatController.getSeatStatus(selectedCoach).where((status) => status == 'booked' || status == 'selected').length}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -204,33 +185,31 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(10.0),
-              child: ListView.builder(
-                itemCount: seatStatus.length ~/ 4,
-                itemBuilder: (context, rowIndex) {
-                  return Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              buildSeat(rowIndex * 4 + 1),
-                              buildSeat(rowIndex * 4),
-                            ],
-                          ),
-                          const SizedBox(width: 40),
-                          Row(
-                            children: [
-                              buildSeat(rowIndex * 4 + 2),
-                              buildSeat(rowIndex * 4 + 3),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  );
-                },
-              ),
+              child: Obx(() {
+                return ListView.builder(
+                  itemCount: (seatController.getSeatStatus(selectedCoach).length / 4).ceil(),
+                  itemBuilder: (context, rowIndex) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            buildSeat(rowIndex * 4),
+                            buildSeat(rowIndex * 4 + 1),
+                          ],
+                        ),
+                        const SizedBox(width: 40),
+                        Row(
+                          children: [
+                            buildSeat(rowIndex * 4 + 2),
+                            buildSeat(rowIndex * 4 + 3),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }),
             ),
           ),
           Container(
@@ -255,8 +234,9 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: selectedSeats.isNotEmpty
-                        ? () {
-                            Get.offAll(PaymentsPage(
+                        ? () async {
+                            await ApiService().insertUserData(selectedSeats, selectedCoach, 'booked',1);
+                            Get.offAll(() => PaymentsPage(
                               orders: [
                                 Order(
                                   'orderId',
@@ -276,14 +256,12 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                                 ),
                               ],
                               totalPrice: (selectedSeats.length *
-                                      getSeatPrice(coaches.firstWhere(
-                                          (coach) =>
-                                              coach['name'] ==
-                                              selectedCoach)['type']) *
+                                      getSeatPrice(coaches.firstWhere((coach) =>
+                                          coach['name'] == selectedCoach)['type']) *
                                       1.15)
                                   .toStringAsFixed(2),
                               selectedSeats: selectedSeats
-                                  .map((index) => index + 1)
+                                  .map((index) => index + 1 )
                                   .toList(),
                             ));
                           }
@@ -305,13 +283,13 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
   }
 
   Widget buildSeat(int index) {
-    if (index >= seatStatus.length) {
+    if (index >= seatController.getSeatStatus(selectedCoach).length) {
       return const SizedBox.shrink();
     }
     return GestureDetector(
       onTap: () {
-        if (seatStatus[index] == 'available' ||
-            seatStatus[index] == 'selected') {
+        if (seatController.getSeatStatus(selectedCoach)[index] == 'available' ||
+            seatController.getSeatStatus(selectedCoach)[index] == 'selected') {
           handleSeatSelection(index);
         }
       },
@@ -320,7 +298,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
         height: 40,
         margin: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: getSeatColor(seatStatus[index]),
+          color: getSeatColor(seatController.getSeatStatus(selectedCoach)[index]),
           borderRadius: BorderRadius.circular(4),
           border: Border.all(color: Colors.black),
         ),
@@ -329,8 +307,9 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
             '${index + 1}',
             style: TextStyle(
               fontSize: 12,
-              color:
-                  seatStatus[index] == 'booked' ? Colors.white : Colors.black,
+              color: seatController.getSeatStatus(selectedCoach)[index] == 'booked'
+                  ? Colors.white
+                  : Colors.black,
             ),
           ),
         ),
@@ -363,9 +342,8 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
         setState(() {
           selectedCoach = coach;
           selectedSeats.clear();
-          seatStatus = List.generate(
-              coaches.firstWhere((c) => c['name'] == coach)['seats'],
-              (index) => 'available');
+          seatController.initializeSeats(
+              coach, coaches.firstWhere((c) => c['name'] == coach)['seats']);
         });
       },
       child: Container(
@@ -389,3 +367,43 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
     );
   }
 }
+
+class ApiService {
+  final String baseUrl = 'http://10.15.19.200:3000';
+Future<void> insertUserData(List<int> seatNumbers, String coachName, String seatStatus,int userId) async {
+  try {
+    final response = await http.post(
+      Uri.parse('$baseUrl/insert-user-data'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+          'user_id': userId,
+          'seat_numbers': seatNumbers,
+          'coachname': coachName,
+          'seat_status': seatStatus,
+        }),
+    );
+
+    if (response.statusCode == 200) {
+      if (kDebugMode) {
+        print('User  data inserted successfully');
+      }
+    } else {
+      // Log the response body for debugging
+      if (kDebugMode) {
+        print('Response status: ${response.statusCode}');
+      }
+      if (kDebugMode) {
+        print('Response body: ${response.body}');
+      }
+      throw Exception('Failed to insert user data: ${response.statusCode} - ${response.body}');
+    }
+  } catch (error) {
+    // Handle network errors or other exceptions
+    if (kDebugMode) {
+      print('Error: $error');
+    }
+    throw Exception('Network error: $error');
+  }
+}
+}
+
