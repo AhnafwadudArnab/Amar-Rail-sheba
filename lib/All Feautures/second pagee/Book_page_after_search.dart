@@ -1,12 +1,11 @@
 import 'dart:convert';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_countdown_timer/flutter_countdown_timer.dart';
 import 'package:get/get.dart';
 import 'package:trackers/All%20Feautures/second%20pagee/trainSelection.dart';
-import 'package:trackers/booking.dart';
-import 'package:trackers/rest_API/API_utils.dart';
+import 'package:trackers/All%20Feautures/firstpage/booking.dart';
+import 'modify_Search_box.dart';
 
 // ignore: must_be_immutable
 class TrainSearchPage extends StatefulWidget {
@@ -14,6 +13,10 @@ class TrainSearchPage extends StatefulWidget {
   late String toStation;
   late String travelClass;
   late String journeyDate;
+  late String returnJourneyDate;
+  late String returnFromStation;
+  late String returnToStation;
+  late String returnJourneyClass;
 
   TrainSearchPage({
     super.key,
@@ -21,7 +24,10 @@ class TrainSearchPage extends StatefulWidget {
     required this.toStation,
     required this.travelClass,
     required this.journeyDate,
-    required String userId,
+    required this.returnJourneyDate,
+    required this.returnFromStation,
+    required this.returnToStation,
+    required this.returnJourneyClass,
   });
 
   @override
@@ -62,6 +68,8 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
   String selectedJourneyType = 'One Way';
   String? _selectedType;
   bool isEditable = false;
+
+  // ignore: unused_field
   final TextEditingController _journeyDateController = TextEditingController();
   final TextEditingController _returnDateController = TextEditingController();
   final TextEditingController returnFromStationController =
@@ -72,7 +80,8 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
   final FocusNode returnToStationFocusNode = FocusNode();
   late final int endTime;
 
-  List<Map<String, String>> _trains = [];
+  // ignore: unused_field
+  final List<Map<String, String>> _trains = [];
 
   @override
   void initState() {
@@ -80,56 +89,27 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
     endTime =
         DateTime.now().millisecondsSinceEpoch + 1000 * 60 * 6; // 6min from now
     _selectedType = 'Direct'; // Set default value for _selectedType
-    _updateTrains(); // Update trains based on the default type
+    //_updateTrains(); // Update trains based on the default type
   }
 
-  void _updateTrains() {
-    if (_selectedType == 'Intercity') {
-      _trains = [
-        {'Train ID': '701', 'Name': 'Subarna Express (Dhaka–Chittagong)'},
-        {'Train ID': '702', 'Name': 'Mohanagar Godhuli (Chittagong–Dhaka)'},
-        {'Train ID': '703', 'Name': 'Mohanagar Express (Dhaka–Chittagong)'},
-        {'Train ID': '704', 'Name': 'Turna Nishitha (Chittagong–Dhaka)'},
-        {'Train ID': '705', 'Name': 'Parabat Express (Dhaka–Sylhet)'},
-        {'Train ID': '706', 'Name': 'Jayantika Express (Sylhet–Dhaka)'},
-        {'Train ID': '707', 'Name': 'Upakul Express (Dhaka–Noakhali)'},
-        {'Train ID': '708', 'Name': 'Paharika Express (Chittagong–Sylhet)'},
-        {'Train ID': '709', 'Name': 'Udayan Express (Sylhet–Chittagong)'},
-      ];
-    } else if (_selectedType == 'Mail and Local') {
-      _trains = [
-        {'Train ID': '31', 'Name': 'Dhaka Mail (Dhaka–Khulna)'},
-        {'Train ID': '33', 'Name': 'Chattala Express (Dhaka–Chittagong)'},
-        {'Train ID': '37', 'Name': 'Titas Commuter (Dhaka–Brahmanbaria)'},
-        {'Train ID': '39', 'Name': 'Surma Mail (Dhaka–Sylhet)'},
-      ];
-    } else {
-      _trains = [];
-    }
-  }
-
-  List<String> editableStations = [
-    'Airport',
-    'Akhaura',
-    'Bhairab-Bazar',
-    'Bhola',
-    'Brahman_Baria',
-    'Chandpur',
-    'Chattogram',
-    'Comilla',
-    'Dewanganj',
+  List<String> routeDhakaToCtgToSylhet = [
     'Dhaka',
-    'Feni',
-    'Gafargaon',
-    'Jamalpur',
-    'Joydebpur',
-    'Khulna',
+    'Airport',
+    'Narshingdi',
+    'Bhairab-Bazar',
+    'Brahman_Baria',
+    'Akhaura',
+    'Comilla',
     'Laksham',
-    'Madaripur',
-    'Mohonganj',
-    'Munshiganj',
-    'Mymensingh',
-    'Narshingdi'
+    'Feni',
+    'Chattogram',
+    'Feni',
+    'Laksham',
+    'Akhaura',
+    'Brahman_Baria',
+    'Bhairab-Bazar',
+    'Narshingdi',
+    'Sylhet'
   ];
 
   void swapStation() {
@@ -144,8 +124,85 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
     returnToStationController.text = temp;
   }
 
-  void updateSearchInfoCard(BuildContext context) {
-    // Implement the logic to update the search info card
+  void callPage() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: const ModifySearchBox(),
+        );
+      },
+    );
+  }
+
+  void newUpdatedValues() {
+    setState(() {
+      if (fromStationController.text.isNotEmpty) {
+        widget.fromStation = fromStationController.text;
+      }
+      if (toStationController.text.isNotEmpty) {
+        widget.toStation = toStationController.text;
+      }
+      if (_journeyDateController.text.isNotEmpty) {
+        widget.journeyDate = _journeyDateController.text;
+      }
+      if (selectedClass != null) {
+        widget.travelClass = selectedClass!;
+      }
+      if (selectedJourneyType == 'One Way') {
+        widget.returnFromStation = '';
+        widget.returnToStation = '';
+        widget.returnJourneyDate = '';
+        widget.returnJourneyClass = '';
+      } else if (selectedJourneyType == 'Round Way') {
+        if (returnFromStationController.text.isNotEmpty) {
+          widget.returnFromStation = returnFromStationController.text;
+        }
+        if (returnToStationController.text.isNotEmpty) {
+          widget.returnToStation = returnToStationController.text;
+        }
+        if (_returnDateController.text.isNotEmpty) {
+          widget.returnJourneyDate = _returnDateController.text;
+        }
+        if (selectedReturnClass != null) {
+          widget.returnJourneyClass = selectedReturnClass!;
+        }
+      }
+    });
+  }
+
+  bool isFormValid() {
+    return fromStationController.text.isNotEmpty &&
+        toStationController.text.isNotEmpty &&
+        _journeyDateController.text.isNotEmpty &&
+        selectedClass != null &&
+        (selectedJourneyType == 'One Way' ||
+            (returnFromStationController.text.isNotEmpty &&
+                returnToStationController.text.isNotEmpty &&
+                _returnDateController.text.isNotEmpty &&
+                selectedReturnClass != null));
+  }
+
+  void updateSearchInfoCard() {
+    setState(() {
+      widget.fromStation = fromStationController.text;
+      widget.toStation = toStationController.text;
+      widget.journeyDate = _journeyDateController.text;
+      widget.travelClass = selectedClass!;
+      if (selectedJourneyType == 'Round Way') {
+        widget.returnFromStation = returnFromStationController.text;
+        widget.returnToStation = returnToStationController.text;
+        widget.returnJourneyDate = _returnDateController.text;
+        widget.returnJourneyClass = selectedReturnClass!;
+      }
+    });
   }
 
   Future showModifySearchBox(BuildContext context) {
@@ -189,19 +246,34 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
             Icon(Icons.train, color: Colors.black),
           ],
         ),
+        centerTitle: true,
         actions: [
-          TextButton(
-            style: TextButton.styleFrom(backgroundColor: Colors.blueAccent),
-            onPressed: () {
-              showModifySearchBox(context);
-            },
-            child: const Text(
-              'Modify Search',
-              style: TextStyle(color: Colors.white),
+          const SizedBox(height: 4, width: 30),
+          SizedBox(
+            width: 100,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    newUpdatedValues();
+                    callPage();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  child: const Text(
+                    'Edit',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
-        centerTitle: true,
       ),
       body: Stack(children: [
         // Background Image
@@ -218,8 +290,9 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
           child: Container(
             //full container height//
             height: MediaQuery.of(context).size.height * 0.9,
-            margin: const EdgeInsets.all(16.0),
-            padding: const EdgeInsets.all(16.0),
+            width: MediaQuery.of(context).size.width,
+            margin: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(8.0),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.8),
               borderRadius: BorderRadius.circular(16.0),
@@ -298,39 +371,43 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Text('Type: ',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold)),
-                              const SizedBox(width: 8),
-                              DropdownButton<String>(
-                                hint: const Text('Select Type'),
-                                items: <String>['Direct', 'Intercity']
-                                    .map((String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value),
-                                  );
-                                }).toList(),
-                                onChanged: (String? newValue) {
-                                  setState(() {
-                                    _selectedType = newValue;
-                                    _updateTrains();
-                                  });
-                                },
-                              ),
-                            ],
+                          Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text('Type: ',
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold)),
+                                const SizedBox(width: 8),
+                                DropdownButton<String>(
+                                  value: _selectedType,
+                                  hint: const Text('Select Type'),
+                                  items: <String>['Direct', 'Intercity']
+                                      .map((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? newValue) {
+                                    setState(() {
+                                      _selectedType = newValue;
+                                      //_updateTrains();
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
-                          //variable passing here
+                          //variable passing here for the train selection//
                           const SizedBox(height: 16),
                           Expanded(
                             child: SingleChildScrollView(
                               child: Column(
                                 children: [
                                   TrainCard(
-                                    trainName: 'Train A',
+                                    trainName: 'Subarna\nExpress',
                                     fromStation: widget.fromStation,
                                     toStation: widget.toStation,
                                     departureTime: '12:30pm',
@@ -346,14 +423,16 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
                                           price: 350,
                                           availableSeats: 5),
                                     ],
+                                    trainId: 1,
                                   ),
+                                  // Example train data
                                   TrainCard(
-                                    trainName: 'Train B',
+                                    trainName: 'Example Train',
                                     fromStation: widget.fromStation,
                                     toStation: widget.toStation,
-                                    departureTime: '7:30am',
-                                    arrivalTime: '12:00pm',
-                                    duration: '4h 30min',
+                                    departureTime: '10:00am',
+                                    arrivalTime: '2:00pm',
+                                    duration: '4h 0m',
                                     departureCity: widget.fromStation,
                                     arrivalCity: widget.toStation,
                                     travelClass: widget.travelClass,
@@ -361,12 +440,13 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
                                     tickets: [
                                       TicketType(
                                           type: widget.travelClass,
-                                          price: 150,
-                                          availableSeats: 5),
+                                          price: 300,
+                                          availableSeats: 10),
                                     ],
+                                    trainId: 2,
                                   ),
                                   TrainCard(
-                                    trainName: 'Train C',
+                                    trainName: 'Mohanagar\nExpress',
                                     fromStation: widget.fromStation,
                                     toStation: widget.toStation,
                                     departureTime: '10:00am',
@@ -382,12 +462,13 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
                                           price: 200,
                                           availableSeats: 10),
                                     ],
+                                    trainId: 5,
                                   ),
                                   TrainCard(
-                                    trainName: 'Train D',
+                                    trainName: 'Turna\nNishitha',
                                     fromStation: widget.fromStation,
                                     toStation: widget.toStation,
-                                    departureTime: '5:00pm',
+                                    departureTime: '11:00am',
                                     arrivalTime: '9:30pm',
                                     duration: '4h 30m',
                                     departureCity: widget.fromStation,
@@ -400,6 +481,7 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
                                           price: 250,
                                           availableSeats: 8),
                                     ],
+                                    trainId: 7,
                                   ),
                                 ],
                               ),
@@ -421,6 +503,29 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
   }
 }
 
+class TrainDetailsAPi {
+  final String baseUrl = "http://10.15.19.200:3000";
+
+  /// Fetches the train details by from_station and to_station
+  Future<List<dynamic>> getTrains(String fromStation, String toStation) async {
+    final url = Uri.parse(
+        '$baseUrl/trains?from_station=$fromStation&to_station=$toStation');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Failed to load train details: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching train details: $e');
+    }
+  }
+}
+
+// box of the train card//
 class SearchInfoCard extends StatelessWidget {
   final String from;
   final String to;
@@ -442,7 +547,6 @@ class SearchInfoCard extends StatelessWidget {
     required this.returnDate,
     required this.returnJourneyClass,
   });
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -451,7 +555,8 @@ class SearchInfoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8.0),
       ),
       elevation: 5,
-      child: Padding(
+      child: Container(
+        width: double.infinity, // Full width of the parent container
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,670 +571,6 @@ class SearchInfoCard extends StatelessWidget {
             if (returnJourneyClass.isNotEmpty)
               Text('Return Class: $returnJourneyClass'),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-Future fetchTrainCollections(
-    String trainId,
-    String trainName,
-    String trainRoute,
-    String trainStart,
-    String trainEnd,
-    String departure,
-    String arrival,
-    String numOfCompartment,
-    String seatNumber,
-    String offday) async {
-  final response = await http.post(
-    Uri.parse('${Utils.baseURL}/train_collections'),
-    headers: {'Accept': 'application/json'},
-    body: {
-      "train_id": trainId,
-      "train_name": trainName,
-      "train_route": trainRoute,
-      "train_start": trainStart,
-      "train_end": trainEnd,
-      "train_departure_time": departure,
-      "arrival": arrival,
-      "num_of_compartment": numOfCompartment,
-      "no_of_seat": seatNumber,
-      "train_Offday_status": offday
-    },
-  );
-
-  var decodeData = jsonDecode(response.body);
-  return decodeData;
-}
-
-class ModifySearchBox extends StatefulWidget {
-  const ModifySearchBox({super.key});
-
-  @override
-  ModifySearchBoxState createState() => ModifySearchBoxState();
-}
-
-class ModifySearchBoxState extends State<ModifySearchBox> {
-  bool isEditable = true;
-  String selectedJourneyType = 'One Way';
-  String? selectedClass;
-  String? selectedReturnClass;
-  TextEditingController fromStationController = TextEditingController();
-  TextEditingController returnFromStationController = TextEditingController();
-  TextEditingController toStationController = TextEditingController();
-  TextEditingController returnToStationController = TextEditingController();
-  final TextEditingController _journeyDateController = TextEditingController();
-  final TextEditingController _returnDateController = TextEditingController();
-  FocusNode returnFromStationFocusNode = FocusNode();
-  FocusNode returnToStationFocusNode = FocusNode();
-  List<String> editableStations = [
-    'Airport',
-    'Akhaura',
-    'Bhairab-Bazar',
-    'Bhola',
-    'Brahman_Baria',
-    'Chandpur',
-    'Chattogram',
-    'Comilla',
-    'Dewanganj',
-    'Dhaka',
-    'Feni',
-    'Gafargaon',
-    'Jamalpur',
-    'Joydebpur',
-    'Khulna',
-    'Laksham',
-    'Madaripur',
-    'Mohonganj',
-    'Munshiganj',
-    'Mymensingh',
-    'Narshingdi'
-  ];
-
-  void swapReturnStation() {
-    setState(() {
-      String temp = returnFromStationController.text;
-      returnFromStationController.text = returnToStationController.text;
-      returnToStationController.text = temp;
-    });
-  }
-
-  void swapStation() {
-    setState(() {
-      final tempText = fromStationController.text;
-      fromStationController.text = toStationController.text;
-      toStationController.text = tempText;
-    });
-  }
-
-  String from = '';
-  String to = '';
-  String date = '';
-  String journeyClass = '';
-  String returnFrom = '';
-  String returnTo = '';
-  String returnDate = '';
-  String returnJourneyClass = '';
-
-  void updateSearchInfoCard() {
-    setState(() {
-      from = fromStationController.text;
-      to = toStationController.text;
-      date = _journeyDateController.text;
-      journeyClass = selectedClass ?? '';
-      if (selectedJourneyType == 'One Way') {
-        returnFrom = '';
-        returnTo = '';
-        returnDate = '';
-        returnJourneyClass = '';
-      } else if (selectedJourneyType == 'Round Way') {
-        returnFrom = returnFromStationController.text;
-        returnTo = returnToStationController.text;
-        returnDate = _returnDateController.text;
-        returnJourneyClass = selectedReturnClass ?? '';
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Card(
-        shadowColor: Colors.white.withOpacity(0.1),
-        margin: const EdgeInsets.all(16.0),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        elevation: 5,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8.0),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8.0),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(height: 16),
-                    if (isEditable)
-                      Container(
-                        padding: const EdgeInsets.all(16.0),
-                        margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10.0,
-                              spreadRadius: 5.0,
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        selectedJourneyType = 'One Way';
-                                      });
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          selectedJourneyType == 'One Way'
-                                              ? Colors.black
-                                              : Colors.grey,
-                                    ),
-                                    child: Text(
-                                      'One Way',
-                                      style: TextStyle(
-                                        color: selectedJourneyType == 'One Way'
-                                            ? Colors.white
-                                            : Colors.black,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        selectedJourneyType = 'Round Way';
-                                        fromStationController.text = from;
-                                        toStationController.text = to;
-                                      });
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          selectedJourneyType == 'Round Way'
-                                              ? Colors.black
-                                              : Colors.grey,
-                                    ),
-                                    child: Text(
-                                      'Round Way',
-                                      style: TextStyle(
-                                        color:
-                                            selectedJourneyType == 'Round Way'
-                                                ? Colors.white
-                                                : Colors.black,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12.0),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 5),
-                                  ),
-                                ],
-                                border: Border.all(
-                                  color: Colors.black,
-                                  width: 2.5,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: DropdownButtonFormField<String>(
-                                      decoration: const InputDecoration(
-                                          icon: Icon(Icons.train_rounded),
-                                          labelText: 'From'),
-                                      value: fromStationController.text.isEmpty
-                                          ? null
-                                          : fromStationController.text,
-                                      items: editableStations.map((station) {
-                                        return DropdownMenuItem<String>(
-                                          value: station,
-                                          child: Text(station),
-                                        );
-                                      }).toList(),
-                                      onChanged:
-                                          selectedJourneyType == 'One Way'
-                                              ? (value) {
-                                                  setState(() {
-                                                    fromStationController.text =
-                                                        value!;
-                                                  });
-                                                }
-                                              : null,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: IconButton(
-                                icon: const Icon(Icons.swap_calls_rounded),
-                                onPressed: selectedJourneyType == 'One Way'
-                                    ? swapStation
-                                    : null,
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12.0),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 5),
-                                  ),
-                                ],
-                                border: Border.all(
-                                  color: Colors.black,
-                                  width: 2.5,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: DropdownButtonFormField<String>(
-                                      decoration: const InputDecoration(
-                                          icon: Icon(Icons.train_rounded),
-                                          labelText: 'To'),
-                                      value: toStationController.text.isEmpty
-                                          ? null
-                                          : toStationController.text,
-                                      items: editableStations.map((station) {
-                                        return DropdownMenuItem<String>(
-                                          value: station,
-                                          child: Text(station),
-                                        );
-                                      }).toList(),
-                                      onChanged:
-                                          selectedJourneyType == 'One Way'
-                                              ? (value) {
-                                                  setState(() {
-                                                    toStationController.text =
-                                                        value!;
-                                                  });
-                                                }
-                                              : null,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                'From and To stations cannot be the same!!',
-                                style: TextStyle(
-                                    color: Color.fromARGB(255, 192, 11, 11)),
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: DropdownButtonFormField<String>(
-                                    decoration: const InputDecoration(
-                                        labelText: 'Class'),
-                                    value: selectedClass,
-                                    items: ['AC', 'Cabin', 'S_chair']
-                                        .map((classType) => DropdownMenuItem(
-                                              value: classType,
-                                              child: Text(classType),
-                                            ))
-                                        .toList(),
-                                    onChanged: (value) {
-                                      setState(() {
-                                        selectedClass = value!;
-                                      });
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 16.0),
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _journeyDateController,
-                                    decoration: const InputDecoration(
-                                        labelText: 'Journey Date'),
-                                    onTap: () async {
-                                      DateTime? pickedDate =
-                                          await showDatePicker(
-                                        context: context,
-                                        initialDate: DateTime.now(),
-                                        firstDate: DateTime.now(),
-                                        lastDate: DateTime.now()
-                                            .add(const Duration(days: 10)),
-                                      );
-                                      if (pickedDate != null) {
-                                        _journeyDateController.text = pickedDate
-                                            .toLocal()
-                                            .toString()
-                                            .split(' ')[0];
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if (selectedJourneyType == 'Round Way') ...[
-                              const SizedBox(height: 16),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12.0),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 5),
-                                    ),
-                                  ],
-                                  border: Border.all(
-                                    color: Colors.black,
-                                    width: 2.5,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: DropdownButtonFormField<String>(
-                                        decoration: const InputDecoration(
-                                            icon: Icon(Icons.train_rounded),
-                                            labelText: 'Return From'),
-                                        value: returnFromStationController
-                                                .text.isEmpty
-                                            ? null
-                                            : returnFromStationController.text,
-                                        items: editableStations.map((station) {
-                                          return DropdownMenuItem<String>(
-                                            value: station,
-                                            child: Text(station),
-                                          );
-                                        }).toList(),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            returnFromStationController.text =
-                                                value!;
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: IconButton(
-                                  icon: const Icon(Icons.swap_calls_rounded),
-                                  onPressed: swapReturnStation,
-                                ),
-                              ),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12.0),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 5),
-                                    ),
-                                  ],
-                                  border: Border.all(
-                                    color: Colors.black,
-                                    width: 2.5,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: DropdownButtonFormField<String>(
-                                        decoration: const InputDecoration(
-                                            icon: Icon(Icons.train_rounded),
-                                            labelText: 'Return To'),
-                                        value: returnToStationController
-                                                .text.isEmpty
-                                            ? null
-                                            : returnToStationController.text,
-                                        items: editableStations.map((station) {
-                                          return DropdownMenuItem<String>(
-                                            value: station,
-                                            child: Text(station),
-                                          );
-                                        }).toList(),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            returnToStationController.text =
-                                                value!;
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: DropdownButtonFormField<String>(
-                                      decoration: const InputDecoration(
-                                          labelText: 'Return Class'),
-                                      value: selectedReturnClass,
-                                      items: ['AC', 'Cabin', 'S_chair']
-                                          .map((classType) => DropdownMenuItem(
-                                                value: classType,
-                                                child: Text(classType),
-                                              ))
-                                          .toList(),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          selectedReturnClass = value!;
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16.0),
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: _returnDateController,
-                                      decoration: const InputDecoration(
-                                          labelText: 'Return Date'),
-                                      onTap: () async {
-                                        DateTime? pickedDate =
-                                            await showDatePicker(
-                                          context: context,
-                                          initialDate: DateTime.now(),
-                                          firstDate: DateTime.now(),
-                                          lastDate: DateTime(2101),
-                                        );
-                                        if (pickedDate != null) {
-                                          if (pickedDate.isAtSameMomentAs(
-                                              DateTime.parse(
-                                                  _journeyDateController
-                                                      .text))) {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Journey date and return date cannot be the same',
-                                                  style: TextStyle(
-                                                      color: Colors.red),
-                                                ),
-                                              ),
-                                            );
-                                          } else {
-                                            _returnDateController.text =
-                                                pickedDate
-                                                    .toLocal()
-                                                    .toString()
-                                                    .split(' ')[0];
-                                          }
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                            ElevatedButton(
-                              onPressed: () {
-                                setState(() {
-                                  // Validate and update the state of the controllers and other variables
-                                  if (fromStationController.text.isNotEmpty &&
-                                      toStationController.text.isNotEmpty &&
-                                      _journeyDateController.text.isNotEmpty &&
-                                      (selectedJourneyType == 'One Way' ||
-                                          (returnFromStationController
-                                                  .text.isNotEmpty &&
-                                              returnToStationController
-                                                  .text.isNotEmpty &&
-                                              _returnDateController
-                                                  .text.isNotEmpty))) {
-                                    isEditable =
-                                        false; // Save the changes and exit edit mode
-                                    updateSearchInfoCard(); // Update the SearchInfoCard
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Please fill in all required fields',
-                                          style: TextStyle(color: Colors.red),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                });
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[200],
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                              ),
-                              child: const Text(
-                                'Modify\nSearch',
-                                style: TextStyle(color: Colors.black),
-                              ),
-                            ),
-                            if (!isEditable)
-                              ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    isEditable = true;
-                                    fromStationController.text = from;
-                                    toStationController.text = to;
-                                    _journeyDateController.text = date;
-                                    selectedClass = journeyClass;
-                                    if (selectedJourneyType == 'Round Way') {
-                                      returnFromStationController.text =
-                                          returnFrom;
-                                      returnToStationController.text = returnTo;
-                                      _returnDateController.text = returnDate;
-                                      selectedReturnClass = returnJourneyClass;
-                                    }
-                                    updateSearchInfoCard(); // Update the SearchInfoCard
-                                  });
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.grey[200],
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Modify',
-                                  style: TextStyle(color: Colors.black),
-                                ),
-                              ),
-                            const SizedBox(height: 16),
-                            if (!isEditable)
-                              SearchInfoCard(
-                                from: from,
-                                to: to,
-                                date: date,
-                                journeyClass: journeyClass,
-                                returnFrom: returnFrom,
-                                returnTo: returnTo,
-                                returnDate: returnDate,
-                                returnJourneyClass: returnJourneyClass,
-                              ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.redAccent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                              ),
-                              onPressed: () {
-                                // Add functionality to cancel the search
-                                setState(() {
-                                  fromStationController.clear();
-                                  toStationController.clear();
-                                  _journeyDateController.clear();
-                                  _returnDateController.clear();
-                                  returnFromStationController.clear();
-                                  returnToStationController.clear();
-                                  selectedClass = null;
-                                  selectedReturnClass = null;
-                                  selectedJourneyType = 'One Way';
-                                  isEditable = false;
-                                });
-                              },
-                              child: const Text(
-                                'Cancel',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
         ),
       ),
     );
