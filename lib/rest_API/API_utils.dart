@@ -1,6 +1,6 @@
 class Utils {
   //static String baseURL = "https://192.168.68.104:3000"; // home
-  static String baseURL = "http://10.15.19.200:3000"; // university
+  static String baseURL = "http://10.15.55.151:3000"; // university
   static String SIGNUP = "$baseURL/user/register";
   static String LOGIN = "$baseURL/user/login";
   static String Firstpage = "$baseURL/firstPage";

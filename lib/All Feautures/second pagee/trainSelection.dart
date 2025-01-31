@@ -7,14 +7,13 @@ import 'package:trackers/All%20Feautures/Seat%20management/Train_Seat.dart';
 import 'package:logger/logger.dart';
 
 class Utils {
-  static String baseURL = "https://192.168.68.105:3000"; // home
-  //static String baseURL = "http://10.15.57.22:3000"; // university 
+ // static String baseURL = "http://192.168.68.101:3000"; // home
+  static String baseURL = "http://10.15.10.140:3000"; // university
 }
 
 class TrainDetailsPage extends StatelessWidget {
   final String fromStation;
   final String toStation;
-
   const TrainDetailsPage({
     super.key,
     required this.fromStation,
@@ -311,6 +310,11 @@ class TrainCard extends StatelessWidget {
                       Get.offAll(() => SeatSelectionPage(
                             price: tickets[0].price.toInt(),
                             ticketType: tickets[0].type,
+                            fromStation: fromStation,
+                            toStation: toStation,
+                            travelClass: travelClass,
+                            journeyDate: journeyDate,
+                            departureTime: departureTime,
                           ));
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -374,7 +378,7 @@ class ApiService {
     var response = await http.post(Uri.parse("$baseUrl/secondPage"),
         headers: requestHeaders, body: jsonEncode(requestBody));
 
-    if (response.statusCode == 201) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return true;
     } else {
       return false;

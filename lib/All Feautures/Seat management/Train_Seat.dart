@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -26,8 +27,21 @@ class SeatController extends GetxController {
 class SeatSelectionPage extends StatefulWidget {
   final int price;
   final String ticketType;
+  final String? fromStation;
+  final String? toStation;
+  final String? travelClass;
+  final String? journeyDate;
+  final String? departureTime;
 
-  const SeatSelectionPage({super.key, required this.price, required this.ticketType});
+  const SeatSelectionPage(
+      {super.key,
+      required this.price,
+      required this.ticketType,
+      required this.fromStation,
+      required this.toStation,
+      required this.travelClass,
+      required this.journeyDate,
+      required this.departureTime});
 
   @override
   SeatSelectionPageState createState() => SeatSelectionPageState();
@@ -111,11 +125,11 @@ class SeatSelectionPageState extends State<SeatSelectionPage> {
   int getSeatPrice(String coachType) {
     switch (coachType) {
       case 'AC_S':
-        return 500;
+        return 320;
       case 'SNIGDHA':
-        return 400;
+        return 420;
       case 'S_CHAIR':
-        return 300;
+        return 280;
       default:
         return 0;
     }
@@ -162,11 +176,13 @@ class SeatSelectionPageState extends State<SeatSelectionPage> {
               children: [
                 Text(
                   'Selected Coach: $selectedCoach',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   'Seats Available: ${coaches.firstWhere((coach) => coach['name'] == selectedCoach)['seats'] - seatController.getSeatStatus(selectedCoach).where((status) => status == 'booked' || status == 'selected').length}',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -187,7 +203,9 @@ class SeatSelectionPageState extends State<SeatSelectionPage> {
               padding: const EdgeInsets.all(10.0),
               child: Obx(() {
                 return ListView.builder(
-                  itemCount: (seatController.getSeatStatus(selectedCoach).length / 4).ceil(),
+                  itemCount:
+                      (seatController.getSeatStatus(selectedCoach).length / 4)
+                          .ceil(),
                   itemBuilder: (context, rowIndex) {
                     return Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -235,35 +253,47 @@ class SeatSelectionPageState extends State<SeatSelectionPage> {
                   child: ElevatedButton(
                     onPressed: selectedSeats.isNotEmpty
                         ? () async {
-                            await ApiService().insertUserData(selectedSeats, selectedCoach, 'booked',1);
+                            await ApiService().insertUserData(
+                                 Random().nextInt(1000), selectedSeats, selectedCoach, 'booked');
                             Get.offAll(() => PaymentsPage(
-                              orders: [
-                                Order(
-                                  'orderId',
-                                  trainId: 'TR-703',
-                                  paymentId: '12',
-                                  paymentDate: '12/11/2025',
-                                  status: 'Pending',
-                                  total: (selectedSeats.length *
+                                  orders: [
+                                    Order(
+                                      'ord-TN01',
+                                      trainId: 'TN001',
+                                      paymentId: 'pay-TN01',
+                                      paymentDate: '12/11/2025',
+                                      status: 'Pending',
+                                      total: (selectedSeats.length *
+                                              getSeatPrice(coaches.firstWhere(
+                                                  (coach) =>
+                                                      coach['name'] ==
+                                                      selectedCoach)['type']))
+                                          .toDouble(),
+                                      seatNumbers: selectedSeats
+                                          .map((index) => index + 1)
+                                          .toList(),
+                                    ),
+                                  ],
+                                  totalPrice: (selectedSeats.length *
                                           getSeatPrice(coaches.firstWhere(
                                               (coach) =>
                                                   coach['name'] ==
-                                                  selectedCoach)['type']))
-                                      .toDouble(),
-                                  seatNumbers: selectedSeats
+                                                  selectedCoach)['type']) *
+                                          1.15)
+                                      .toStringAsFixed(2),
+                                  selectedSeats: selectedSeats
                                       .map((index) => index + 1)
                                       .toList(),
-                                ),
-                              ],
-                              totalPrice: (selectedSeats.length *
-                                      getSeatPrice(coaches.firstWhere((coach) =>
-                                          coach['name'] == selectedCoach)['type']) *
-                                      1.15)
-                                  .toStringAsFixed(2),
-                              selectedSeats: selectedSeats
-                                  .map((index) => index + 1 )
-                                  .toList(),
-                            ));
+                                  trainId: 'TN001',
+                                  trainName: widget.ticketType,
+                                  fromStation: widget.fromStation ?? 'Unknown',
+                                  toStation: widget.toStation ?? 'Unknown',
+                                  departureTime:
+                                      widget.departureTime ?? 'Unknown',
+                                  tickets: const [],
+                                  travelClass: widget.travelClass ?? 'Unknown', date: widget.journeyDate ?? 'Unknown',
+                                    
+                                ));
                           }
                         : null,
                     style: ElevatedButton.styleFrom(
@@ -298,7 +328,8 @@ class SeatSelectionPageState extends State<SeatSelectionPage> {
         height: 40,
         margin: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: getSeatColor(seatController.getSeatStatus(selectedCoach)[index]),
+          color:
+              getSeatColor(seatController.getSeatStatus(selectedCoach)[index]),
           borderRadius: BorderRadius.circular(4),
           border: Border.all(color: Colors.black),
         ),
@@ -307,9 +338,10 @@ class SeatSelectionPageState extends State<SeatSelectionPage> {
             '${index + 1}',
             style: TextStyle(
               fontSize: 12,
-              color: seatController.getSeatStatus(selectedCoach)[index] == 'booked'
-                  ? Colors.white
-                  : Colors.black,
+              color:
+                  seatController.getSeatStatus(selectedCoach)[index] == 'booked'
+                      ? Colors.white
+                      : Colors.black,
             ),
           ),
         ),
@@ -367,43 +399,38 @@ class SeatSelectionPageState extends State<SeatSelectionPage> {
     );
   }
 }
-
 class ApiService {
-  final String baseUrl = 'http://10.15.19.200:3000';
-Future<void> insertUserData(List<int> seatNumbers, String coachName, String seatStatus,int userId) async {
-  try {
-    final response = await http.post(
-      Uri.parse('$baseUrl/insert-user-data'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
+  final String baseUrl = 'http://10.15.10.140:3000';
+
+  Future<void> insertUserData(int userId, List<int> seatNumbers, String coachName, String seatStatus) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/insert-user-data'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
           'user_id': userId,
           'seat_numbers': seatNumbers,
           'coachname': coachName,
           'seat_status': seatStatus,
         }),
-    );
+      );
 
-    if (response.statusCode == 200) {
-      if (kDebugMode) {
-        print('User  data inserted successfully');
+      if (response.statusCode == 200) {
+        if (kDebugMode) {
+          print('User data inserted successfully');
+        }
+      } else {
+        if (kDebugMode) {
+          print('Response status: ${response.statusCode}');
+          print('Response body: ${response.body}');
+        }
+        throw Exception('Failed to insert user data: ${response.statusCode} - ${response.body}');
       }
-    } else {
-      // Log the response body for debugging
+    } catch (error) {
       if (kDebugMode) {
-        print('Response status: ${response.statusCode}');
+        print('Error: $error');
       }
-      if (kDebugMode) {
-        print('Response body: ${response.body}');
-      }
-      throw Exception('Failed to insert user data: ${response.statusCode} - ${response.body}');
+      throw Exception('Network error: $error');
     }
-  } catch (error) {
-    // Handle network errors or other exceptions
-    if (kDebugMode) {
-      print('Error: $error');
-    }
-    throw Exception('Network error: $error');
   }
 }
-}
-

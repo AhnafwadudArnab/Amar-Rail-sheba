@@ -1,34 +1,44 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:trackers/All%20Feautures/second%20pagee/trainSelection.dart';
-class TrainDetailsAPi {
-  final String baseUrl = Utils.baseURL;
+// ignore: depend_on_referenced_packages
+import 'package:logging/logging.dart';
 
-  /// Fetches the train details by from_station and to_station
-  Future<List<dynamic>> getTrains(String fromStation, String toStation) async {
-    final url = Uri.parse(
-        '$baseUrl/trains?from_station=$fromStation&to_station=$toStation');
+const String baseURL = 'http://localhost:3000';
+final Logger logger = Logger('TrainsAPI');
 
-    try {
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to load train details: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error fetching train details: $e');
-    }
+Future<void> fetchAllTrains() async {
+  final response = await http.get(Uri.parse('$baseURL/trains'));
+  if (response.statusCode == 200) {
+    logger.info(jsonDecode(response.body));
+  } else {
+    logger.severe('Failed to load trains');
   }
 }
 
-void main() async {
-  TrainDetailsAPi api = TrainDetailsAPi();
-  try {
-    List<dynamic> trains = await api.getTrains('NYC', 'LA');
-    print(trains);
-  } catch (e) {
-    print(e);
+Future<void> fetchTrainById(int id) async {
+  final response = await http.get(Uri.parse('$baseURL/train/$id'));
+  if (response.statusCode == 200) {
+    logger.info(jsonDecode(response.body));
+  } else {
+    logger.severe('Failed to load train');
   }
+}
+
+Future<void> fetchTrainsByStations(String fromStation, String toStation) async {
+  final response = await http.get(Uri.parse('$baseURL/trains/search?from_station=$fromStation&to_station=$toStation'));
+  if (response.statusCode == 200) {
+    logger.info(jsonDecode(response.body));
+  } else {
+    logger.severe('Failed to load trains');
+  }
+}
+
+void main() {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    print('${record.level.name}: ${record.time}: ${record.message}');
+  });
+
+  fetchAllTrains();
+  fetchTrainById(1); // fetchTrainsByStations('StationA', 'StationB');
 }

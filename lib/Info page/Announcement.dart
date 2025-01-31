@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:trackers/All%20Feautures/firstpage/booking.dart';
 
+import '../All Feautures/firstpage/booking.dart';
 class AnnouncementPage extends StatefulWidget {
   const AnnouncementPage({super.key});
 
@@ -34,7 +34,7 @@ class _AnnouncementPageState extends State<AnnouncementPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Get.offAll(() => const MainHomeScreen());
+            Get.to(() => const MainHomeScreen());
           },
         ),
       ),

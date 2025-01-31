@@ -9,10 +9,12 @@ import '../firstpage/booking.dart';
 class User {
   final String role;
   User(this.role);
+  
 }
 
 class EmergencyAlertScreen extends StatelessWidget {
-  const EmergencyAlertScreen({super.key});
+  final String name;
+  const EmergencyAlertScreen({super.key, required this.name});
 
   @override
   Widget build(BuildContext context) {
@@ -36,14 +38,14 @@ class EmergencyAlertScreen extends StatelessWidget {
 class Passenger {
   String name;
   String seatNO;
-  String couach_name;
+  String coachName; // Fixed typo from 'couach_name' to 'coachName'
 
-  Passenger(this.name, this.seatNO, this.couach_name);
+  Passenger(this.name, this.seatNO, this.coachName);
 
   void showDetails() {
     if (kDebugMode) {
       Logger().i(
-        'Passenger: $name, Seat: $seatNO, Compartment: $couach_name',
+        'Passenger: $name, Seat: $seatNO, Compartment: $coachName',
       );
     }
   }
@@ -53,7 +55,7 @@ class Attendant {
   void receiveAlert(Passenger passenger, String? emergencyType) {
     if (kDebugMode) {
       Logger().i(
-        'Alert received for Passenger: ${passenger.name}, Seat: ${passenger.seatNO}, Compartment: ${passenger.couach_name}, Emergency Type: $emergencyType',
+        'Alert received for Passenger: ${passenger.name}, Seat: ${passenger.seatNO}, Compartment: ${passenger.coachName}, Emergency Type: $emergencyType',
       );
     }
   }
@@ -65,22 +67,22 @@ class EmergencyScreen extends StatefulWidget {
   const EmergencyScreen({super.key, required this.user});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _EmergencyScreenState createState() => _EmergencyScreenState();
+  EmergencyScreenState createState() => EmergencyScreenState();
 }
 
-class _EmergencyScreenState extends State<EmergencyScreen> {
+class EmergencyScreenState extends State<EmergencyScreen> {
   final Attendant attendant = Attendant();
-  final Passenger passenger = Passenger('Ahnaf', '13', 'C3');
+  final Passenger passenger = Passenger('Ahnaf', '8', 'C1');
   final ApiService apiService = ApiService();
   User? user;
   String? _selectedEmergencyType;
+
   @override
   void initState() {
     super.initState();
-    fetchUserFromDatabase().then((fetchedUser) {
+    fetchUserFromDatabase().then((fetchedUser ) {
       setState(() {
-        user = fetchedUser;
+        user = fetchedUser ;
       });
     });
   }
@@ -100,7 +102,9 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.redAccent),
           onPressed: () {
-            Get.to(() => const MainHomeScreen());
+            
+           Navigator.pop(context);
+            //Get.to(() => const MainHomeScreen());
           },
         ),
         centerTitle: true,
@@ -114,8 +118,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage(
-                    'assets/trainBackgrong/em.jpg'), // Replace with your image path
+                image: AssetImage('assets/trainBackgrong/em.jpg'), // Replace with your image path
                 fit: BoxFit.cover,
               ),
             ),
@@ -144,7 +147,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                   const SizedBox(height: 20),
                   _buildInfoCard('Seat Number: ${passenger.seatNO}'),
                   const SizedBox(height: 20),
-                  _buildInfoCard('Compartment: ${passenger.couach_name}'),
+                  _buildInfoCard('Compartment: ${passenger.coachName}'),
                   const SizedBox(height: 20),
                   DropdownButton<String>(
                     dropdownColor: Colors.grey[200],
@@ -209,19 +212,21 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
         await apiService.sendEmergencyAlert(
           seatNumber: passenger.seatNO,
           emergencyType: _selectedEmergencyType ?? 'Unknown',
-          coachNo: passenger.couach_name,
+          coachNo: passenger.coachName,
         );
         Get.snackbar('Success', 'Emergency alert sent successfully!');
       } catch (e) {
         Logger().e('Failed to send emergency alert: $e');
         Get.snackbar('Error', 'Failed to send emergency alert.');
       }
+    } else {
+      Get.snackbar('Error', 'User  is not authorized to send alerts.');
     }
   }
 }
 
 class ApiService {
-  final String baseUrl = "http://192.168.68.102:3000";
+  final String baseUrl = "http://10.15.10.140:3000";
 
   Future<void> sendEmergencyAlert({
     required String seatNumber,
@@ -247,6 +252,17 @@ class ApiService {
       if (kDebugMode) {
         print('Failed to save emergency alert: ${response.body}');
       }
+    }
+  }
+  Future<void> getUserDetails(String userId) async {
+    final url = Uri.parse('$baseUrl/user/$userId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final userData = jsonDecode(response.body);
+      Logger().i('User Details: $userData');
+    } else {
+      Logger().e('Failed to fetch user details: ${response.body}');
     }
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:sidebarx/sidebarx.dart';
+import 'package:trackers/ADMIN/adminPage.dart';
 import 'package:trackers/All%20Feautures/Emergencies/emergencies.dart';
 import 'package:trackers/All%20Feautures/Maintainence/LostAndFound.dart';
 import 'package:trackers/All%20Feautures/Maintainence/about.dart';
@@ -16,9 +17,10 @@ import 'package:trackers/Info%20page/TrainInfo.dart';
 import 'package:trackers/Info%20page/ratings&review.dart';
 import 'package:trackers/profileBar.dart';
 
-import '../Dynamic Tickets/TicketDetails.dart';
+import '../../ADMIN/ticketUpcoming.dart';
 
 class MainHomeScreen extends StatefulWidget {
+  
   const MainHomeScreen({super.key});
   @override
   _MainHomeScreenState createState() => _MainHomeScreenState();
@@ -27,21 +29,22 @@ class MainHomeScreen extends StatefulWidget {
 class _MainHomeScreenState extends State<MainHomeScreen> {
   int _currentIndex = 0;
 
-  // under-List of pages to navigate
+  // under-rows of page to navigate
   final List<Widget> _pages = [
     const RailwayBookingPage(),
-    const MainTicketPage(
-      name: 'Ahnaf arnab',
-      from: 'Dhaka',
-      to: 'Chattogram',
-      travelClass: 'AC',
-      date: '2023-10-10',
-      departTime: '10:00 AM',
-      seat: 'A1',
-      trainCode: 'Dhaka-CTG-101',
-      totalAmount: '750',
-      train_code: 'TR-703',
-    ),
+    UpcomingTicket(),
+    // const MainTicketPage(
+    //   name: 'Ahna arnab',
+    //   from: 'Dhaka',
+    //   to: 'Chattogram',
+    //   travelClass: 'AC',
+    //   date: '2023-10-10',
+    //   departTime: '10:00 AM',
+    //   seat: 'A1',
+    //   trainCode: 'Dhaka-CTG-101',
+    //   totalAmount: '750',
+    //   train_code: 'TR-703',
+    // ),
 
     // const MainTicketPage(
     //   name: '',
@@ -55,6 +58,7 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
     // ),
     const ProfileBar(
       loggedIn: true,
+      // userId: '', name: '', email: '',
     ),
   ];
 
@@ -261,34 +265,34 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                 leading: const Icon(Icons.privacy_tip),
                 title: const Text('Train Information'),
                 onTap: () {
-                    Get.offAll(() => const TrainListPage());
-                  },
-                  ),
-                ),
-                Card(
-                  child: ListTile(
-                  leading: const Icon(Icons.not_interested_rounded),
-                  title: const Text('Lost & Found'),
-                  onTap: () {
-                    Get.offAll(() => const LostAndFoundPage());
-                  },
-                  ),
-                ),
-                Card(
-                  child: ListTile(
-                  leading: const Icon(Icons.rate_review_rounded),
-                  title: const Text('Rating & Reviews'),
-                  onTap: () {
-                    Get.offAll(() => const RatingsReviewsPage());
-                  },
-                  ),
-                ),
-                Card(
-                  child: ListTile(
-                  leading: const Icon(Icons.announcement_rounded),
-                  title: const Text('Announcement'),
-                  onTap: () {
-                    Get.offAll(() => const AnnouncementPage());
+                  Get.offAll(() => const TrainListPage());
+                },
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.not_interested_rounded),
+                title: const Text('Lost & Found'),
+                onTap: () {
+                  Get.offAll(() => const LostAndFoundPage());
+                },
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.rate_review_rounded),
+                title: const Text('Rating & Reviews'),
+                onTap: () {
+                  Get.offAll(() => const RatingsReviewsPage());
+                },
+              ),
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.announcement_rounded),
+                title: const Text('Announcement'),
+                onTap: () {
+                  Get.offAll(() => const AnnouncementPage());
                 },
               ),
             ),
@@ -307,6 +311,15 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                 title: const Text('About'),
                 onTap: () {
                   Get.offAll(() => const DeveloperInfoDialog());
+                },
+              ),
+            ),
+             Card(
+              child: ListTile(
+                leading: const Icon(Icons.admin_panel_settings),
+                title: const Text('Admin'),
+                onTap: () {
+                  Get.offAll(() => const AdminPage());
                 },
               ),
             ),
@@ -581,7 +594,7 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                                     .toLocal()
                                     .toString()
                                     .split(' ')[0];
-                                                            },
+                              },
                             ),
                           ),
                         ],
@@ -603,7 +616,10 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
-                                    'From and To stations cannot be the same.'),
+                                  'From and To stations cannot be the same.',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                                backgroundColor: Colors.white,
                               ),
                             );
                           } else if (emptyFields == 0) {
@@ -617,27 +633,33 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                             if (kDebugMode) {
                               print('Search Data: $bookingData');
                             }
-                            final response = await ApiService().addBooking(
-                              userFrom: fromStationController.text,
-                              userTo: toStationController.text,
-                              journeyDate: _dateController.text,
-                              userClass: selectedClass,
+                            final response = await ApiService().createBooking(
+                              1, // Replace with actual booking ID
+                              fromStationController.text,
+                              toStationController.text,
+                              selectedClass,
+                              _dateController.text,
                             );
-                            if (response) {
+                            if (response['error'] == null) {
                               Get.offAll(() => TrainSearchPage(
                                     fromStation: fromStationController.text,
                                     toStation: toStationController.text,
                                     travelClass: selectedClass,
                                     journeyDate: _dateController.text,
-                                    returnJourneyDate: '', // Add appropriate value
-                                    returnFromStation: '', // Add appropriate value
-                                    returnToStation: '', // Add appropriate value
-                                    returnJourneyClass: '', // Add appropriate value
+                                    returnJourneyDate:
+                                        '', // Add appropriate value
+                                    returnFromStation:
+                                        '', // Add appropriate value
+                                    returnToStation:
+                                        '', // Add appropriate value
+                                    returnJourneyClass:
+                                        '', // Add appropriate value
                                   ));
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Booking failed.'),
+                                SnackBar(
+                                  content: Text(
+                                      'Booking failed: ${response['message']}'),
                                 ),
                               );
                             }
@@ -673,51 +695,73 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
 }
 
 class ApiService {
-  //final String baseUrl = "http://192.168.68.103:3000";
-   final String baseUrl = "http://10.15.52.157:3000";//university wifi ip//
+  final String baseUrl = 'http://10.15.10.140:3000/firstPage';
 
-  Future<bool> addBooking({
-    required String userFrom,
-    required String userTo,
-    required String userClass,
-    required String journeyDate,
-  }) async {
-    Map<String, String> requestHeaders = {
-      "Content-Type": "application/json",
-    };
-    Map<String, String> requestBody = {
-      "user_from": userFrom,
-      "user_to": userTo,
-      "user_class": userClass,
-      "journey_date": journeyDate,
-    };
-    var response = await http.post(Uri.parse("$baseUrl/firstPage"),
-        headers: requestHeaders, body: jsonEncode(requestBody));
+  // Method to create a new booking
+  Future<Map<String, dynamic>> createBooking(int bookingId, String userFrom,
+      String userTo, String userClass, String journeyDate) async {
+    try {
+      final response = await http.post(
+        Uri.parse(baseUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'Booking_ID': bookingId,
+          'user_from': userFrom,
+          'user_to': userTo,
+          'user_class': userClass,
+          'journey_date': journeyDate,
+        }),
+      );
 
-    if (response.statusCode == 201) {
-      return true;
-    } else {
-      return false;
+      if (response.statusCode == 201) {
+        return jsonDecode(response.body);
+      } else {
+        return {
+          'error': true,
+          'message': 'Failed to create booking',
+          'details': jsonDecode(response.body)
+        };
+      }
+    } catch (e) {
+      return {
+        'error': true,
+        'message': 'Error connecting to server',
+        'details': e.toString()
+      };
     }
   }
 
+  // Method to fetch all bookings
   Future<List<dynamic>> getAllBookings() async {
-    var response = await http.get(Uri.parse("$baseUrl/firstPage"));
+    try {
+      final response = await http.get(Uri.parse(baseUrl));
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Failed to load bookings');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return [];
+      }
+    } catch (e) {
+      return [];
     }
   }
 
+  // Method to fetch a specific booking by ID
   Future<Map<String, dynamic>> getBookingById(int bookingId) async {
-    var response = await http.get(Uri.parse("$baseUrl/firstPage/$bookingId"));
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/$bookingId'));
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Failed to load booking');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {'error': true, 'message': 'Booking not found'};
+      }
+    } catch (e) {
+      return {
+        'error': true,
+        'message': 'Error connecting to server',
+        'details': e.toString()
+      };
     }
   }
 }
