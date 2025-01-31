@@ -15,7 +15,7 @@ class PrivacyPolicyPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () {
-            Get.offAll(() =>const MainHomeScreen());
+          Get.to(() => const MainHomeScreen());
             },
         ),
       ),

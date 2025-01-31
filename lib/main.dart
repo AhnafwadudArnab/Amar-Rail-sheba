@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'All Feautures/Seat management/Train_Seat.dart';
+import 'package:trackers/All%20Feautures/firstpage/booking.dart';
+import 'package:trackers/OnBoards/FrontPage.dart';
+//import 'package:get/get_connect/http/src/utils/utils.dart';
+//import 'package:trackers/All%20Feautures/second%20pagee/Book_page_after_search.dart';
+//import 'package:trackers/OnBoards/FrontPage.dart';
+//import 'All Feautures/Seat management/Train_Seat.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,17 +16,33 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const GetMaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Amar Rail Sheba',
-        home: SeatSelectionPage(price: 150, ticketType: 'S-Chair'),
-      //home: MainHomeScreen(),
+      debugShowCheckedModeBanner: false,
+      title: 'Amar Rail Sheba',
+      home: Onboard(),
+//       home: TrainSearchPage(
+//   fromStation: 'Dhaka',
+//   toStation: 'Chittagong',
+//   travelClass: 'S-Chair',
+//   journeyDate: DateTime(2025, 1, 16).toIso8601String(),
+//   returnFromStation: 'Chittagong',
+//   returnToStation: 'Dhaka',
+//   returnJourneyClass: 'S-Chair',
+//   returnJourneyDate: DateTime(2025, 1, 20).toIso8601String(),
+// ),
+      // home: SeatSelectionPage(
+      //   price: 150,
+      //   ticketType: 'SNIGDHA',
+      //   fromStation: 'Dhaka',
+      //   toStation: 'Chittagong',
+      //   travelClass: 'S-Chair',
+      //   journeyDate: "2025-01-29",
+      //   departureTime: '10:00 AM',
+      // ),
     );
   }
 }
-
-
 //home: SignUp(),
-//home: SeatSelectionPage(price: 150, ticketType: 'SNIGDHA'),
+
 // final response = await ApiService()
 //home: SeatSelectionApp(price: 150, ticketType: 'AC',),
 //home: LiveLocation(),

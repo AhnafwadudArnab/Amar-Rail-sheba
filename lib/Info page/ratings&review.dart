@@ -6,6 +6,7 @@ class RatingsReviewsPage extends StatefulWidget {
   const RatingsReviewsPage({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _RatingsReviewsPageState createState() => _RatingsReviewsPageState();
 }
 
@@ -21,7 +22,7 @@ class _RatingsReviewsPageState extends State<RatingsReviewsPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Get.offAll(() => const MainHomeScreen());
+           Get.to(() => const MainHomeScreen());
           },
         ),
       ),

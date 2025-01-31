@@ -89,8 +89,7 @@ class DeveloperInfoDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () {
-
-            Get.to(()=>const MainHomeScreen());
+           Get.to(() => const MainHomeScreen());
           },
           child: const Text("Close"),
         ),

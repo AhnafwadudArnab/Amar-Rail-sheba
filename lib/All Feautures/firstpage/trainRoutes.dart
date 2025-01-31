@@ -352,7 +352,6 @@ final List<Map<String, dynamic>> mohanagarGodhuliPrices = [
   {'from': 'Bhairab_Bazar', 'to': 'Biman_Bandar', 'S-chair': 120, 'AC': 280, 'Cabin': 600},
   {'from': 'Biman_Bandar', 'to': 'Dhaka', 'S-chair': 150, 'AC': 350, 'Cabin': 700},
 ];
-
 final List<Map<String, dynamic>> mohanagarExpressPrices = [
   {'from': 'Dhaka', 'to': 'Biman_Bandar', 'S-chair': 140, 'AC': 330, 'Cabin': 690},
   {'from': 'Biman_Bandar', 'to': 'Bhairab_Bazar', 'S-chair': 110, 'AC': 270, 'Cabin': 590},

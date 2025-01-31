@@ -1,12 +1,78 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shelf/shelf.dart';
-import 'package:shelf/shelf_io.dart' as shelf_io;
-import 'package:trackers/All%20Feautures/Dynamic%20Tickets/TicketDetails.dart';
-import 'package:trackers/All%20Feautures/Seat%20management/Train_Seat.dart';
-
 import 'package:shelf/shelf.dart' as shelf;
+import 'package:http/http.dart' as http;
+import 'package:shelf/shelf.dart';
+import 'package:trackers/All%20Feautures/Dynamic%20Tickets/TicketDetails.dart';
+import 'package:shelf/shelf.dart' as shelf;
+import 'package:shelf/shelf.dart';
+import 'package:mysql1/mysql1.dart';
+import 'package:trackers/All%20Feautures/firstpage/booking.dart';
+
+class TrainCard extends StatelessWidget {
+  final String trainName;
+  final String fromStation;
+  final String toStation;
+  final String departureTime;
+  final String arrivalTime;
+  final String duration;
+  final String departureCity;
+  final String arrivalCity;
+  final String travelClass;
+  final String journeyDate;
+  final List<TicketType> tickets;
+  final int trainId;
+
+  const TrainCard({
+    super.key,
+    required this.trainName,
+    required this.fromStation,
+    required this.toStation,
+    required this.departureTime,
+    required this.arrivalTime,
+    required this.duration,
+    required this.departureCity,
+    required this.arrivalCity,
+    required this.travelClass,
+    required this.journeyDate,
+    required this.tickets,
+    required this.trainId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Column(
+        children: [
+          Text(trainName),
+          Text('From: $fromStation'),
+          Text('To: $toStation'),
+          Text('Departure: $departureTime'),
+          Text('Arrival: $arrivalTime'),
+          Text('Duration: $duration'),
+          Text('Class: $travelClass'),
+          Text('Date: $journeyDate'),
+          Text('Train ID: $trainId'),
+          ...tickets.map((ticket) => Text(
+              'Ticket: ${ticket.type}, Price: ${ticket.price}, Available Seats: ${ticket.availableSeats}')),
+        ],
+      ),
+    );
+  }
+}
+
+class TicketType {
+  final String type;
+  final double price;
+  final int availableSeats;
+
+  TicketType({
+    required this.type,
+    required this.price,
+    required this.availableSeats,
+  });
+}
 
 class Order {
   final String trainId;
@@ -30,12 +96,29 @@ class PaymentsPage extends StatefulWidget {
   final List<Order> orders;
   final String totalPrice;
   final List<int> selectedSeats;
+  final String trainId;
+  final List<TicketType> tickets;
+  final String trainName;
+  final String fromStation;
+  final String toStation;
+  final String departureTime;
+  final String travelClass;
+  final String date;
+
 
   const PaymentsPage({
     super.key,
     required this.orders,
     required this.totalPrice,
     required this.selectedSeats,
+    required this.trainId,
+    required this.trainName,
+    required this.fromStation,
+    required this.toStation,
+    required this.departureTime,
+    required this.tickets,
+     required this.travelClass,
+      required this.date,
   });
 
   @override
@@ -60,8 +143,7 @@ class PaymentsPageState extends State<PaymentsPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () {
-            Get.to(() =>
-                const SeatSelectionPage(price: 250, ticketType: 'S-Chair'));
+            Get.to(() => MainHomeScreen());
           },
         ),
         centerTitle: true,
@@ -218,20 +300,35 @@ class PaymentsPageState extends State<PaymentsPage> {
                     ),
                   ),
                   onPressed: () async {
-                    if (selectedPaymentMethod == "None") {
-                      _showPaymentMethodError();
+                    final response = await http.post(
+                      Uri.parse('http://10.15.10.140:3000/payments'),
+                      headers: {'Content-Type': 'application/json'},
+                      body: jsonEncode({
+                        'ticket_id': '12345',
+                        'payment_id': 'pay_001',
+                        'payment_date': DateTime.now().toIso8601String(),
+                        'payment_status': 'completed',
+                        'total_amount': totalAmount + 20,
+                        'payment_type': selectedPaymentMethod,
+                      }),
+                    );
+
+                    if (response.statusCode == 200) {
+                      Get.to(
+                        () => TrainTicketPage(
+                          name: "(User)",
+                          from: widget.fromStation,
+                          to:widget.toStation,
+                          travelClass: widget.travelClass,
+                          date:widget.date,
+                          departTime: widget.departureTime,
+                          seat: widget.selectedSeats.join(', '),
+                          totalAmount: widget.totalPrice,
+                          trainCode: widget.trainId,
+                        ),
+                      );
                     } else {
-                      Get.off(() => TrainTicketPage(
-                            name: 'John Doe',
-                            from: 'Place Abu-1',
-                            to: 'Place Bali-1',
-                            travelClass: 'First Class',
-                            date: '2023-10-10',
-                            departTime: '10:00 AM',
-                            seat: widget.selectedSeats.join(', '),
-                            totalAmount: totalAmount.toStringAsFixed(2),
-                            trainCode: 'TR-703',
-                          ));
+                      _showPaymentMethodError();
                     }
                   },
                   child: const Center(
@@ -294,7 +391,6 @@ class PaymentsPageState extends State<PaymentsPage> {
 
 class OrderSummaryCard extends StatelessWidget {
   final Order order;
-
   const OrderSummaryCard({super.key, required this.order});
   @override
   Widget build(BuildContext context) {
@@ -322,7 +418,7 @@ class OrderSummaryCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Ticket ID #",
+                const Text("Train ID #",
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(order.trainId.toString()),
               ],
@@ -385,63 +481,154 @@ class OrderSummaryCard extends StatelessWidget {
   }
 }
 
-// Entry point for the server
-Future<void> main() async {
-  final app = const Pipeline().addMiddleware(logRequests()).addHandler(_router);
-  final port = 3000;
+//api call//
 
-  print('Server running on http://localhost:$port');
-  await shelf_io.serve(app, 'localhost', port);
-}
+const int PORT = 3000;
 
-// Router to handle different endpoints
-Future<shelf.Response> _router(shelf.Request request) async {
-  if (request.url.path == 'payments' && request.method == 'POST') {
-    return _savePayment(jsonDecode(await request.readAsString()));
-  } else if (request.url.path == 'orders' && request.method == 'GET') {
-    return _fetchOrders();
-  } else {
-    return shelf.Response.notFound('Not Found');
-  }
-}
+// Database Configuration
+final ConnectionSettings settings = ConnectionSettings(
+  host: 'localhost',
+  port: 3306,
+  user: 'root',
+  db: 'bd_railways',
+  password: '',
+);
 
-// Handler to save payment details
-
-Future<shelf.Response> _savePayment(Map<String, dynamic> requestBody) async {
+Future<shelf.Response> savePaymentDetails(Request request) async {
   try {
-    List<String> requiredFields = ['field1', 'field2', 'field3'];
-
-    // Check for missing fields
-    for (var field in requiredFields) {
-      if (!requestBody.containsKey(field) || requestBody[field] == null) {
-        return shelf.Response(400,
-            body: jsonEncode({'error': 'Missing required fields'}));
-      }
+    final body = jsonDecode(await request.readAsString());
+    if (!body.containsKey('ticket_id') ||
+        !body.containsKey('payment_id') ||
+        !body.containsKey('payment_date') ||
+        !body.containsKey('payment_status') ||
+        !body.containsKey('total_amount') ||
+        !body.containsKey('payment_type')) {
+      return shelf.Response(400,
+          body: jsonEncode({'error': 'Missing required fields'}));
     }
 
-    // Call your database operation here (abstracted)
-    // Example: await savePaymentToDatabase(requestBody);
+    final conn = await MySqlConnection.connect(settings);
+    await conn.query(
+      'INSERT INTO payments (ticket_id, payment_id, payment_date, payment_status, total_amount, payment_type) VALUES (?, ?, ?, ?, ?, ?)',
+      [
+        body['ticket_id'],
+        body['payment_id'],
+        body['payment_date'],
+        body['payment_status'],
+        body['total_amount'],
+        body['payment_type'],
+      ],
+    );
+    await conn.close();
 
     return shelf.Response.ok(
         jsonEncode({'message': 'Payment saved successfully'}));
   } catch (e) {
-    print('Error: $e');
-    return shelf.Response(500,
-        body: jsonEncode({'error': 'Internal server error'}));
+    return shelf.Response.internalServerError(
+        body: jsonEncode({'error': 'Database error', 'details': e.toString()}));
   }
 }
 
-// Handler to fetch orders
-Future<shelf.Response> _fetchOrders() async {
+Future<shelf.Response> fetchOrders(Request request) async {
   try {
-    // Call your database operation here (abstracted)
-    // Example: final orders = await fetchOrdersFromDatabase();
+    final conn = await MySqlConnection.connect(settings);
+    final results = await conn.query('SELECT * FROM orders');
+    await conn.close();
 
-    final orders = []; // Placeholder for actual database data
+    final orders = results.map((row) => row.fields).toList();
     return shelf.Response.ok(jsonEncode(orders));
   } catch (e) {
-    print('Error: $e');
-    return shelf.Response(500,
-        body: jsonEncode({'error': 'Internal server error'}));
+    return shelf.Response.internalServerError(
+        body: jsonEncode({'error': 'Database error', 'details': e.toString()}));
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+// }
+// import 'dart:convert';
+// import 'package:flutter/foundation.dart';
+// import 'package:shelf/shelf.dart';
+// import 'package:shelf_router/shelf_router.dart';
+// import 'package:shelf/shelf_io.dart' as shelf_io;
+
+//   shelf.Response _handleBadRequest(String message) {
+//     return shelf.Response(400,
+//         body: jsonEncode({'error': message}),
+//         headers: {'Content-Type': 'application/json'});
+//   }
+
+//   Future<shelf.Response> savePayment(shelf.Response request) async {
+//     final payload = await request.readAsString();
+
+//     final data = jsonDecode(payload) as Map<String, dynamic>;
+//     final requiredFields = [
+//       'ticket_id',
+//       'payment_id',
+//       'payment_date',
+//       'payment_status',
+//       'total_amount',
+//       'payment_type'
+//     ];
+
+//     for (var field in requiredFields) {
+//       if (!data.containsKey(field)) {
+//         return _handleBadRequest('Missing required fields');
+//       }
+//     }
+
+//     // Simulate saving payment
+//     final payment = {
+//       'ticket_id': data['ticket_id'],
+//       'payment_id': data['payment_id'],
+//       'payment_date': data['payment_date'],
+//       'payment_status': data['payment_status'],
+//       'total_amount': data['total_amount'],
+//       'payment_type': data['payment_type'],
+//     };
+
+//     return shelf.Response.ok(
+//       jsonEncode({'message': 'Payment saved successfully', 'payment': payment}),
+//       headers: {'Content-Type': 'application/json'},
+//     );
+//   }
+
+//   Future<shelf.Response> fetchOrders(Request request) async {
+//     // Simulate fetching orders
+//     final orders = [
+//       {
+//         'order_id': 1,
+//         'train_id': 101,
+//         'payment_id': 'pay_001',
+//         'payment_date': '2023-01-01',
+//         'status': 'completed',
+//         'total': 100.0,
+//         'created_at': '2023-01-01T10:00:00Z',
+//       },
+//       {
+//         'order_id': 2,
+//         'train_id': 102,
+//         'payment_id': 'pay_002',
+//         'payment_date': '2023-01-02',
+//         'status': 'pending',
+//         'total': 150.0,
+//         'created_at': '2023-01-02T11:00:00Z',
+//       },
+//     ];
+
+//     return shelf.Response.ok(
+//       jsonEncode(orders),
+//       headers: {'Content-Type': 'application/json'},
+//     );
+//   }
+// }

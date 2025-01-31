@@ -296,7 +296,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
 
 class ApiService {
   //final String baseUrl = "http://192.168.68.103:3000";
-   final String baseUrl =  "http://10.15.52.157:3000";//university wifi ip//
+  final String baseUrl = "http://10.15.10.140:3000"; //university wifi ip//
 
   Future<bool> registerUser({
     required String name,

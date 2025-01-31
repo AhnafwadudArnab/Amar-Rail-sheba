@@ -2,9 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_countdown_timer/flutter_countdown_timer.dart';
-import 'package:get/get.dart';
 import 'package:trackers/All%20Feautures/second%20pagee/trainSelection.dart';
-import 'package:trackers/All%20Feautures/firstpage/booking.dart';
 import 'modify_Search_box.dart';
 
 // ignore: must_be_immutable
@@ -66,6 +64,7 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
   String? selectedClass;
   String? selectedReturnClass;
   String selectedJourneyType = 'One Way';
+  // ignore: unused_field
   String? _selectedType;
   bool isEditable = false;
 
@@ -232,14 +231,14 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
           onPressed: () {
-            Get.offAll(() => const MainHomeScreen());
+            Navigator.pop(context);
           },
         ),
         title: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Train Search',
+              '    Train Search',
               style: TextStyle(color: Colors.black),
             ),
             SizedBox(width: 4),
@@ -337,7 +336,7 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
                           endTime: endTime,
                           widgetBuilder: (_, time) {
                             if (time == null) {
-                              Get.to(const MainHomeScreen());
+                              Navigator.pop(context);
                               return const Text('Time is up!');
                             }
                             return Text(
@@ -370,36 +369,36 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 8),
-                          Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text('Type: ',
-                                    style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold)),
-                                const SizedBox(width: 8),
-                                DropdownButton<String>(
-                                  value: _selectedType,
-                                  hint: const Text('Select Type'),
-                                  items: <String>['Direct', 'Intercity']
-                                      .map((String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    );
-                                  }).toList(),
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      _selectedType = newValue;
-                                      //_updateTrains();
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
+                          //const SizedBox(height: 8),
+                          // Center(
+                          //   child: Row(
+                          //     mainAxisAlignment: MainAxisAlignment.center,
+                          //     children: [
+                          //       const Text('Type: ',
+                          //           style: TextStyle(
+                          //               fontSize: 16,
+                          //               fontWeight: FontWeight.bold)),
+                          //       const SizedBox(width: 8),
+                          //       DropdownButton<String>(
+                          //         value: _selectedType,
+                          //         hint: const Text('Select Type'),
+                          //         items: <String>['Direct', 'Intercity']
+                          //             .map((String value) {
+                          //           return DropdownMenuItem<String>(
+                          //             value: value,
+                          //             child: Text(value),
+                          //           );
+                          //         }).toList(),
+                          //         onChanged: (String? newValue) {
+                          //           setState(() {
+                          //             _selectedType = newValue;
+                          //             //_updateTrains();
+                          //           });
+                          //         },
+                          //       ),
+                          //     ],
+                          //   ),
+                          // ),
                           //variable passing here for the train selection//
                           const SizedBox(height: 16),
                           Expanded(
@@ -407,7 +406,7 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
                               child: Column(
                                 children: [
                                   TrainCard(
-                                    trainName: 'Subarna\nExpress',
+                                    trainName: 'Train A',
                                     fromStation: widget.fromStation,
                                     toStation: widget.toStation,
                                     departureTime: '12:30pm',
@@ -427,7 +426,7 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
                                   ),
                                   // Example train data
                                   TrainCard(
-                                    trainName: 'Example Train',
+                                    trainName: 'Train B',
                                     fromStation: widget.fromStation,
                                     toStation: widget.toStation,
                                     departureTime: '10:00am',
@@ -446,7 +445,7 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
                                     trainId: 2,
                                   ),
                                   TrainCard(
-                                    trainName: 'Mohanagar\nExpress',
+                                    trainName: 'Train C',
                                     fromStation: widget.fromStation,
                                     toStation: widget.toStation,
                                     departureTime: '10:00am',
@@ -465,7 +464,7 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
                                     trainId: 5,
                                   ),
                                   TrainCard(
-                                    trainName: 'Turna\nNishitha',
+                                    trainName: 'Train D',
                                     fromStation: widget.fromStation,
                                     toStation: widget.toStation,
                                     departureTime: '11:00am',
@@ -504,7 +503,7 @@ class _TrainSearchPageState extends State<TrainSearchPage> {
 }
 
 class TrainDetailsAPi {
-  final String baseUrl = "http://10.15.19.200:3000";
+  final String baseUrl = "http://10.15.10.140:3000";
 
   /// Fetches the train details by from_station and to_station
   Future<List<dynamic>> getTrains(String fromStation, String toStation) async {

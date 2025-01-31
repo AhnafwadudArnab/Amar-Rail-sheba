@@ -33,7 +33,7 @@ class TrainTicketPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.redAccent),
           onPressed: () {
-            Get.to(() => const MainHomeScreen());
+           Get.to(() => const MainHomeScreen());
           },
         ),
         centerTitle: true,

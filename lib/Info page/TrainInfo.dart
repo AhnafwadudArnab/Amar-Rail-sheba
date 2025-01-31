@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:trackers/All%20Feautures/firstpage/booking.dart';
+
+import '../All Feautures/firstpage/booking.dart';
 
 class TrainDetailsPage extends StatelessWidget {
   final Map<String, List<Station>> trainStations;
@@ -357,7 +358,8 @@ class TrainListPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.home),
             onPressed: () {
-              Get.off(() => const MainHomeScreen());
+              Get.to(() => const MainHomeScreen());
+
             },
           ),
         ],
