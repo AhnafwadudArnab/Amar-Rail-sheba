@@ -1,97 +1,41 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shelf/shelf.dart' as shelf;
-import 'package:http/http.dart' as http;
-import 'package:shelf/shelf.dart';
 import 'package:trackers/All%20Feautures/Dynamic%20Tickets/TicketDetails.dart';
-import 'package:shelf/shelf.dart' as shelf;
-import 'package:shelf/shelf.dart';
-import 'package:mysql1/mysql1.dart';
 import 'package:trackers/All%20Feautures/firstpage/booking.dart';
+import 'package:trackers/services/local_data_service.dart';
+import 'package:trackers/utils/responsive.dart';
 
-class TrainCard extends StatelessWidget {
-  final String trainName;
-  final String fromStation;
-  final String toStation;
-  final String departureTime;
-  final String arrivalTime;
-  final String duration;
-  final String departureCity;
-  final String arrivalCity;
-  final String travelClass;
-  final String journeyDate;
-  final List<TicketType> tickets;
-  final int trainId;
-
-  const TrainCard({
-    super.key,
-    required this.trainName,
-    required this.fromStation,
-    required this.toStation,
-    required this.departureTime,
-    required this.arrivalTime,
-    required this.duration,
-    required this.departureCity,
-    required this.arrivalCity,
-    required this.travelClass,
-    required this.journeyDate,
-    required this.tickets,
-    required this.trainId,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Column(
-        children: [
-          Text(trainName),
-          Text('From: $fromStation'),
-          Text('To: $toStation'),
-          Text('Departure: $departureTime'),
-          Text('Arrival: $arrivalTime'),
-          Text('Duration: $duration'),
-          Text('Class: $travelClass'),
-          Text('Date: $journeyDate'),
-          Text('Train ID: $trainId'),
-          ...tickets.map((ticket) => Text(
-              'Ticket: ${ticket.type}, Price: ${ticket.price}, Available Seats: ${ticket.availableSeats}')),
-        ],
-      ),
-    );
-  }
-}
-
-class TicketType {
-  final String type;
-  final double price;
-  final int availableSeats;
-
-  TicketType({
-    required this.type,
-    required this.price,
-    required this.availableSeats,
-  });
-}
-
+// ── Order model ───────────────────────────────────────────────────────────────
 class Order {
+  final String id;
   final String trainId;
   final String paymentId;
   final String paymentDate;
   final String status;
   final double total;
+  final List<int> seatNumbers;
 
   Order(
-    String s, {
+    this.id, {
     required this.trainId,
     required this.paymentId,
     required this.paymentDate,
     required this.status,
     required this.total,
-    required List<int> seatNumbers,
+    required this.seatNumbers,
   });
 }
 
+// ── TicketType (kept for backward compat) ─────────────────────────────────────
+class TicketType {
+  final String type;
+  final double price;
+  final int availableSeats;
+
+  const TicketType({required this.type, required this.price, required this.availableSeats});
+}
+
+// ── Payments Page ─────────────────────────────────────────────────────────────
 class PaymentsPage extends StatefulWidget {
   final List<Order> orders;
   final String totalPrice;
@@ -104,7 +48,9 @@ class PaymentsPage extends StatefulWidget {
   final String departureTime;
   final String travelClass;
   final String date;
-
+  final bool isRoundTrip;
+  final TrainModel? outboundTrain;
+  final TrainModel? returnTrain;
 
   const PaymentsPage({
     super.key,
@@ -117,8 +63,11 @@ class PaymentsPage extends StatefulWidget {
     required this.toStation,
     required this.departureTime,
     required this.tickets,
-     required this.travelClass,
-      required this.date,
+    required this.travelClass,
+    required this.date,
+    this.isRoundTrip = false,
+    this.outboundTrain,
+    this.returnTrain,
   });
 
   @override
@@ -126,509 +75,304 @@ class PaymentsPage extends StatefulWidget {
 }
 
 class PaymentsPageState extends State<PaymentsPage> {
-  String selectedPaymentMethod = "None";
+  String _selectedMethod = '';
+  bool _processing = false;
 
-  @override
-  void initState() {
-    super.initState();
-  }
+  double get totalAmount =>
+      widget.orders.fold<double>(0.0, (sum, o) => sum + o.total) + 20;
+
+  final List<Map<String, dynamic>> _methods = [
+    {'id': 'bkash', 'label': 'bKash', 'color': Color(0xFFE2136E), 'icon': Icons.phone_android},
+    {'id': 'nagad', 'label': 'Nagad', 'color': Color(0xFFFF6600), 'icon': Icons.account_balance_wallet},
+    {'id': 'card', 'label': 'Card', 'color': Color(0xFF1A3A6B), 'icon': Icons.credit_card},
+    {'id': 'rocket', 'label': 'Rocket', 'color': Color(0xFF8B1A8B), 'icon': Icons.rocket_launch},
+  ];
 
   @override
   Widget build(BuildContext context) {
-    double totalAmount =
-        widget.orders.fold(0, (sum, order) => sum + order.total);
-
     return Scaffold(
+      backgroundColor: const Color(0xFFF0F4F8),
       appBar: AppBar(
+        backgroundColor: const Color(0xFF1A3A6B),
+        foregroundColor: Colors.white,
+        title: const Text('Payment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () {
-            Get.to(() => MainHomeScreen());
-          },
-        ),
-        centerTitle: true,
-        title: const Center(child: Text("Payments Details")),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.65,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 5,
-                blurRadius: 7,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ...widget.orders.map((order) => OrderSummaryCard(order: order)),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(
-                    color: Colors.blueAccent,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Total Amount",
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
-                      ),
-                      Text(
-                        "${(totalAmount + 20).toStringAsFixed(2)}/tk",
-                        style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Divider(thickness: 1),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "You Have to Pay",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      "${(totalAmount + 20).toStringAsFixed(2)}/tk",
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedPaymentMethod == "bKash"
-                            ? Colors.red
-                            : Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(0),
-                        ),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          selectedPaymentMethod = "bKash";
-                        });
-                      },
-                      child: Text(
-                        "bKash",
-                        style: TextStyle(
-                          color: selectedPaymentMethod == "bKash"
-                              ? Colors.white
-                              : Colors.blue,
-                        ),
-                      ),
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedPaymentMethod == "Card"
-                            ? Colors.red
-                            : Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(0),
-                        ),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          selectedPaymentMethod = "Card";
-                        });
-                      },
-                      child: Text(
-                        "Card",
-                        style: TextStyle(
-                          color: selectedPaymentMethod == "Card"
-                              ? Colors.white
-                              : Colors.blue,
-                        ),
-                      ),
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedPaymentMethod == "Nagad"
-                            ? Colors.red
-                            : Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(0),
-                        ),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          selectedPaymentMethod = "Nagad";
-                        });
-                      },
-                      child: Text(
-                        "Nagad",
-                        style: TextStyle(
-                          color: selectedPaymentMethod == "Nagad"
-                              ? Colors.white
-                              : Colors.blue,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.all(16.0),
-                    backgroundColor: Colors.orangeAccent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: () async {
-                    final response = await http.post(
-                      Uri.parse('http://10.15.10.140:3000/payments'),
-                      headers: {'Content-Type': 'application/json'},
-                      body: jsonEncode({
-                        'ticket_id': '12345',
-                        'payment_id': 'pay_001',
-                        'payment_date': DateTime.now().toIso8601String(),
-                        'payment_status': 'completed',
-                        'total_amount': totalAmount + 20,
-                        'payment_type': selectedPaymentMethod,
-                      }),
-                    );
-
-                    if (response.statusCode == 200) {
-                      Get.to(
-                        () => TrainTicketPage(
-                          name: "(User)",
-                          from: widget.fromStation,
-                          to:widget.toStation,
-                          travelClass: widget.travelClass,
-                          date:widget.date,
-                          departTime: widget.departureTime,
-                          seat: widget.selectedSeats.join(', '),
-                          totalAmount: widget.totalPrice,
-                          trainCode: widget.trainId,
-                        ),
-                      );
-                    } else {
-                      _showPaymentMethodError();
-                    }
-                  },
-                  child: const Center(
-                    child: Text(
-                      "Pay Now",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Selected Payment Method: ",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      selectedPaymentMethod,
-                      style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blueAccent),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          onPressed: () => Get.offAll(() => const MainHomeScreen()),
         ),
       ),
-    );
-  }
-
-  void _showPaymentMethodError() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Error"),
-          content: const Text("Please select a payment method."),
-          actions: [
-            TextButton(
-              child: const Text("OK"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class OrderSummaryCard extends StatelessWidget {
-  final Order order;
-  const OrderSummaryCard({super.key, required this.order});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      width: MediaQuery.of(context).size.width * 0.9,
-      height: MediaQuery.of(context).size.height * 0.2,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 5,
-            blurRadius: 7,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: SingleChildScrollView(
+            padding: R.of(context).pagePad,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Train ID #",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(order.trainId.toString()),
-              ],
+            // Round trip badge
+            if (widget.isRoundTrip)
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF3E0),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE8A838)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.swap_horiz, color: Color(0xFFE65100), size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Round Trip: ${widget.outboundTrain?.trainName ?? ''} ↔ ${widget.returnTrain?.trainName ?? ''}',
+                      style: const TextStyle(color: Color(0xFFE65100), fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+
+            // Journey summary card
+            _buildJourneySummary(),
+            const SizedBox(height: 16),
+
+            // Order summary
+            _buildOrderSummary(),
+            const SizedBox(height: 16),
+
+            // Payment methods
+            Text('Select Payment Method',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: R.of(context).fs15)),
+            SizedBox(height: R.of(context).sp10),
+            LayoutBuilder(builder: (ctx, constraints) {
+              final r = R.of(ctx);
+              final cols = constraints.maxWidth > 400 ? 4 : 2;
+              return GridView.count(
+                crossAxisCount: cols,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: r.sp10,
+                mainAxisSpacing: r.sp10,
+                childAspectRatio: constraints.maxWidth > 400 ? 2.2 : 2.8,
+                children: _methods.map((m) => _buildMethodTile(m)).toList(),
+              );
+            }),
+            SizedBox(height: R.of(context).sp20),
+
+            // Pay button
+            SizedBox(
+              width: double.infinity,
+              height: R.of(context).btnH,
+              child: ElevatedButton(
+                onPressed: _selectedMethod.isEmpty || _processing ? null : _pay,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1A3A6B),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: _processing
+                    ? const SizedBox(
+                        width: 20, height: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : Text(
+                        _selectedMethod.isEmpty
+                            ? 'Select a payment method'
+                            : 'Pay ৳${totalAmount.toStringAsFixed(2)}',
+                        style: TextStyle(fontSize: R.of(context).fs15, fontWeight: FontWeight.bold),
+                      ),
+              ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Payment ID #",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(order.paymentId.toString()),
-              ],
+          ],
+        ),
+      ),
+    ),  // ConstrainedBox
+    ),  // Center
+    );
+  }
+
+  Widget _buildJourneySummary() {
+    final r = R.of(context);
+    return Container(
+      padding: EdgeInsets.all(r.sp16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06), blurRadius: 8)
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Journey Details',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold, fontSize: r.fs14)),
+          SizedBox(height: r.sp10),
+          _summaryRow('From', widget.fromStation),
+          _summaryRow('To', widget.toStation),
+          _summaryRow('Date', widget.date),
+          _summaryRow('Class', widget.travelClass),
+          _summaryRow('Seats', widget.selectedSeats.join(', ')),
+          _summaryRow('Train', widget.trainName),
+          _summaryRow('Departure', widget.departureTime),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryRow(String label, String value) {
+    final r = R.of(context);
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: r.sp4 / 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: TextStyle(color: Colors.grey, fontSize: r.fs12)),
+          Flexible(
+            child: Text(value,
+                style: TextStyle(
+                    fontWeight: FontWeight.w600, fontSize: r.fs12),
+                textAlign: TextAlign.end,
+                overflow: TextOverflow.ellipsis),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderSummary() {
+    final r = R.of(context);
+    return Container(
+      padding: EdgeInsets.all(r.sp16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A3A6B),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Ticket Price',
+                  style: TextStyle(color: Colors.white70, fontSize: r.fs13)),
+              Text('৳${(totalAmount - 20).toStringAsFixed(2)}',
+                  style: TextStyle(color: Colors.white, fontSize: r.fs13)),
+            ],
+          ),
+          SizedBox(height: r.sp6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Service Charge',
+                  style: TextStyle(color: Colors.white70, fontSize: r.fs13)),
+              Text('৳20.00',
+                  style: TextStyle(color: Colors.white, fontSize: r.fs13)),
+            ],
+          ),
+          const Divider(color: Colors.white30, height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Total',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: r.fs16)),
+              Text('৳${totalAmount.toStringAsFixed(2)}',
+                  style: TextStyle(
+                      color: const Color(0xFFE8A838),
+                      fontWeight: FontWeight.bold,
+                      fontSize: r.fs18)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMethodTile(Map<String, dynamic> m) {
+    final r = R.of(context);
+    final selected = _selectedMethod == m['id'];
+    return GestureDetector(
+      onTap: () => setState(() => _selectedMethod = m['id']),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: EdgeInsets.symmetric(horizontal: r.sp12, vertical: r.sp8),
+        decoration: BoxDecoration(
+          color: selected
+              ? (m['color'] as Color).withValues(alpha: 0.1)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? m['color'] as Color : Colors.grey[300]!,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(m['icon'] as IconData,
+                color: m['color'] as Color, size: r.fs20),
+            SizedBox(width: r.sp8),
+            Flexible(
+              child: Text(m['label'] as String,
+                  style: TextStyle(
+                      fontWeight:
+                          selected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: r.fs12,
+                      color: selected
+                          ? m['color'] as Color
+                          : Colors.black87),
+                  overflow: TextOverflow.ellipsis),
             ),
-            const SizedBox(height: 5),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Payment Date #",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(order.paymentDate),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Status #",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(order.status.toString()),
-              ],
-            ),
-            const SizedBox(height: 5),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Total price (with extra VAT%):",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Text("${order.total.toStringAsFixed(2)}/tk"),
-              ],
-            ),
-            const SizedBox(height: 5),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Bank Charge:",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Text("20/tk"),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Total Amount (including Bank Charge):",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Text("${(order.total + 20).toStringAsFixed(2)}/tk"),
-              ],
-            ),
+            const Spacer(),
+            if (selected)
+              Icon(Icons.check_circle,
+                  color: m['color'] as Color, size: r.fs15),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pay() async {
+    setState(() => _processing = true);
+    // Simulate payment processing (no MySQL)
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() => _processing = false);
+
+    Get.to(() => TrainTicketPage(
+          name: 'Passenger',
+          from: widget.fromStation,
+          to: widget.toStation,
+          travelClass: widget.travelClass,
+          date: widget.date,
+          departTime: widget.departureTime,
+          seat: widget.selectedSeats.join(', '),
+          totalAmount: totalAmount.toStringAsFixed(2),
+          trainCode: widget.trainId,
+        ));
+  }
+}
+
+// ── OrderSummaryCard (kept for backward compat) ───────────────────────────────
+class OrderSummaryCard extends StatelessWidget {
+  final Order order;
+  const OrderSummaryCard({super.key, required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Order: ${order.id}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('Total: ৳${order.total.toStringAsFixed(2)}'),
           ],
         ),
       ),
     );
   }
 }
-
-//api call//
-
-const int PORT = 3000;
-
-// Database Configuration
-final ConnectionSettings settings = ConnectionSettings(
-  host: 'localhost',
-  port: 3306,
-  user: 'root',
-  db: 'bd_railways',
-  password: '',
-);
-
-Future<shelf.Response> savePaymentDetails(Request request) async {
-  try {
-    final body = jsonDecode(await request.readAsString());
-    if (!body.containsKey('ticket_id') ||
-        !body.containsKey('payment_id') ||
-        !body.containsKey('payment_date') ||
-        !body.containsKey('payment_status') ||
-        !body.containsKey('total_amount') ||
-        !body.containsKey('payment_type')) {
-      return shelf.Response(400,
-          body: jsonEncode({'error': 'Missing required fields'}));
-    }
-
-    final conn = await MySqlConnection.connect(settings);
-    await conn.query(
-      'INSERT INTO payments (ticket_id, payment_id, payment_date, payment_status, total_amount, payment_type) VALUES (?, ?, ?, ?, ?, ?)',
-      [
-        body['ticket_id'],
-        body['payment_id'],
-        body['payment_date'],
-        body['payment_status'],
-        body['total_amount'],
-        body['payment_type'],
-      ],
-    );
-    await conn.close();
-
-    return shelf.Response.ok(
-        jsonEncode({'message': 'Payment saved successfully'}));
-  } catch (e) {
-    return shelf.Response.internalServerError(
-        body: jsonEncode({'error': 'Database error', 'details': e.toString()}));
-  }
-}
-
-Future<shelf.Response> fetchOrders(Request request) async {
-  try {
-    final conn = await MySqlConnection.connect(settings);
-    final results = await conn.query('SELECT * FROM orders');
-    await conn.close();
-
-    final orders = results.map((row) => row.fields).toList();
-    return shelf.Response.ok(jsonEncode(orders));
-  } catch (e) {
-    return shelf.Response.internalServerError(
-        body: jsonEncode({'error': 'Database error', 'details': e.toString()}));
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-// }
-// import 'dart:convert';
-// import 'package:flutter/foundation.dart';
-// import 'package:shelf/shelf.dart';
-// import 'package:shelf_router/shelf_router.dart';
-// import 'package:shelf/shelf_io.dart' as shelf_io;
-
-//   shelf.Response _handleBadRequest(String message) {
-//     return shelf.Response(400,
-//         body: jsonEncode({'error': message}),
-//         headers: {'Content-Type': 'application/json'});
-//   }
-
-//   Future<shelf.Response> savePayment(shelf.Response request) async {
-//     final payload = await request.readAsString();
-
-//     final data = jsonDecode(payload) as Map<String, dynamic>;
-//     final requiredFields = [
-//       'ticket_id',
-//       'payment_id',
-//       'payment_date',
-//       'payment_status',
-//       'total_amount',
-//       'payment_type'
-//     ];
-
-//     for (var field in requiredFields) {
-//       if (!data.containsKey(field)) {
-//         return _handleBadRequest('Missing required fields');
-//       }
-//     }
-
-//     // Simulate saving payment
-//     final payment = {
-//       'ticket_id': data['ticket_id'],
-//       'payment_id': data['payment_id'],
-//       'payment_date': data['payment_date'],
-//       'payment_status': data['payment_status'],
-//       'total_amount': data['total_amount'],
-//       'payment_type': data['payment_type'],
-//     };
-
-//     return shelf.Response.ok(
-//       jsonEncode({'message': 'Payment saved successfully', 'payment': payment}),
-//       headers: {'Content-Type': 'application/json'},
-//     );
-//   }
-
-//   Future<shelf.Response> fetchOrders(Request request) async {
-//     // Simulate fetching orders
-//     final orders = [
-//       {
-//         'order_id': 1,
-//         'train_id': 101,
-//         'payment_id': 'pay_001',
-//         'payment_date': '2023-01-01',
-//         'status': 'completed',
-//         'total': 100.0,
-//         'created_at': '2023-01-01T10:00:00Z',
-//       },
-//       {
-//         'order_id': 2,
-//         'train_id': 102,
-//         'payment_id': 'pay_002',
-//         'payment_date': '2023-01-02',
-//         'status': 'pending',
-//         'total': 150.0,
-//         'created_at': '2023-01-02T11:00:00Z',
-//       },
-//     ];
-
-//     return shelf.Response.ok(
-//       jsonEncode(orders),
-//       headers: {'Content-Type': 'application/json'},
-//     );
-//   }
-// }

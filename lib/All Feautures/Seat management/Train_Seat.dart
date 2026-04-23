@@ -1,11 +1,9 @@
-import 'dart:convert';
 import 'dart:math';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
-import 'package:trackers/All%20Feautures/second%20pagee/Book_page_after_search.dart';
+import 'package:trackers/services/local_data_service.dart';
+import 'package:trackers/utils/responsive.dart';
 import '../payments_Methods/Payments.dart';
 
 class SeatController extends GetxController {
@@ -32,16 +30,25 @@ class SeatSelectionPage extends StatefulWidget {
   final String? travelClass;
   final String? journeyDate;
   final String? departureTime;
+  final bool isRoundTrip;
+  final TrainModel? outboundTrain;
+  final TrainModel? returnTrain;
+  final int passengers;
 
-  const SeatSelectionPage(
-      {super.key,
-      required this.price,
-      required this.ticketType,
-      required this.fromStation,
-      required this.toStation,
-      required this.travelClass,
-      required this.journeyDate,
-      required this.departureTime});
+  const SeatSelectionPage({
+    super.key,
+    required this.price,
+    required this.ticketType,
+    this.fromStation,
+    this.toStation,
+    this.travelClass,
+    this.journeyDate,
+    this.departureTime,
+    this.isRoundTrip = false,
+    this.outboundTrain,
+    this.returnTrain,
+    this.passengers = 1,
+  });
 
   @override
   SeatSelectionPageState createState() => SeatSelectionPageState();
@@ -51,8 +58,9 @@ class SeatSelectionPageState extends State<SeatSelectionPage> {
   final SeatController seatController = Get.put(SeatController());
   List<int> selectedSeats = [];
   Timer? timer;
-  int allowedSeats = 4;
-  List<Map<String, dynamic>> coaches = [
+  int get allowedSeats => widget.passengers;
+
+  final List<Map<String, dynamic>> coaches = [
     {"name": "C-1", "seats": 60, "type": "AC_S"},
     {"name": "C-2", "seats": 58, "type": "AC_S"},
     {"name": "C-5A", "seats": 35, "type": "SNIGDHA"},
@@ -66,8 +74,9 @@ class SeatSelectionPageState extends State<SeatSelectionPage> {
   @override
   void initState() {
     super.initState();
-    seatController.initializeSeats(selectedCoach,
-        coaches.firstWhere((coach) => coach['name'] == selectedCoach)['seats']);
+    seatController.initializeSeats(
+        selectedCoach,
+        coaches.firstWhere((c) => c['name'] == selectedCoach)['seats']);
     startTimer();
   }
 
@@ -78,10 +87,8 @@ class SeatSelectionPageState extends State<SeatSelectionPage> {
   }
 
   void startTimer() {
-    timer = Timer.periodic(const Duration(minutes: 10), (timer) {
-      setState(() {
-        selectedSeats.clear();
-      });
+    timer = Timer.periodic(const Duration(minutes: 10), (_) {
+      setState(() => selectedSeats.clear());
     });
   }
 
@@ -100,337 +107,335 @@ class SeatSelectionPageState extends State<SeatSelectionPage> {
 
   Color getSeatColor(String status) {
     switch (status) {
-      case 'available':
-        return Colors.green;
-      case 'selected':
-        return Colors.orange;
-      case 'booked':
-        return Colors.red;
-      case 'unselected':
-        return Colors.grey[300]!;
-      default:
-        return Colors.grey;
+      case 'available': return Colors.green;
+      case 'selected': return const Color(0xFFE8A838);
+      case 'booked': return Colors.red;
+      default: return Colors.grey[300]!;
     }
-  }
-
-  void bookSeats() {
-    setState(() {
-      for (int index in selectedSeats) {
-        seatController.updateSeatStatus(selectedCoach, index, 'booked');
-      }
-      selectedSeats.clear();
-    });
   }
 
   int getSeatPrice(String coachType) {
     switch (coachType) {
-      case 'AC_S':
-        return 320;
-      case 'SNIGDHA':
-        return 420;
-      case 'S_CHAIR':
-        return 280;
-      default:
-        return 0;
+      case 'AC_S': return 320;
+      case 'SNIGDHA': return 420;
+      case 'S_CHAIR': return 280;
+      default: return 0;
     }
+  }
+
+  double get totalPrice {
+    final coachType = coaches.firstWhere((c) => c['name'] == selectedCoach)['type'];
+    return selectedSeats.length * getSeatPrice(coachType).toDouble();
+  }
+
+  void _confirmBooking() async {
+    // Save booking locally (no MySQL)
+    final bookingId = 'BK${Random().nextInt(999999).toString().padLeft(6, '0')}';
+    final booking = BookingModel(
+      bookingId: bookingId,
+      userId: 'user_local',
+      fromStation: widget.fromStation ?? '',
+      toStation: widget.toStation ?? '',
+      journeyDate: widget.journeyDate ?? '',
+      travelClass: widget.travelClass ?? '',
+      trainName: widget.ticketType,
+      trainCode: 'TR001',
+      departureTime: widget.departureTime ?? '',
+      arrivalTime: '',
+      seatNumbers: selectedSeats.map((i) => i + 1).toList(),
+      coachName: selectedCoach,
+      totalAmount: totalPrice * 1.15,
+      status: 'confirmed',
+      bookingType: widget.isRoundTrip ? 'round_trip' : 'one_way',
+    );
+    await LocalDataService().saveBooking(booking);
+
+    Get.offAll(() => PaymentsPage(
+          orders: [
+            Order(
+              bookingId,
+              trainId: 'TN001',
+              paymentId: 'PAY-${Random().nextInt(99999)}',
+              paymentDate: DateTime.now().toString().split(' ')[0],
+              status: 'Pending',
+              total: totalPrice * 1.15,
+              seatNumbers: selectedSeats.map((i) => i + 1).toList(),
+            ),
+          ],
+          totalPrice: (totalPrice * 1.15).toStringAsFixed(2),
+          selectedSeats: selectedSeats.map((i) => i + 1).toList(),
+          trainId: 'TN001',
+          trainName: widget.ticketType,
+          fromStation: widget.fromStation ?? 'Unknown',
+          toStation: widget.toStation ?? 'Unknown',
+          departureTime: widget.departureTime ?? 'Unknown',
+          tickets: const [],
+          travelClass: widget.travelClass ?? 'Unknown',
+          date: widget.journeyDate ?? 'Unknown',
+          isRoundTrip: widget.isRoundTrip,
+          outboundTrain: widget.outboundTrain,
+          returnTrain: widget.returnTrain,
+        ));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF0F4F8),
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            Get.offAll(() => TrainSearchPage(
-                  fromStation: 'Station A',
-                  toStation: 'Station B',
-                  travelClass: 'AC_S',
-                  journeyDate: '2023-12-01',
-                  returnJourneyDate: '2023-12-02',
-                  returnFromStation: 'Station B',
-                  returnToStation: 'Station A',
-                  returnJourneyClass: 'AC_S',
-                ));
-          },
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+        backgroundColor: const Color(0xFF1A3A6B),
+        foregroundColor: Colors.white,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Select Seats', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            Text('${widget.fromStation} → ${widget.toStation}',
+                style: const TextStyle(fontSize: 11, color: Colors.white70)),
+          ],
         ),
-        title: const Text("Seat Selection"),
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+          // Round trip info banner
+          if (widget.isRoundTrip)
+            Container(
+              color: const Color(0xFFFFF3E0),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
-                children: coaches.map((coach) {
-                  return buildCoachIcon(coach['name']);
-                }).toList(),
+                children: [
+                  const Icon(Icons.swap_horiz, color: Color(0xFFE65100), size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Round Trip: ${widget.outboundTrain?.trainName ?? ''} + ${widget.returnTrain?.trainName ?? ''}',
+                      style: const TextStyle(color: Color(0xFFE65100), fontSize: 12),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Text(
-                  'Selected Coach: $selectedCoach',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'Seats Available: ${coaches.firstWhere((coach) => coach['name'] == selectedCoach)['seats'] - seatController.getSeatStatus(selectedCoach).where((status) => status == 'booked' || status == 'selected').length}',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                legendItem(Colors.green, 'Available'),
-                legendItem(Colors.orange, 'Selected'),
-                legendItem(Colors.red, 'Booked'),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Obx(() {
-                return ListView.builder(
-                  itemCount:
-                      (seatController.getSeatStatus(selectedCoach).length / 4)
-                          .ceil(),
-                  itemBuilder: (context, rowIndex) {
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            buildSeat(rowIndex * 4),
-                            buildSeat(rowIndex * 4 + 1),
-                          ],
-                        ),
-                        const SizedBox(width: 40),
-                        Row(
-                          children: [
-                            buildSeat(rowIndex * 4 + 2),
-                            buildSeat(rowIndex * 4 + 3),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
-                );
-              }),
-            ),
-          ),
+
+          // Coach selector
           Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
+            color: Colors.white,
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "Your Seat: ${selectedSeats.isNotEmpty ? "Seat no - ${selectedSeats.map((index) => index + 1).join(', ')}" : "Not Selected"}",
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  "Total Price: ${(selectedSeats.length * getSeatPrice(coaches.firstWhere((coach) => coach['name'] == selectedCoach)['type'])).toStringAsFixed(2)}/-",
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: selectedSeats.isNotEmpty
-                        ? () async {
-                            await ApiService().insertUserData(
-                                 Random().nextInt(1000), selectedSeats, selectedCoach, 'booked');
-                            Get.offAll(() => PaymentsPage(
-                                  orders: [
-                                    Order(
-                                      'ord-TN01',
-                                      trainId: 'TN001',
-                                      paymentId: 'pay-TN01',
-                                      paymentDate: '12/11/2025',
-                                      status: 'Pending',
-                                      total: (selectedSeats.length *
-                                              getSeatPrice(coaches.firstWhere(
-                                                  (coach) =>
-                                                      coach['name'] ==
-                                                      selectedCoach)['type']))
-                                          .toDouble(),
-                                      seatNumbers: selectedSeats
-                                          .map((index) => index + 1)
-                                          .toList(),
-                                    ),
-                                  ],
-                                  totalPrice: (selectedSeats.length *
-                                          getSeatPrice(coaches.firstWhere(
-                                              (coach) =>
-                                                  coach['name'] ==
-                                                  selectedCoach)['type']) *
-                                          1.15)
-                                      .toStringAsFixed(2),
-                                  selectedSeats: selectedSeats
-                                      .map((index) => index + 1)
-                                      .toList(),
-                                  trainId: 'TN001',
-                                  trainName: widget.ticketType,
-                                  fromStation: widget.fromStation ?? 'Unknown',
-                                  toStation: widget.toStation ?? 'Unknown',
-                                  departureTime:
-                                      widget.departureTime ?? 'Unknown',
-                                  tickets: const [],
-                                  travelClass: widget.travelClass ?? 'Unknown', date: widget.journeyDate ?? 'Unknown',
-                                    
-                                ));
-                          }
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.yellow[700],
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                    ),
-                    child: const Text("Continue"),
+                const Text('Select Coach', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: coaches.map((c) => _buildCoachChip(c['name'])).toList(),
                   ),
                 ),
               ],
             ),
           ),
+
+          // Legend
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _legendItem(Colors.green, 'Available'),
+                _legendItem(const Color(0xFFE8A838), 'Selected'),
+                _legendItem(Colors.red, 'Booked'),
+              ],
+            ),
+          ),
+
+          // Seat grid
+          Expanded(
+            child: LayoutBuilder(
+              builder: (ctx, constraints) {
+                final r = R.of(ctx);
+                // Responsive columns: more columns on wider screens
+                final cols = constraints.maxWidth < 360
+                    ? 5
+                    : constraints.maxWidth < 500
+                        ? 6
+                        : 8;
+                final seatSize = (constraints.maxWidth - (cols + 1) * 6) / cols;
+                return Padding(
+                  padding: EdgeInsets.all(r.sp12),
+                  child: Obx(() {
+                    final statuses = seatController.getSeatStatus(selectedCoach);
+                    return GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: cols,
+                        crossAxisSpacing: 5,
+                        mainAxisSpacing: 5,
+                        childAspectRatio: 1,
+                      ),
+                      itemCount: statuses.length,
+                      itemBuilder: (ctx2, i) =>
+                          _buildSeat(i, statuses[i], seatSize),
+                    );
+                  }),
+                );
+              },
+            ),
+          ),
+
+          // Bottom summary
+          _buildBottomBar(),
         ],
       ),
     );
   }
 
-  Widget buildSeat(int index) {
-    if (index >= seatController.getSeatStatus(selectedCoach).length) {
-      return const SizedBox.shrink();
-    }
+  Widget _buildCoachChip(String name) {
+    final selected = name == selectedCoach;
     return GestureDetector(
       onTap: () {
-        if (seatController.getSeatStatus(selectedCoach)[index] == 'available' ||
-            seatController.getSeatStatus(selectedCoach)[index] == 'selected') {
+        setState(() {
+          selectedCoach = name;
+          selectedSeats.clear();
+          seatController.initializeSeats(
+              name, coaches.firstWhere((c) => c['name'] == name)['seats']);
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF1A3A6B) : const Color(0xFFF0F4F8),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? const Color(0xFF1A3A6B) : Colors.grey[300]!,
+          ),
+        ),
+        child: Text(name,
+            style: TextStyle(
+                color: selected ? Colors.white : Colors.grey[700],
+                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 12)),
+      ),
+    );
+  }
+
+  Widget _buildSeat(int index, String status, [double? size]) {
+    final r = R.of(context);
+    return GestureDetector(
+      onTap: () {
+        if (status == 'available' || status == 'selected') {
           handleSeatSelection(index);
         }
       },
       child: Container(
-        width: 40,
-        height: 40,
-        margin: const EdgeInsets.all(4),
+        width: size,
+        height: size,
         decoration: BoxDecoration(
-          color:
-              getSeatColor(seatController.getSeatStatus(selectedCoach)[index]),
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: Colors.black),
+          color: getSeatColor(status),
+          borderRadius: BorderRadius.circular(5),
+          border: Border.all(color: Colors.black12),
         ),
         child: Center(
-          child: Text(
-            '${index + 1}',
-            style: TextStyle(
-              fontSize: 12,
-              color:
-                  seatController.getSeatStatus(selectedCoach)[index] == 'booked'
-                      ? Colors.white
-                      : Colors.black,
-            ),
-          ),
+          child: Text('${index + 1}',
+              style: TextStyle(
+                  fontSize: r.fs10,
+                  color: status == 'booked' ? Colors.white : Colors.black87,
+                  fontWeight: FontWeight.w600)),
         ),
       ),
     );
   }
 
-  Widget legendItem(Color color, String text) {
+  Widget _legendItem(Color color, String label) {
+    final r = R.of(context);
     return Row(
       children: [
         Container(
-          width: 20,
-          height: 20,
-          margin: const EdgeInsets.only(right: 8),
+          width: r.sp16,
+          height: r.sp16,
           decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Colors.black),
-          ),
+              color: color, borderRadius: BorderRadius.circular(3)),
         ),
-        Text(text),
+        SizedBox(width: r.sp4),
+        Text(label, style: TextStyle(fontSize: r.fs12)),
       ],
     );
   }
 
-  Widget buildCoachIcon(String coach) {
-    bool isSelected = coach == selectedCoach;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedCoach = coach;
-          selectedSeats.clear();
-          seatController.initializeSeats(
-              coach, coaches.firstWhere((c) => c['name'] == coach)['seats']);
-        });
-      },
-      child: Container(
-        width: 40,
-        height: 40,
-        margin: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.blue : Colors.grey[300],
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: Colors.black),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          coach,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.white : Colors.black,
+  Widget _buildBottomBar() {
+    final r = R.of(context);
+    return Container(
+      padding: EdgeInsets.all(r.sp16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -4))
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      selectedSeats.isEmpty
+                          ? 'No seats selected'
+                          : 'Seats: ${selectedSeats.map((i) => i + 1).join(', ')}',
+                      style: TextStyle(fontSize: r.fs13),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      'Select $allowedSeats seat${allowedSeats > 1 ? 's' : ''}',
+                      style: TextStyle(color: Colors.grey, fontSize: r.fs11),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '৳${totalPrice.toStringAsFixed(0)}',
+                    style: TextStyle(
+                        fontSize: r.fs20,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1A3A6B)),
+                  ),
+                  Text('+15% VAT',
+                      style: TextStyle(color: Colors.grey, fontSize: r.fs10)),
+                ],
+              ),
+            ],
           ),
-        ),
+          SizedBox(height: r.sp12),
+          SizedBox(
+            width: double.infinity,
+            height: r.btnH,
+            child: ElevatedButton(
+              onPressed:
+                  selectedSeats.length == allowedSeats ? _confirmBooking : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A3A6B),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(
+                selectedSeats.length == allowedSeats
+                    ? 'Continue to Payment'
+                    : 'Select ${allowedSeats - selectedSeats.length} more seat${(allowedSeats - selectedSeats.length) > 1 ? 's' : ''}',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: r.fs14),
+              ),
+            ),
+          ),
+        ],
       ),
     );
-  }
-}
-class ApiService {
-  final String baseUrl = 'http://10.15.10.140:3000';
-
-  Future<void> insertUserData(int userId, List<int> seatNumbers, String coachName, String seatStatus) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/insert-user-data'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'user_id': userId,
-          'seat_numbers': seatNumbers,
-          'coachname': coachName,
-          'seat_status': seatStatus,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        if (kDebugMode) {
-          print('User data inserted successfully');
-        }
-      } else {
-        if (kDebugMode) {
-          print('Response status: ${response.statusCode}');
-          print('Response body: ${response.body}');
-        }
-        throw Exception('Failed to insert user data: ${response.statusCode} - ${response.body}');
-      }
-    } catch (error) {
-      if (kDebugMode) {
-        print('Error: $error');
-      }
-      throw Exception('Network error: $error');
-    }
   }
 }

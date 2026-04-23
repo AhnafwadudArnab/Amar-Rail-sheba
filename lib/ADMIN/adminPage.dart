@@ -156,14 +156,14 @@ class _AdminPageState extends State<AdminPage> {
         color: Colors.blue,
         child: SingleChildScrollView(
           child: Center(
-            child: SizedBox(
-              width: 400,
-              height: 768,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
               child: Container(
+                margin: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 10.0,
                       spreadRadius: 5.0,
                       offset: const Offset(0, 5),
@@ -171,7 +171,7 @@ class _AdminPageState extends State<AdminPage> {
                   ],
                 ),
                 child: Card(
-                  shadowColor: Colors.white.withOpacity(0.1),
+                  shadowColor: Colors.white.withValues(alpha: 0.1),
                   margin: const EdgeInsets.all(16.0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),

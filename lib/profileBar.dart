@@ -1,222 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// import 'package:trackers/Login&Signup/Login.dart';
 import 'package:trackers/Login&Signup/forget_Password.dart';
-// import 'package:http/http.dart' as http;
-// import 'dart:convert';
+import 'package:trackers/services/local_data_service.dart';
 import 'All Feautures/Maintainence/about.dart';
+import 'Login&Signup/Login.dart';
 import 'Login&Signup/sign_up.dart';
-/*
-class ProfileBar extends StatefulWidget {
-  final bool loggedIn;
-  final String userId;
-  final String name;
-  final String email;
-  
-  const ProfileBar({
-    super.key,
-    required this.loggedIn,
-    required this.userId,
-    required this.name,
-    required this.email,
-  });
-
-  @override
-  ProfileBarState createState() => ProfileBarState();
-}
-
-class ProfileBarState extends State<ProfileBar> {
-  bool isEditing = false;
-  Map<String, dynamic>? userProfile;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.loggedIn) {
-     // _fetchUserProfile();
-    }
-  }
-
-  // Future<void> _fetchUserProfile() async {
-  //   try {
-  //     final profile = await ApiService().getUserProfile(widget.userId);
-  //     setState(() {
-  //       userProfile = profile;
-  //     });
-  //   } catch (e) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('Failed to load profile: $e')),
-  //     );
-  //   }
-  // }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text('My Profile', style: TextStyle(color: Colors.orange)),
-        actions: [_buildPopupMenu()],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: widget.loggedIn
-            ? (userProfile != null
-                ? _buildProfileContent()
-                : const Center(child: CircularProgressIndicator()))
-            : _buildLoginRegisterButtons(),
-      ),
-    );
-  }
-
-  Widget _buildPopupMenu() {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert, color: Colors.orange),
-      onSelected: (value) {
-        if (value == 'Edit Profile') {
-          setState(() => isEditing = !isEditing);
-        } else if (value == 'Save') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile saved successfully')),
-          );
-          setState(() => isEditing = false);
-        } else if (value == 'Contact us') {
-          Get.to(() => const DeveloperInfoDialog());
-        }
-      },
-      itemBuilder: (context) => const [
-        PopupMenuItem(value: 'Edit Profile', child: Text('Edit Profile')),
-        PopupMenuItem(value: 'Save', child: Text('Save')),
-        PopupMenuItem(value: 'Contact us', child: Text('Contact us')),
-      ],
-    );
-  }
-
-  Widget _buildProfileContent() {
-    return SingleChildScrollView(
-      child: Center(
-        child: Column(
-          children: [
-            const SizedBox(height: 80),
-            const CircleAvatar(
-              radius: 55,
-              backgroundColor: Colors.orange,
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage: AssetImage('assets/trainBackgrong/profile_user.jpg'),
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildEditableTextField('Name', userProfile!['name']),
-            _buildEditableTextField('Email', userProfile!['email']),
-            _buildEditableTextField('Mobile Number', userProfile!['mobile_number']),
-            _buildEditableTextField('ID Number', userProfile!['id_number']),
-            _buildEditableTextField('Date of Birth', userProfile!['date_of_birth']),
-            _buildEditableTextField('Post Code', userProfile!['post_code']),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () => Get.to(() => const ForgetPassword()),
-              icon: const Icon(Icons.lock_outline_rounded, color: Colors.white),
-              label: const Text('Update Password', style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.brown),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () => Get.to(() => const SignUp()),
-              icon: const Icon(Icons.logout, color: Colors.white),
-              label: const Text('Log out', style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEditableTextField(String label, String initialValue) {
-    return TextFormField(
-      initialValue: initialValue,
-      decoration: InputDecoration(labelText: label),
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      enabled: isEditing,
-    );
-  }
-
-  Widget _buildLoginRegisterButtons() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ElevatedButton(
-            onPressed: () => Get.to(() => const Login()),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Login'),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => Get.to(() => const SignUp()),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: const Text('Register'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// class ApiService {
-//   final String baseUrl = 'http://192.168.68.105:3000';
-
-//   Future<Map<String, dynamic>> getUserProfile(String userId) async {
-//     final response = await http.get(Uri.parse('$baseUrl/profiles/$userId'));
-//     if (response.statusCode == 200) {
-//       return jsonDecode(response.body);
-//     } else {
-//       throw Exception('Failed to load profile');
-//     }
-//   }
-
-//   Future<void> createUserProfile(Map<String, dynamic> profileData) async {
-//     final response = await http.post(
-//       Uri.parse('$baseUrl/profiles'),
-//       headers: {'Content-Type': 'application/json'},
-//       body: jsonEncode(profileData),
-//     );
-//     if (response.statusCode != 201) {
-//       throw Exception('Failed to create profile');
-//     }
-//   }
-
-//   Future<void> updateUserProfile(String userId, Map<String, dynamic> profileData) async {
-//     final response = await http.put(
-//       Uri.parse('$baseUrl/profiles/$userId'),
-//       headers: {'Content-Type': 'application/json'},
-//       body: jsonEncode(profileData),
-//     );
-//     if (response.statusCode != 200) {
-//       throw Exception('Failed to update profile');
-//     }
-//   }
-
-//   Future<void> deleteUserProfile(String userId) async {
-//     final response = await http.delete(Uri.parse('$baseUrl/profiles/$userId'));
-//     if (response.statusCode != 200) {
-//       throw Exception('Failed to delete profile');
-//     }
-//   }
-
-//   Future<Map<String, dynamic>> getProfileBar(String userId) async {
-//     final response = await http.get(Uri.parse('$baseUrl/profilebar/$userId'));
-//     if (response.statusCode == 200) {
-//       return jsonDecode(response.body);
-//     } else {
-//       throw Exception('Failed to load profile bar');
-//     }
-//   }
-// }
-*/
 
 class ProfileBar extends StatefulWidget {
   final bool loggedIn;
@@ -228,128 +16,223 @@ class ProfileBar extends StatefulWidget {
 
 class _ProfileBarState extends State<ProfileBar> {
   bool isEditing = false;
+  Map<String, dynamic>? _user;
+  bool _loading = true;
+
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final session = await LocalDataService().getUserSession();
+    setState(() {
+      _user = session;
+      _loading = false;
+      if (session != null) {
+        _nameCtrl.text = session['name'] ?? '';
+        _emailCtrl.text = session['email'] ?? '';
+        _phoneCtrl.text = session['phone'] ?? '';
+      }
+    });
+  }
+
+  Future<void> _logout() async {
+    await LocalDataService().clearSession();
+    if (mounted) {
+      Get.offAll(() => const _LoggedOutProfile());
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final loggedIn = widget.loggedIn && _user != null;
+
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'My Profile',
-          style: TextStyle(color: Colors.orange),
-        ),
-        actions: [
-          DropdownButton<String>(
-            underline: Container(),
-            icon: const Icon(Icons.more_vert, color: Colors.orange),
-            items: const [
-              DropdownMenuItem(
-                value: 'Edit Profile',
-                child: Text('Edit Profile'),
-              ),
-              DropdownMenuItem(
-                value: 'Save',
-                child: Text('Save'),
-              ),
-              DropdownMenuItem(
-                value: 'Contact us',
-                child: Text('Contact us'),
-              ),
-            ],
-            onChanged: (String? newValue) {
-              if (newValue == 'Edit Profile') {
-                setState(() {
-                  isEditing = !isEditing;
-                });
-              } else if (newValue == 'Save') {
-                // Save action (if needed)
-                // Implement save functionality here
-                // For example, you can save the edited profile information to a database or backend
-                // You can also show a success message to the user
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profile saved successfully')),
-                );
-                setState(() {
-                  isEditing = false;
-                });
-              } else if (newValue == 'Contact us') {
-                Get.to(() => const DeveloperInfoDialog());
-              }
-            },
-          ),
-        ],
+        title: const Text('My Profile', style: TextStyle(color: Colors.orange)),
+        actions: loggedIn
+            ? [
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: Colors.orange),
+                  onSelected: (value) {
+                    if (value == 'Edit Profile') {
+                      setState(() => isEditing = !isEditing);
+                    } else if (value == 'Save') {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Profile saved')),
+                      );
+                      setState(() => isEditing = false);
+                    } else if (value == 'Contact us') {
+                      Get.to(() => const DeveloperInfoPage());
+                    }
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(value: 'Edit Profile', child: Text('Edit Profile')),
+                    PopupMenuItem(value: 'Save', child: Text('Save')),
+                    PopupMenuItem(value: 'Contact us', child: Text('Contact us')),
+                  ],
+                ),
+              ]
+            : null,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: widget.loggedIn
-            ? _buildProfileContent()
-            : _buildLoginRegisterButtons(),
-      ),
+      body: loggedIn ? _buildProfileContent() : _buildLoginRegisterButtons(),
     );
   }
 
   Widget _buildProfileContent() {
     return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+              Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 55,
+                    backgroundColor: Colors.orange.shade100,
+                    child: const Icon(Icons.person, size: 60, color: Colors.orange),
+                  ),
+                  if (isEditing)
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: Colors.orange,
+                      child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _user?['name'] ?? 'User',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                _user?['email'] ?? '',
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              ),
+              const SizedBox(height: 24),
+              _buildField(Icons.person_outline, 'Full Name', _nameCtrl),
+              const SizedBox(height: 12),
+              _buildField(Icons.email_outlined, 'Email', _emailCtrl,
+                  keyboardType: TextInputType.emailAddress),
+              const SizedBox(height: 12),
+              _buildField(Icons.phone_outlined, 'Phone Number', _phoneCtrl,
+                  keyboardType: TextInputType.phone),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => Get.to(() => const ForgetPassword()),
+                  icon: const Icon(Icons.lock_outline, color: Colors.white),
+                  label: const Text('Update Password',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1A3A6B),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _logout,
+                  icon: const Icon(Icons.logout, color: Colors.redAccent),
+                  label: const Text('Log Out',
+                      style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.redAccent),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildField(IconData icon, String label, TextEditingController ctrl,
+      {TextInputType keyboardType = TextInputType.text}) {
+    return TextFormField(
+      controller: ctrl,
+      enabled: isEditing,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: const Color(0xFF1A3A6B)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        filled: !isEditing,
+        fillColor: Colors.grey[100],
+      ),
+    );
+  }
+
+  Widget _buildLoginRegisterButtons() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 80),
-            const CircleAvatar(
-              radius: 55,
-              backgroundColor: Colors.orange,
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage:
-                    AssetImage('assets/trainBackgrong/profile user.jpg'),
-              ),
-            ),
+            const Icon(Icons.account_circle_outlined, size: 80, color: Colors.grey),
             const SizedBox(height: 16),
-            _buildEditableTextField('Name', '***** ******'),
-            _buildEditableTextField('Email', '...@bscse.uiu.ac.bd'),
-            _buildEditableTextField('Mobile Number', '01234556789'),
-            _buildEditableTextField('ID Number', '123456789'),
-            _buildEditableTextField('Date of Birth', '1997-05-10'),
-            _buildEditableTextField('Post Code', '1212'),/*
-            _buildEditableTextField('Address', 'North Badda, Dhaka'),*/
-            const SizedBox(height: 20),
-            TextButton.icon(
-              onPressed: () {
-                Get.to(() => const DeveloperInfoDialog());
-              },
-              icon: const Icon(Icons.phone),
-              label: const Text('Contact Us'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                Get.to(() => const ForgetPassword());
-              },
-              icon: const Icon(Icons.lock_outline_rounded, color: Colors.white),
-              label: const Text(
-                'Update Password',
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 165, 121, 70),
+            const Text('Sign in to view your profile',
+                style: TextStyle(fontSize: 16, color: Colors.grey)),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Get.to(() => const Login()),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1A3A6B),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Login',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
               ),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                Get.to(() => const SignUp());
-              },
-              icon: const Icon(Icons.logout, color: Colors.white),
-              label: const Text(
-                'Log out',
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 207, 108, 108),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Get.to(() => const SignUp()),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF1A3A6B)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Register',
+                    style: TextStyle(color: Color(0xFF1A3A6B), fontWeight: FontWeight.bold, fontSize: 16)),
               ),
             ),
           ],
@@ -357,42 +240,11 @@ class _ProfileBarState extends State<ProfileBar> {
       ),
     );
   }
+}
 
-  Widget _buildEditableTextField(String label, String initialValue) {
-    return TextFormField(
-      initialValue: initialValue,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.green[800]),
-      ),
-      style: TextStyle(
-          fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green[800]),
-      enabled: isEditing,
-    );
-  }
-
-  Widget _buildLoginRegisterButtons() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ElevatedButton(
-            onPressed: () {
-              // Navigate to login page
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Login'),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              // Navigate to register page
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: const Text('Register'),
-          ),
-        ],
-      ),
-    );
-  }
+// Shown after logout
+class _LoggedOutProfile extends StatelessWidget {
+  const _LoggedOutProfile();
+  @override
+  Widget build(BuildContext context) => const ProfileBar(loggedIn: false);
 }

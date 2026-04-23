@@ -1,577 +1,548 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:flutter_countdown_timer/flutter_countdown_timer.dart';
-import 'package:trackers/All%20Feautures/second%20pagee/trainSelection.dart';
-import 'modify_Search_box.dart';
+import 'package:get/get.dart';
+import 'package:trackers/All%20Feautures/Seat%20management/Train_Seat.dart';
+import 'package:trackers/services/local_data_service.dart';
+import 'package:trackers/utils/responsive.dart';
 
 // ignore: must_be_immutable
 class TrainSearchPage extends StatefulWidget {
-  late String fromStation;
-  late String toStation;
-  late String travelClass;
-  late String journeyDate;
-  late String returnJourneyDate;
-  late String returnFromStation;
-  late String returnToStation;
-  late String returnJourneyClass;
+  final String fromStation;
+  final String toStation;
+  final String travelClass;
+  final String journeyDate;
+  final String returnJourneyDate;
+  final String returnFromStation;
+  final String returnToStation;
+  final String returnJourneyClass;
+  final int passengers;
+  final bool isRoundTrip;
 
-  TrainSearchPage({
+  const TrainSearchPage({
     super.key,
     required this.fromStation,
     required this.toStation,
     required this.travelClass,
     required this.journeyDate,
-    required this.returnJourneyDate,
-    required this.returnFromStation,
-    required this.returnToStation,
-    required this.returnJourneyClass,
+    this.returnJourneyDate = '',
+    this.returnFromStation = '',
+    this.returnToStation = '',
+    this.returnJourneyClass = '',
+    this.passengers = 1,
+    this.isRoundTrip = false,
   });
 
   @override
-  // ignore: library_private_types_in_public_api
-  _TrainSearchPageState createState() {
-    return _TrainSearchPageState();
-  }
-
-  Widget filterChipWidget(
-      {required String label, required List<String> options}) {
-    return FilterChip(
-      label: Text(label),
-      onSelected: (bool value) {},
-    );
-  }
-
-  // ignore: non_constant_identifier_names
-  Widget SwitchWidget({required String label}) {
-    return Row(
-      children: [
-        Text(label),
-        Switch(
-          value: false,
-          onChanged: (bool value) {},
-        ),
-      ],
-    );
-  }
+  _TrainSearchPageState createState() => _TrainSearchPageState();
 }
 
-class _TrainSearchPageState extends State<TrainSearchPage> {
-  final TextEditingController fromStationController = TextEditingController();
-  final TextEditingController toStationController = TextEditingController();
-  final FocusNode fromStationFocusNode = FocusNode();
-  final FocusNode toStationFocusNode = FocusNode();
-  String? selectedClass;
-  String? selectedReturnClass;
-  String selectedJourneyType = 'One Way';
-  // ignore: unused_field
-  String? _selectedType;
-  bool isEditable = false;
+class _TrainSearchPageState extends State<TrainSearchPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  late List<TrainModel> _outboundTrains;
+  late List<TrainModel> _returnTrains;
 
-  // ignore: unused_field
-  final TextEditingController _journeyDateController = TextEditingController();
-  final TextEditingController _returnDateController = TextEditingController();
-  final TextEditingController returnFromStationController =
-      TextEditingController();
-  final TextEditingController returnToStationController =
-      TextEditingController();
-  final FocusNode returnFromStationFocusNode = FocusNode();
-  final FocusNode returnToStationFocusNode = FocusNode();
-  late final int endTime;
-
-  // ignore: unused_field
-  final List<Map<String, String>> _trains = [];
+  // For round trip: track which outbound train was selected
+  TrainModel? _selectedOutbound;
+  bool _outboundConfirmed = false;
 
   @override
   void initState() {
     super.initState();
-    endTime =
-        DateTime.now().millisecondsSinceEpoch + 1000 * 60 * 6; // 6min from now
-    _selectedType = 'Direct'; // Set default value for _selectedType
-    //_updateTrains(); // Update trains based on the default type
-  }
-
-  List<String> routeDhakaToCtgToSylhet = [
-    'Dhaka',
-    'Airport',
-    'Narshingdi',
-    'Bhairab-Bazar',
-    'Brahman_Baria',
-    'Akhaura',
-    'Comilla',
-    'Laksham',
-    'Feni',
-    'Chattogram',
-    'Feni',
-    'Laksham',
-    'Akhaura',
-    'Brahman_Baria',
-    'Bhairab-Bazar',
-    'Narshingdi',
-    'Sylhet'
-  ];
-
-  void swapStation() {
-    String temp = fromStationController.text;
-    fromStationController.text = toStationController.text;
-    toStationController.text = temp;
-  }
-
-  void swapReturnStation() {
-    String temp = returnFromStationController.text;
-    returnFromStationController.text = returnToStationController.text;
-    returnToStationController.text = temp;
-  }
-
-  void callPage() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
-      ),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: const ModifySearchBox(),
-        );
-      },
+    _tabController = TabController(
+      length: widget.isRoundTrip ? 2 : 1,
+      vsync: this,
     );
+    _outboundTrains = LocalDataService().getTrains(widget.fromStation, widget.toStation);
+    _returnTrains = widget.isRoundTrip
+        ? LocalDataService().getTrains(widget.toStation, widget.fromStation)
+        : [];
   }
 
-  void newUpdatedValues() {
-    setState(() {
-      if (fromStationController.text.isNotEmpty) {
-        widget.fromStation = fromStationController.text;
-      }
-      if (toStationController.text.isNotEmpty) {
-        widget.toStation = toStationController.text;
-      }
-      if (_journeyDateController.text.isNotEmpty) {
-        widget.journeyDate = _journeyDateController.text;
-      }
-      if (selectedClass != null) {
-        widget.travelClass = selectedClass!;
-      }
-      if (selectedJourneyType == 'One Way') {
-        widget.returnFromStation = '';
-        widget.returnToStation = '';
-        widget.returnJourneyDate = '';
-        widget.returnJourneyClass = '';
-      } else if (selectedJourneyType == 'Round Way') {
-        if (returnFromStationController.text.isNotEmpty) {
-          widget.returnFromStation = returnFromStationController.text;
-        }
-        if (returnToStationController.text.isNotEmpty) {
-          widget.returnToStation = returnToStationController.text;
-        }
-        if (_returnDateController.text.isNotEmpty) {
-          widget.returnJourneyDate = _returnDateController.text;
-        }
-        if (selectedReturnClass != null) {
-          widget.returnJourneyClass = selectedReturnClass!;
-        }
-      }
-    });
-  }
-
-  bool isFormValid() {
-    return fromStationController.text.isNotEmpty &&
-        toStationController.text.isNotEmpty &&
-        _journeyDateController.text.isNotEmpty &&
-        selectedClass != null &&
-        (selectedJourneyType == 'One Way' ||
-            (returnFromStationController.text.isNotEmpty &&
-                returnToStationController.text.isNotEmpty &&
-                _returnDateController.text.isNotEmpty &&
-                selectedReturnClass != null));
-  }
-
-  void updateSearchInfoCard() {
-    setState(() {
-      widget.fromStation = fromStationController.text;
-      widget.toStation = toStationController.text;
-      widget.journeyDate = _journeyDateController.text;
-      widget.travelClass = selectedClass!;
-      if (selectedJourneyType == 'Round Way') {
-        widget.returnFromStation = returnFromStationController.text;
-        widget.returnToStation = returnToStationController.text;
-        widget.returnJourneyDate = _returnDateController.text;
-        widget.returnJourneyClass = selectedReturnClass!;
-      }
-    });
-  }
-
-  Future showModifySearchBox(BuildContext context) {
-    return showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25.0)),
-      ),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: const ModifySearchBox(),
-        );
-      },
-    );
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF0F4F8),
       appBar: AppBar(
+        backgroundColor: const Color(0xFF1A3A6B),
+        foregroundColor: Colors.white,
         elevation: 0,
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        title: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '    Train Search',
-              style: TextStyle(color: Colors.black),
+              '${widget.fromStation} → ${widget.toStation}',
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
-            SizedBox(width: 4),
-            Icon(Icons.train, color: Colors.black),
+            Text(
+              widget.isRoundTrip ? 'Round Trip · ${widget.passengers} pax' : 'One Way · ${widget.passengers} pax',
+              style: const TextStyle(fontSize: 11, color: Colors.white70),
+            ),
           ],
         ),
-        centerTitle: true,
-        actions: [
-          const SizedBox(height: 4, width: 30),
-          SizedBox(
-            width: 100,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    newUpdatedValues();
-                    callPage();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
+        bottom: widget.isRoundTrip
+            ? TabBar(
+                controller: _tabController,
+                indicatorColor: const Color(0xFFE8A838),
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white60,
+                tabs: [
+                  Tab(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('Outbound', style: TextStyle(fontSize: 12)),
+                        Text(widget.journeyDate,
+                            style: const TextStyle(fontSize: 10, color: Colors.white70)),
+                      ],
                     ),
                   ),
-                  child: const Text(
-                    'Edit',
-                    style: TextStyle(color: Colors.white),
+                  Tab(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('Return', style: TextStyle(fontSize: 12)),
+                        Text(widget.returnJourneyDate,
+                            style: const TextStyle(fontSize: 10, color: Colors.white70)),
+                      ],
+                    ),
                   ),
-                ),
+                ],
+              )
+            : null,
+      ),
+      body: widget.isRoundTrip
+          ? TabBarView(
+              controller: _tabController,
+              physics: _outboundConfirmed
+                  ? const AlwaysScrollableScrollPhysics()
+                  : const NeverScrollableScrollPhysics(),
+              children: [
+                _buildTrainList(_outboundTrains, isReturn: false),
+                _buildTrainList(_returnTrains, isReturn: true),
+              ],
+            )
+          : _buildTrainList(_outboundTrains, isReturn: false),
+    );
+  }
+
+  Widget _buildTrainList(List<TrainModel> trains, {required bool isReturn}) {
+    return Column(
+      children: [
+        // Journey summary bar
+        _buildJourneySummary(isReturn),
+        // Round trip step indicator
+        if (widget.isRoundTrip) _buildStepIndicator(isReturn),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(12),
+            itemCount: trains.length,
+            itemBuilder: (ctx, i) => TrainCard(
+              train: trains[i],
+              passengers: widget.passengers,
+              isReturn: isReturn,
+              isLocked: isReturn && !_outboundConfirmed,
+              onSelect: (train) => _handleSelect(train, isReturn),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildJourneySummary(bool isReturn) {
+    final from = isReturn ? widget.toStation : widget.fromStation;
+    final to = isReturn ? widget.fromStation : widget.toStation;
+    final date = isReturn ? widget.returnJourneyDate : widget.journeyDate;
+    final cls = isReturn ? widget.returnJourneyClass : widget.travelClass;
+
+    return Container(
+      color: const Color(0xFF1A3A6B),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$from → $to',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                Text('$date · $cls · ${widget.passengers} pax',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
               ],
             ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Modify', style: TextStyle(color: Color(0xFFE8A838))),
           ),
         ],
       ),
-      body: Stack(children: [
-        // Background Image
+    );
+  }
+
+  Widget _buildStepIndicator(bool isReturn) {
+    return Container(
+      color: const Color(0xFFEEF2F7),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          _stepDot(1, 'Select Outbound', !isReturn),
+          Expanded(child: Container(height: 2, color: _outboundConfirmed ? const Color(0xFF1A3A6B) : Colors.grey[300])),
+          _stepDot(2, 'Select Return', isReturn && _outboundConfirmed),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepDot(int step, String label, bool active) {
+    return Column(
+      children: [
         Container(
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-                image: AssetImage('assets/trainBackgrong/05.jpeg'),
-                fit: BoxFit.cover),
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: active ? const Color(0xFF1A3A6B) : Colors.grey[300],
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text('$step',
+                style: TextStyle(
+                    color: active ? Colors.white : Colors.grey,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold)),
           ),
         ),
-        // Search Form Container with white background and shadow effect//
-        //box shadow effect//
-        SingleChildScrollView(
-          child: Container(
-            //full container height//
-            height: MediaQuery.of(context).size.height * 0.9,
-            width: MediaQuery.of(context).size.width,
-            margin: const EdgeInsets.all(10.0),
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.8),
-              borderRadius: BorderRadius.circular(16.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10.0,
-                  spreadRadius: 5.0,
-                ),
-              ],
-            ),
+        const SizedBox(height: 2),
+        Text(label, style: TextStyle(fontSize: 9, color: active ? const Color(0xFF1A3A6B) : Colors.grey)),
+      ],
+    );
+  }
+
+  void _handleSelect(TrainModel train, bool isReturn) {
+    if (!isReturn) {
+      // Outbound selected — for round trip, move to return tab
+      setState(() {
+        _selectedOutbound = train;
+        _outboundConfirmed = true;
+      });
+      if (widget.isRoundTrip) {
+        _tabController.animateTo(1);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Outbound train selected! Now choose your return train.'),
+            backgroundColor: Color(0xFF1A3A6B),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        _goToSeatSelection(train, isReturn: false);
+      }
+    } else {
+      // Return selected — go to seat selection with both trains
+      _goToSeatSelection(train, isReturn: true);
+    }
+  }
+
+  void _goToSeatSelection(TrainModel train, {required bool isReturn}) {
+    Get.to(() => SeatSelectionPage(
+          price: train.classes.first.price.toInt(),
+          ticketType: train.classes.first.type,
+          fromStation: isReturn ? widget.toStation : widget.fromStation,
+          toStation: isReturn ? widget.fromStation : widget.toStation,
+          travelClass: isReturn ? widget.returnJourneyClass : widget.travelClass,
+          journeyDate: isReturn ? widget.returnJourneyDate : widget.journeyDate,
+          departureTime: train.departureTime,
+          isRoundTrip: widget.isRoundTrip,
+          outboundTrain: _selectedOutbound,
+          returnTrain: isReturn ? train : null,
+          passengers: widget.passengers,
+        ));
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TRAIN CARD
+// ─────────────────────────────────────────────────────────────────────────────
+class TrainCard extends StatefulWidget {
+  final TrainModel train;
+  final int passengers;
+  final bool isReturn;
+  final bool isLocked;
+  final void Function(TrainModel) onSelect;
+
+  const TrainCard({
+    super.key,
+    required this.train,
+    required this.passengers,
+    required this.isReturn,
+    required this.isLocked,
+    required this.onSelect,
+  });
+
+  @override
+  State<TrainCard> createState() => _TrainCardState();
+}
+
+class _TrainCardState extends State<TrainCard> {
+  bool _expanded = false;
+  String? _selectedClass;
+
+  @override
+  Widget build(BuildContext context) {
+    final r = R.of(context);
+    final t = widget.train;
+    return Container(
+      margin: EdgeInsets.only(bottom: r.sp12),
+      decoration: BoxDecoration(
+        color: widget.isLocked ? Colors.grey[100] : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.07),
+              blurRadius: 10,
+              offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Main row
+          Padding(
+            padding: EdgeInsets.all(r.sp14),
             child: Column(
               children: [
-                //make a box information about what is search for by the user//
-                SearchInfoCard(
-                  from: widget.fromStation,
-                  to: widget.toStation,
-                  date: widget.journeyDate,
-                  journeyClass: widget.travelClass,
-                  returnDate: selectedJourneyType == 'Round Way'
-                      ? _returnDateController.text
-                      : '',
-                  returnJourneyClass: selectedJourneyType == 'Round Way'
-                      ? selectedReturnClass ?? ''
-                      : '',
-                  returnFrom: '',
-                  returnTo: '', // Add the required argument here
-                ),
-                // // Countdown Timer
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.05,
-                  child: Center(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: Colors.grey, width: 2.0), // Bold border
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: CountdownTimer(
-                          endTime: endTime,
-                          widgetBuilder: (_, time) {
-                            if (time == null) {
-                              Navigator.pop(context);
-                              return const Text('Time is up!');
-                            }
-                            return Text(
-                              'Time left: ${time.min?.toString().padLeft(2, '0') ?? '00'}:${time.sec?.toString().padLeft(2, '0') ?? '00'}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blueAccent,
-                                fontSize: 22,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Container(
-                      height: MediaQuery.of(context).size.height,
-                      width: MediaQuery.of(context).size.width,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.rectangle,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                Row(
+                  children: [
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          //const SizedBox(height: 8),
-                          // Center(
-                          //   child: Row(
-                          //     mainAxisAlignment: MainAxisAlignment.center,
-                          //     children: [
-                          //       const Text('Type: ',
-                          //           style: TextStyle(
-                          //               fontSize: 16,
-                          //               fontWeight: FontWeight.bold)),
-                          //       const SizedBox(width: 8),
-                          //       DropdownButton<String>(
-                          //         value: _selectedType,
-                          //         hint: const Text('Select Type'),
-                          //         items: <String>['Direct', 'Intercity']
-                          //             .map((String value) {
-                          //           return DropdownMenuItem<String>(
-                          //             value: value,
-                          //             child: Text(value),
-                          //           );
-                          //         }).toList(),
-                          //         onChanged: (String? newValue) {
-                          //           setState(() {
-                          //             _selectedType = newValue;
-                          //             //_updateTrains();
-                          //           });
-                          //         },
-                          //       ),
-                          //     ],
-                          //   ),
-                          // ),
-                          //variable passing here for the train selection//
-                          const SizedBox(height: 16),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              child: Column(
-                                children: [
-                                  TrainCard(
-                                    trainName: 'Train A',
-                                    fromStation: widget.fromStation,
-                                    toStation: widget.toStation,
-                                    departureTime: '12:30pm',
-                                    arrivalTime: '16:00pm',
-                                    duration: '4h 30m',
-                                    departureCity: widget.fromStation,
-                                    arrivalCity: widget.toStation,
-                                    travelClass: widget.travelClass,
-                                    journeyDate: widget.journeyDate,
-                                    tickets: [
-                                      TicketType(
-                                          type: widget.travelClass,
-                                          price: 350,
-                                          availableSeats: 5),
-                                    ],
-                                    trainId: 1,
-                                  ),
-                                  // Example train data
-                                  TrainCard(
-                                    trainName: 'Train B',
-                                    fromStation: widget.fromStation,
-                                    toStation: widget.toStation,
-                                    departureTime: '10:00am',
-                                    arrivalTime: '2:00pm',
-                                    duration: '4h 0m',
-                                    departureCity: widget.fromStation,
-                                    arrivalCity: widget.toStation,
-                                    travelClass: widget.travelClass,
-                                    journeyDate: widget.journeyDate,
-                                    tickets: [
-                                      TicketType(
-                                          type: widget.travelClass,
-                                          price: 300,
-                                          availableSeats: 10),
-                                    ],
-                                    trainId: 2,
-                                  ),
-                                  TrainCard(
-                                    trainName: 'Train C',
-                                    fromStation: widget.fromStation,
-                                    toStation: widget.toStation,
-                                    departureTime: '10:00am',
-                                    arrivalTime: '2:30pm',
-                                    duration: '4h 30m',
-                                    departureCity: widget.fromStation,
-                                    arrivalCity: widget.toStation,
-                                    travelClass: widget.travelClass,
-                                    journeyDate: widget.journeyDate,
-                                    tickets: [
-                                      TicketType(
-                                          type: widget.travelClass,
-                                          price: 200,
-                                          availableSeats: 10),
-                                    ],
-                                    trainId: 5,
-                                  ),
-                                  TrainCard(
-                                    trainName: 'Train D',
-                                    fromStation: widget.fromStation,
-                                    toStation: widget.toStation,
-                                    departureTime: '11:00am',
-                                    arrivalTime: '9:30pm',
-                                    duration: '4h 30m',
-                                    departureCity: widget.fromStation,
-                                    arrivalCity: widget.toStation,
-                                    travelClass: widget.travelClass,
-                                    journeyDate: widget.journeyDate,
-                                    tickets: [
-                                      TicketType(
-                                          type: widget.travelClass,
-                                          price: 250,
-                                          availableSeats: 8),
-                                    ],
-                                    trainId: 7,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                          Text(t.trainName,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: r.fs14)),
+                          Text('Train #${t.trainCode}',
+                              style: TextStyle(
+                                  color: Colors.grey, fontSize: r.fs11)),
                         ],
-                        // Ticket cards will be displayed here
-                        // Add a Column widget to display the ticket cards
                       ),
                     ),
-                  ),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: r.sp10, vertical: r.sp4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF3E0),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'From ৳${t.classes.map((c) => c.price).reduce((a, b) => a < b ? a : b).toStringAsFixed(0)}',
+                        style: TextStyle(
+                            color: const Color(0xFFE65100),
+                            fontWeight: FontWeight.bold,
+                            fontSize: r.fs12),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: r.sp12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _timeBlock(r, t.departureTime, t.fromStation),
+                    Column(
+                      children: [
+                        Text(t.duration,
+                            style: TextStyle(
+                                color: Colors.grey, fontSize: r.fs11)),
+                        SizedBox(height: r.sp4),
+                        Row(
+                          children: [
+                            Container(
+                                width: 36,
+                                height: 1.5,
+                                color: Colors.grey[300]),
+                            Icon(Icons.train,
+                                size: r.fs16,
+                                color: const Color(0xFF1A3A6B)),
+                            Container(
+                                width: 36,
+                                height: 1.5,
+                                color: Colors.grey[300]),
+                          ],
+                        ),
+                      ],
+                    ),
+                    _timeBlock(r, t.arrivalTime, t.toStation,
+                        alignRight: true),
+                  ],
                 ),
               ],
             ),
           ),
-        ),
-      ]),
+
+          // Class selector
+          if (!widget.isLocked) ...[
+            const Divider(height: 1, color: Color(0xFFF0F0F0)),
+            InkWell(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                    horizontal: r.sp14, vertical: r.sp10),
+                child: Row(
+                  children: [
+                    Text('Select Class',
+                        style: TextStyle(
+                            fontSize: r.fs13,
+                            color: const Color(0xFF1A3A6B),
+                            fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    Icon(
+                        _expanded
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                        color: const Color(0xFF1A3A6B)),
+                  ],
+                ),
+              ),
+            ),
+            if (_expanded) ...[
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                    r.sp14, 0, r.sp14, r.sp14),
+                child: Column(
+                  children: [
+                    ...t.classes.map((cls) => _classRow(r, cls)),
+                    SizedBox(height: r.sp10),
+                    SizedBox(
+                      width: double.infinity,
+                      height: r.btnH,
+                      child: ElevatedButton(
+                        onPressed: _selectedClass != null
+                            ? () => widget.onSelect(widget.train)
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: widget.isReturn
+                              ? const Color(0xFFE8A838)
+                              : const Color(0xFF1A3A6B),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: Text(
+                          widget.isReturn
+                              ? 'Select Return Train'
+                              : 'Select This Train',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: r.fs14),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+
+          if (widget.isLocked)
+            Padding(
+              padding: EdgeInsets.all(r.sp12),
+              child: Row(
+                children: [
+                  Icon(Icons.lock_outline, size: r.fs13, color: Colors.grey),
+                  SizedBox(width: r.sp6),
+                  Text('Select outbound train first',
+                      style: TextStyle(
+                          color: Colors.grey[500], fontSize: r.fs12)),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
-}
 
-class TrainDetailsAPi {
-  final String baseUrl = "http://10.15.10.140:3000";
-
-  /// Fetches the train details by from_station and to_station
-  Future<List<dynamic>> getTrains(String fromStation, String toStation) async {
-    final url = Uri.parse(
-        '$baseUrl/trains?from_station=$fromStation&to_station=$toStation');
-
-    try {
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to load train details: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error fetching train details: $e');
-    }
+  Widget _timeBlock(R r, String time, String station,
+      {bool alignRight = false}) {
+    return Column(
+      crossAxisAlignment:
+          alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Text(time,
+            style: TextStyle(
+                fontSize: r.fs16, fontWeight: FontWeight.bold)),
+        Text(station,
+            style: TextStyle(color: Colors.grey, fontSize: r.fs11)),
+      ],
+    );
   }
-}
 
-// box of the train card//
-class SearchInfoCard extends StatelessWidget {
-  final String from;
-  final String to;
-  final String date;
-  final String journeyClass;
-  final String returnFrom;
-  final String returnTo;
-  final String returnDate;
-  final String returnJourneyClass;
-
-  const SearchInfoCard({
-    super.key,
-    required this.from,
-    required this.to,
-    required this.date,
-    required this.journeyClass,
-    required this.returnFrom,
-    required this.returnTo,
-    required this.returnDate,
-    required this.returnJourneyClass,
-  });
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(16.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      elevation: 5,
+  Widget _classRow(R r, TicketClass cls) {
+    final selected = _selectedClass == cls.type;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedClass = cls.type),
       child: Container(
-        width: double.infinity, // Full width of the parent container
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        margin: EdgeInsets.only(bottom: r.sp8),
+        padding: EdgeInsets.symmetric(
+            horizontal: r.sp12, vertical: r.sp10),
+        decoration: BoxDecoration(
+          color: selected
+              ? const Color(0xFFE8F0FE)
+              : const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: selected
+                ? const Color(0xFF1A3A6B)
+                : const Color(0xFFE0E0E0),
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
           children: [
-            Text('From: $from'),
-            Text('To: $to'),
-            Text('Date: $date'),
-            Text('Class: $journeyClass'),
-            if (returnFrom.isNotEmpty) Text('Return From: $returnFrom'),
-            if (returnTo.isNotEmpty) Text('Return To: $returnTo'),
-            if (returnDate.isNotEmpty) Text('Return Date: $returnDate'),
-            if (returnJourneyClass.isNotEmpty)
-              Text('Return Class: $returnJourneyClass'),
+            Icon(
+              selected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              size: r.fs18,
+              color: selected
+                  ? const Color(0xFF1A3A6B)
+                  : Colors.grey,
+            ),
+            SizedBox(width: r.sp10),
+            Expanded(
+              child: Text(cls.type,
+                  style: TextStyle(
+                      fontWeight: selected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      fontSize: r.fs13)),
+            ),
+            Text('${cls.availableSeats} seats',
+                style: TextStyle(
+                    color: Colors.grey, fontSize: r.fs11)),
+            SizedBox(width: r.sp12),
+            Text('৳${cls.price.toStringAsFixed(0)}',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: r.fs14,
+                    color: const Color(0xFF1A3A6B))),
           ],
         ),
       ),
     );
   }
+}
+
+// Keep TicketType for backward compatibility
+class TicketType {
+  final String type;
+  final double price;
+  final int availableSeats;
+
+  const TicketType({required this.type, required this.price, required this.availableSeats});
 }

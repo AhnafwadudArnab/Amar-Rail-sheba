@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
-import 'package:logging/logging.dart';
+import 'package:logger/logger.dart';
 import 'package:trackers/All%20Feautures/second%20pagee/Book_page_after_search.dart';
+
+final _logger = Logger();
 
 class RouteFinder {
   final List<String> availableRoutes = [
@@ -31,62 +33,19 @@ class RouteFinder {
   }
 }
 
-final Logger _logger = Logger('RouteFinderLogger');
-
 void main() {
-  setupLogging();
   checkRoutes();
-  handleUserInput('Dhaka', 'Sylhet'); // Example user input
+  handleUserInput('Dhaka', 'Sylhet');
 }
 
-void setupLogging() {
-  Logger.root.level = Level.ALL;
-  Logger.root.onRecord.listen((record) {
-    _logger.info('${record.level.name}: ${record.time}: ${record.message}');
-  });
-}
+void setupLogging() {}
 
 void checkRoutes() {
   RouteFinder routeFinder = RouteFinder();
-
-  List<String> availableStations = [
-    'Airport',
-    'Akhaura',
-    'Bhairab-Bazar',
-    'Brahman_Baria',
-    'Chattogram',
-    'Comilla',
-    'Dhaka',
-    'Feni',
-    'Laksham',
-    'Narshingdi',
-    'Sylhet'
-  ];
-
-  List<String> unavailableStations = [
-    'Chandpur',
-    'Jessore',
-    'Kishoreganj',
-    'Munshiganj',
-    'Mymensingh',
-    'Narshingdi',
-    'Noakhali',
-    'Rajshahi',
-    'Rangpur',
-    'Dinajpur',
-    'Khulna',
-    'Bogra'
-  ];
-
-  for (String startStation in availableStations) {
-    for (String endStation in unavailableStations) {
-      bool isAvailable = routeFinder.isRouteAvailable(startStation, endStation);
-      if (isAvailable) {
-        _logger.info('Route available: $startStation -> $endStation');
-      } else {
-        _logger.warning('No route available: $startStation -> $endStation');
-      }
-    }
+  final stations = ['Dhaka', 'Chattogram', 'Sylhet'];
+  for (String s in stations) {
+    _logger.i('Checking routes from $s');
+    routeFinder.isRouteAvailable(s, 'Dhaka');
   }
 }
 
@@ -95,22 +54,18 @@ void navigateBasedOnRoute(String startStation, String endStation) {
   bool isAvailable = routeFinder.isRouteAvailable(startStation, endStation);
 
   if (isAvailable) {
-    _logger.info('Navigating to next page: $startStation -> $endStation');
-
+    _logger.i('Navigating: $startStation -> $endStation');
     Get.to(() => TrainSearchPage(
         fromStation: startStation,
         toStation: endStation,
-        travelClass: 'AC', // Example value
-        journeyDate: DateTime.now().toString(), // Example value
-        returnJourneyDate: DateTime.now().toString(), // Example value
-        returnFromStation: endStation, // Example value
-        returnToStation: startStation, // Example value
-        returnJourneyClass: 'S-Chair' // Example value
-        ));
+        travelClass: 'AC',
+        journeyDate: DateTime.now().toString(),
+        returnJourneyDate: '',
+        returnFromStation: '',
+        returnToStation: '',
+        returnJourneyClass: ''));
   } else {
-    _logger
-        .severe('Error: No route available from $startStation to $endStation');
-    // Code to show error notification
+    _logger.e('No route available from $startStation to $endStation');
   }
 }
 

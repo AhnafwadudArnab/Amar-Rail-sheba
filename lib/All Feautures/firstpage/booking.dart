@@ -1,11 +1,6 @@
 // ignore_for_file: camel_case_types, library_private_types_in_public_api
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
-import 'package:sidebarx/sidebarx.dart';
-import 'package:trackers/ADMIN/adminPage.dart';
 import 'package:trackers/All%20Feautures/Emergencies/emergencies.dart';
 import 'package:trackers/All%20Feautures/Maintainence/LostAndFound.dart';
 import 'package:trackers/All%20Feautures/Maintainence/about.dart';
@@ -16,11 +11,12 @@ import 'package:trackers/Info%20page/Announcement.dart';
 import 'package:trackers/Info%20page/TrainInfo.dart';
 import 'package:trackers/Info%20page/ratings&review.dart';
 import 'package:trackers/profileBar.dart';
-
+import 'package:trackers/services/local_data_service.dart';
+import 'package:trackers/utils/responsive.dart';
 import '../../ADMIN/ticketUpcoming.dart';
+import '../../ADMIN/adminPage.dart';
 
 class MainHomeScreen extends StatefulWidget {
-  
   const MainHomeScreen({super.key});
   @override
   _MainHomeScreenState createState() => _MainHomeScreenState();
@@ -29,44 +25,11 @@ class MainHomeScreen extends StatefulWidget {
 class _MainHomeScreenState extends State<MainHomeScreen> {
   int _currentIndex = 0;
 
-  // under-rows of page to navigate
   final List<Widget> _pages = [
     const RailwayBookingPage(),
     UpcomingTicket(),
-    // const MainTicketPage(
-    //   name: 'Ahna arnab',
-    //   from: 'Dhaka',
-    //   to: 'Chattogram',
-    //   travelClass: 'AC',
-    //   date: '2023-10-10',
-    //   departTime: '10:00 AM',
-    //   seat: 'A1',
-    //   trainCode: 'Dhaka-CTG-101',
-    //   totalAmount: '750',
-    //   train_code: 'TR-703',
-    // ),
-
-    // const MainTicketPage(
-    //   name: '',
-    //   from: '',
-    //   to: '',
-    //   travelClass: '',
-    //   date: '',
-    //   departTime: '',
-    //   seat: '',
-    //   train_code: '',
-    // ),
-    const ProfileBar(
-      loggedIn: true,
-      // userId: '', name: '', email: '',
-    ),
+    const ProfileBar(loggedIn: true),
   ];
-
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,15 +40,10 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
         child: Container(
           height: 59,
           decoration: BoxDecoration(
-            // Add some border radius to top
-            color: const Color.fromARGB(145, 12, 9, 9).withOpacity(0.9),
+            color: const Color(0xFF0A1628).withOpacity(0.95),
             borderRadius: BorderRadius.circular(16),
             boxShadow: const [
-              BoxShadow(
-                color: Colors.black12,
-                offset: Offset(0, 5),
-                blurRadius: 20,
-              ),
+              BoxShadow(color: Colors.black26, offset: Offset(0, 5), blurRadius: 20),
             ],
           ),
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -93,27 +51,17 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
             borderRadius: BorderRadius.circular(16),
             child: BottomNavigationBar(
               currentIndex: _currentIndex,
-              onTap: _onTabTapped,
-              selectedItemColor: const Color.fromARGB(255, 251, 251, 251),
-              unselectedItemColor: const Color.fromARGB(255, 204, 143, 74),
+              onTap: (i) => setState(() => _currentIndex = i),
+              selectedItemColor: Colors.white,
+              unselectedItemColor: const Color(0xFFE8A838),
               showSelectedLabels: true,
               showUnselectedLabels: false,
               type: BottomNavigationBarType.fixed,
-              backgroundColor:
-                  Colors.transparent, // This removes extra background color
+              backgroundColor: Colors.transparent,
               items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home),
-                  label: 'Home',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.access_time),
-                  label: 'My Tickets',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.account_circle),
-                  label: 'My Account',
-                ),
+                BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+                BottomNavigationBarItem(icon: Icon(Icons.confirmation_num_outlined), label: 'My Tickets'),
+                BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'My Account'),
               ],
             ),
           ),
@@ -123,568 +71,148 @@ class _MainHomeScreenState extends State<MainHomeScreen> {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GOZAYAAN-STYLE BOOKING PAGE
+// ─────────────────────────────────────────────────────────────────────────────
 class RailwayBookingPage extends StatefulWidget {
   const RailwayBookingPage({super.key});
-
   @override
   _RailwayBookingPageState createState() => _RailwayBookingPageState();
 }
 
-class NavButton extends StatelessWidget {
-  final String label;
-  const NavButton({super.key, required this.label});
+class _RailwayBookingPageState extends State<RailwayBookingPage> {
+  // Trip type: 0 = One Way, 1 = Round Trip
+  int _tripType = 0;
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Text(
-        label,
-        style: const TextStyle(color: Colors.white, fontSize: 16),
+  // Outbound
+  String? _fromStation;
+  String? _toStation;
+  DateTime? _departDate;
+  String _travelClass = 'AC';
+  int _passengers = 1;
+
+  // Return (Round Trip only)
+  DateTime? _returnDate;
+  String _returnClass = 'AC';
+
+  final List<String> _stations = LocalDataService.stations;
+  final List<String> _classes = LocalDataService.travelClasses;
+
+  // ── helpers ──────────────────────────────────────────────────────────────
+  String _fmt(DateTime? d) =>
+      d == null ? 'Select Date' : '${d.day} ${_monthName(d.month)} ${d.year}';
+
+  String _monthName(int m) => const [
+        '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ][m];
+
+  Future<void> _pickDate(bool isReturn) async {
+    final now = DateTime.now();
+    final first = isReturn ? (_departDate ?? now) : now;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: first,
+      firstDate: first,
+      lastDate: now.add(const Duration(days: 90)),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme: const ColorScheme.light(primary: Color(0xFF1A3A6B)),
+        ),
+        child: child!,
       ),
     );
+    if (picked != null) {
+      setState(() {
+        if (isReturn) {
+          _returnDate = picked;
+        } else {
+          _departDate = picked;
+          if (_returnDate != null && _returnDate!.isBefore(picked)) {
+            _returnDate = null;
+          }
+        }
+      });
+    }
   }
-}
 
-class _RailwayBookingPageState extends State<RailwayBookingPage> {
-  final TextEditingController fromStationController = TextEditingController();
-  final TextEditingController toStationController = TextEditingController();
-  final yourController = SidebarXController(selectedIndex: 2);
-  final TextEditingController _dateController = TextEditingController();
-  final FocusNode fromStationFocusNode = FocusNode();
-  final FocusNode toStationFocusNode = FocusNode();
-  String selectedClass = 'AC';
-  bool isSingleTripSelected = true;
-  bool isRoundTripSelected = false;
-  final List<String> _stations = [
-    'Airport',
-    'Akhaura',
-    'Bhairab-Bazar',
-    'Brahman_Baria',
-    'Chandpur',
-    'Chattogram',
-    'Comilla',
-    'Dhaka',
-    'Feni',
-    'Jessore',
-    'Kishoreganj',
-    'Laksham',
-    'Munshiganj',
-    'Mymensingh',
-    'Narshingdi',
-    'Noakhali',
-    'Rajshahi',
-    'Rangpur',
-    'Sylhet',
-    'Dinajpur',
-    'Khulna',
-    'Bogra'
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-
-    fromStationFocusNode.addListener(() {
-      // Add any additional logic if needed
-    });
-
-    toStationFocusNode.addListener(() {
-      // Add any additional logic if needed
+  void _swapStations() {
+    setState(() {
+      final tmp = _fromStation;
+      _fromStation = _toStation;
+      _toStation = tmp;
     });
   }
 
-  Future<void> doSearch(BuildContext context, String from, String to,
-      String travelClass, String date) async {
-    // Implement your search logic here
-    // For example, you can navigate to another page with the search results
-    Get.offAll(() => TrainSearchPage(
-          fromStation: from,
-          toStation: to,
-          travelClass: travelClass,
-          journeyDate: date,
-          returnJourneyDate: '', // Add appropriate value
-          returnFromStation: '', // Add appropriate value
-          returnToStation: '', // Add appropriate value
-          returnJourneyClass: '', // Add appropriate value
+  void _search() {
+    if (_fromStation == null || _toStation == null) {
+      _snack('Please select From and To stations');
+      return;
+    }
+    if (_fromStation == _toStation) {
+      _snack('From and To stations cannot be the same');
+      return;
+    }
+    if (_departDate == null) {
+      _snack('Please select a journey date');
+      return;
+    }
+    if (_tripType == 1 && _returnDate == null) {
+      _snack('Please select a return date');
+      return;
+    }
+
+    Get.to(() => TrainSearchPage(
+          fromStation: _fromStation!,
+          toStation: _toStation!,
+          travelClass: _travelClass,
+          journeyDate: _departDate!.toIso8601String().split('T')[0],
+          passengers: _passengers,
+          isRoundTrip: _tripType == 1,
+          returnFromStation: _tripType == 1 ? _toStation! : '',
+          returnToStation: _tripType == 1 ? _fromStation! : '',
+          returnJourneyDate: _tripType == 1
+              ? (_returnDate?.toIso8601String().split('T')[0] ?? '')
+              : '',
+          returnJourneyClass: _tripType == 1 ? _returnClass : '',
         ));
   }
 
-  @override
-  void dispose() {
-    fromStationController.dispose();
-    toStationController.dispose();
-    _dateController.dispose();
-    fromStationFocusNode.dispose();
-    toStationFocusNode.dispose();
-    super.dispose();
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: const Color(0xFF1A3A6B)),
+    );
   }
 
-  void swapStation() {
-    setState(() {
-      final tempText = fromStationController.text;
-      fromStationController.text = toStationController.text;
-      toStationController.text = tempText;
-    });
-  }
-
+  // ── build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Color.fromARGB(209, 4, 10, 24),
-              ),
-              child: Center(
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.white,
-                      backgroundImage: AssetImage(
-                          'assets/trainBackgrong/12.png'), // Add your image path here
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Dashboard',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.privacy_tip),
-                title: const Text('Train Information'),
-                onTap: () {
-                  Get.offAll(() => const TrainListPage());
-                },
-              ),
-            ),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.not_interested_rounded),
-                title: const Text('Lost & Found'),
-                onTap: () {
-                  Get.offAll(() => const LostAndFoundPage());
-                },
-              ),
-            ),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.rate_review_rounded),
-                title: const Text('Rating & Reviews'),
-                onTap: () {
-                  Get.offAll(() => const RatingsReviewsPage());
-                },
-              ),
-            ),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.announcement_rounded),
-                title: const Text('Announcement'),
-                onTap: () {
-                  Get.offAll(() => const AnnouncementPage());
-                },
-              ),
-            ),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.privacy_tip),
-                title: const Text('Privacy & Policy'),
-                onTap: () {
-                  Get.offAll(() => const PrivacyPolicyPage());
-                },
-              ),
-            ),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.emoji_food_beverage_rounded),
-                title: const Text('About'),
-                onTap: () {
-                  Get.offAll(() => const DeveloperInfoDialog());
-                },
-              ),
-            ),
-             Card(
-              child: ListTile(
-                leading: const Icon(Icons.admin_panel_settings),
-                title: const Text('Admin'),
-                onTap: () {
-                  Get.offAll(() => const AdminPage());
-                },
-              ),
-            ),
-            const Card(),
-          ],
-        ),
-      ),
+      drawer: _buildDrawer(),
       body: Stack(
         children: [
-          // Background Image
+          // Background
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage(
-                    'assets/trainBackgrong/05.jpeg'), // Add background image
+                image: AssetImage('assets/trainBackgrong/05.jpeg'),
                 fit: BoxFit.cover,
               ),
             ),
           ),
-          // Dark Overlay
-          Container(
-            color: Colors.black.withOpacity(0.5),
-          ),
-          // Main Content
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-            child: ListView(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Logo
-                    Builder(
-                      builder: (context) => IconButton(
-                        icon: const Icon(
-                          Icons.menu,
-                          color: Color.fromARGB(255, 245, 245, 245),
-                          size: 30,
-                        ),
-                        onPressed: () {
-                          Scaffold.of(context).openDrawer();
-                        },
-                      ),
-                    ),
-                    // Navigation
-                    Row(
-                      children: [
-                        TextButton(
-                          onPressed: () {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              Get.to(() => const LiveLocation());
-                            });
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.transparent,
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.location_on,
-                                  color: Color.fromARGB(255, 245, 240, 240)),
-                              NavButton(label: 'Live Location'),
-                            ],
-                          ),
-                        ),
-                        // Emergency Alert Button icon
-                        IconButton(
-                          icon: const Icon(Icons.railway_alert,
-                              color: Color.fromARGB(255, 245, 240, 240)),
-                          onPressed: () {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              Get.to(() =>
-                                  EmergencyScreen(user: User('defaultUser')));
-                            });
-                          },
-                        ),
-                        // const SizedBox(width: 10),
-                        // //if (!loggedIn)
-                        // ElevatedButton(
-                        //   onPressed: () {
-                        //     WidgetsBinding.instance.addPostFrameCallback((_) {
-                        //       Get.to(() => const SignUp());
-                        //     });
-                        //   },
-                        //   style: ElevatedButton.styleFrom(
-                        //     backgroundColor: Colors.black12,
-                        //   ),
-                        //   child: const Text(
-                        //     'Register',
-                        //     style: TextStyle(
-                        //       color: Color.fromARGB(255, 245, 240, 240),
-                        //     ),
-                        //   ),
-                        // ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 200), //150
-                // Title and Subtitle
-                const Text(
-                  'Bangladesh Railway',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 6.0),
-                Text(
-                  'Heartily enjoy every journey through our boundless hospitality.\nThrough Bangladesh Railways, The Lifeline of the Nation.',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Search Form {From, To, Class, Date}
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Column(
-                    children: [
-                      const Row(
-                        children: [
-                          SizedBox(height: 20),
-                          Spacer(),
-                          ChoiceChip(
-                              label: Text('Book Your Ticket'), selected: true),
-                          Spacer(),
-                        ],
-                      ),
-                      //from here to//
-                      const SizedBox(height: 16.0),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                          border: Border.all(
-                            color: Colors.black, // Outline color
-                            width: 2.5, // Outline width
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                decoration: const InputDecoration(
-                                    icon: Icon(Icons.train_rounded),
-                                    labelText: 'From'),
-                                value: fromStationController.text.isEmpty
-                                    ? null
-                                    : fromStationController.text,
-                                items: _stations.map((station) {
-                                  return DropdownMenuItem<String>(
-                                    value: station,
-                                    child: Text(station),
-                                  );
-                                }).toList(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    fromStationController.text = value!;
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: IconButton(
-                          icon: const Icon(Icons.swap_calls_rounded),
-                          onPressed: swapStation,
-                        ),
-                      ),
-                      //
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                          border: Border.all(
-                            color: Colors.black, // Outline color
-                            width: 2.5, // Outline width
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                decoration: const InputDecoration(
-                                    icon: Icon(Icons.train_rounded),
-                                    labelText: 'To'),
-                                value: toStationController.text.isEmpty
-                                    ? null
-                                    : toStationController.text,
-                                items: _stations.map((station) {
-                                  return DropdownMenuItem<String>(
-                                    value: station,
-                                    child: Text(station),
-                                  );
-                                }).toList(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    toStationController.text = value!;
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          'From and To stations cannot be the same.',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              decoration:
-                                  const InputDecoration(labelText: 'Class'),
-                              value: selectedClass,
-                              items: ['AC', 'Cabin', 'S_chair']
-                                  .map((classType) => DropdownMenuItem(
-                                        value: classType,
-                                        child: Text(classType),
-                                      ))
-                                  .toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  selectedClass = value!;
-                                });
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 16.0),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _dateController,
-                              decoration: const InputDecoration(
-                                  labelText: 'Journey Date'),
-                              onTap: () async {
-                                DateTime? pickedDate = await showDatePicker(
-                                  context: context,
-                                  initialDate: DateTime.now(),
-                                  firstDate: DateTime.now(),
-                                  lastDate: DateTime.now()
-                                      .add(const Duration(days: 10)),
-                                );
-                                _dateController.text = pickedDate!
-                                    .toLocal()
-                                    .toString()
-                                    .split(' ')[0];
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      ElevatedButton(
-                        onPressed: () async {
-                          int emptyFields = 0;
-                          if (fromStationController.text.isEmpty) {
-                            emptyFields++;
-                          }
-                          if (toStationController.text.isEmpty ||
-                              toStationController.text == '') {
-                            emptyFields++;
-                          }
-                          if (_dateController.text.isEmpty) emptyFields++;
+          Container(color: const Color(0xFF0A1628).withOpacity(0.72)),
 
-                          if (fromStationController.text ==
-                              toStationController.text) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'From and To stations cannot be the same.',
-                                  style: TextStyle(color: Colors.black),
-                                ),
-                                backgroundColor: Colors.white,
-                              ),
-                            );
-                          } else if (emptyFields == 0) {
-                            final bookingData = {
-                              'user_from': fromStationController.text,
-                              'user_to': toStationController.text,
-                              'user_class': selectedClass,
-                              'journey_date': _dateController.text,
-                              'user_id': 'user123',
-                            };
-                            if (kDebugMode) {
-                              print('Search Data: $bookingData');
-                            }
-                            final response = await ApiService().createBooking(
-                              1, // Replace with actual booking ID
-                              fromStationController.text,
-                              toStationController.text,
-                              selectedClass,
-                              _dateController.text,
-                            );
-                            if (response['error'] == null) {
-                              Get.offAll(() => TrainSearchPage(
-                                    fromStation: fromStationController.text,
-                                    toStation: toStationController.text,
-                                    travelClass: selectedClass,
-                                    journeyDate: _dateController.text,
-                                    returnJourneyDate:
-                                        '', // Add appropriate value
-                                    returnFromStation:
-                                        '', // Add appropriate value
-                                    returnToStation:
-                                        '', // Add appropriate value
-                                    returnJourneyClass:
-                                        '', // Add appropriate value
-                                  ));
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      'Booking failed: ${response['message']}'),
-                                ),
-                              );
-                            }
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content:
-                                    Text('You left $emptyFields box(es) empty'),
-                              ),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black),
-                        child: const Text(
-                          'Search Train',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+          SafeArea(
+            child: ListView(
+              padding: R.of(context).pagePad,
+              children: [
+                _buildTopBar(),
+                const SizedBox(height: 24),
+                _buildHeroText(),
+                const SizedBox(height: 20),
+                _buildBookingCard(),
+                const SizedBox(height: 24),
+                _buildQuickLinks(),
               ],
             ),
           ),
@@ -692,76 +220,515 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
       ),
     );
   }
-}
 
-class ApiService {
-  final String baseUrl = 'http://10.15.10.140:3000/firstPage';
-
-  // Method to create a new booking
-  Future<Map<String, dynamic>> createBooking(int bookingId, String userFrom,
-      String userTo, String userClass, String journeyDate) async {
-    try {
-      final response = await http.post(
-        Uri.parse(baseUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'Booking_ID': bookingId,
-          'user_from': userFrom,
-          'user_to': userTo,
-          'user_class': userClass,
-          'journey_date': journeyDate,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        return jsonDecode(response.body);
-      } else {
-        return {
-          'error': true,
-          'message': 'Failed to create booking',
-          'details': jsonDecode(response.body)
-        };
-      }
-    } catch (e) {
-      return {
-        'error': true,
-        'message': 'Error connecting to server',
-        'details': e.toString()
-      };
-    }
+  // ── top bar ───────────────────────────────────────────────────────────────
+  Widget _buildTopBar() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white, size: 28),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
+        ),
+        Row(
+          children: [
+            TextButton.icon(
+              onPressed: () => Get.to(() => const LiveLocation()),
+              icon: const Icon(Icons.location_on, color: Colors.white70, size: 18),
+              label: const Text('Live', style: TextStyle(color: Colors.white70)),
+            ),
+            IconButton(
+              icon: const Icon(Icons.railway_alert, color: Colors.white70),
+              onPressed: () => Get.to(() => EmergencyScreen(user: User('defaultUser'))),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
-  // Method to fetch all bookings
-  Future<List<dynamic>> getAllBookings() async {
-    try {
-      final response = await http.get(Uri.parse(baseUrl));
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        return [];
-      }
-    } catch (e) {
-      return [];
-    }
+  // ── hero text ─────────────────────────────────────────────────────────────
+  Widget _buildHeroText() {
+    final r = R.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Bangladesh Railway',
+          style: TextStyle(
+              color: Colors.white,
+              fontSize: r.fs28,
+              fontWeight: FontWeight.bold),
+        ),
+        SizedBox(height: r.sp6),
+        Text(
+          'Book train tickets easily — one way or round trip',
+          style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.8), fontSize: r.fs13),
+        ),
+      ],
+    );
   }
 
-  // Method to fetch a specific booking by ID
-  Future<Map<String, dynamic>> getBookingById(int bookingId) async {
-    try {
-      final response = await http.get(Uri.parse('$baseUrl/$bookingId'));
+  // ── main booking card ─────────────────────────────────────────────────────
+  Widget _buildBookingCard() {
+    final r = R.of(context);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTripTypeTabs(),
+              Padding(
+                padding: EdgeInsets.fromLTRB(r.sp16, r.sp12, r.sp16, r.sp16),
+                child: Column(
+                  children: [
+                    _buildRouteLabel('Outbound Journey', Icons.train, const Color(0xFF1A3A6B)),
+                    SizedBox(height: r.sp10),
+                    _buildRouteRow(
+                      fromValue: _fromStation,
+                      toValue: _toStation,
+                      onFromChanged: (v) => setState(() => _fromStation = v),
+                      onToChanged: (v) => setState(() => _toStation = v),
+                      onSwap: _swapStations,
+                    ),
+                    SizedBox(height: r.sp12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildDateTile(
+                            label: 'Departure',
+                            value: _fmt(_departDate),
+                            icon: Icons.calendar_today,
+                            onTap: () => _pickDate(false),
+                          ),
+                        ),
+                        SizedBox(width: r.sp10),
+                        Expanded(
+                            child: _buildClassDropdown(
+                                _travelClass,
+                                (v) => setState(() => _travelClass = v!))),
+                      ],
+                    ),
+                    if (_tripType == 1) ...[
+                      SizedBox(height: r.sp16),
+                      const Divider(height: 1, color: Color(0xFFE0E0E0)),
+                      SizedBox(height: r.sp16),
+                      _buildRouteLabel('Return Journey', Icons.swap_horiz, const Color(0xFFE8A838)),
+                      SizedBox(height: r.sp10),
+                      _buildRouteRow(
+                        fromValue: _toStation,
+                        toValue: _fromStation,
+                        onFromChanged: null,
+                        onToChanged: null,
+                        onSwap: null,
+                        locked: true,
+                      ),
+                      SizedBox(height: r.sp12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildDateTile(
+                              label: 'Return Date',
+                              value: _fmt(_returnDate),
+                              icon: Icons.calendar_today,
+                              onTap: () => _pickDate(true),
+                              accent: const Color(0xFFE8A838),
+                            ),
+                          ),
+                          SizedBox(width: r.sp10),
+                          Expanded(
+                              child: _buildClassDropdown(
+                                  _returnClass,
+                                  (v) => setState(() => _returnClass = v!),
+                                  accent: const Color(0xFFE8A838))),
+                        ],
+                      ),
+                    ],
+                    SizedBox(height: r.sp14),
+                    _buildPassengerRow(),
+                    SizedBox(height: r.sp16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: r.btnH,
+                      child: ElevatedButton.icon(
+                        onPressed: _search,
+                        icon: const Icon(Icons.search, color: Colors.white),
+                        label: Text(
+                          _tripType == 0 ? 'Search Trains' : 'Search Round Trip',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: r.fs15,
+                              fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1A3A6B),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        return {'error': true, 'message': 'Booking not found'};
-      }
-    } catch (e) {
-      return {
-        'error': true,
-        'message': 'Error connecting to server',
-        'details': e.toString()
-      };
-    }
+  // ── trip type tabs ────────────────────────────────────────────────────────
+  Widget _buildTripTypeTabs() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF5F7FA),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      child: Row(
+        children: [
+          _tripTab(0, 'One Way', Icons.arrow_forward),
+          _tripTab(1, 'Round Trip', Icons.swap_horiz),
+        ],
+      ),
+    );
+  }
+
+  Widget _tripTab(int index, String label, IconData icon) {
+    final selected = _tripType == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _tripType = index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFF1A3A6B) : Colors.transparent,
+            borderRadius: index == 0
+                ? const BorderRadius.only(topLeft: Radius.circular(16))
+                : const BorderRadius.only(topRight: Radius.circular(16)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: selected ? Colors.white : Colors.grey),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: selected ? Colors.white : Colors.grey[600],
+                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── route label ───────────────────────────────────────────────────────────
+  Widget _buildRouteLabel(String text, IconData icon, Color color) {
+    final r = R.of(context);
+    return Row(
+      children: [
+        Icon(icon, size: r.fs16, color: color),
+        SizedBox(width: r.sp6),
+        Text(text,
+            style: TextStyle(
+                color: color, fontWeight: FontWeight.w600, fontSize: r.fs13)),
+      ],
+    );
+  }
+
+  // ── from / to row ─────────────────────────────────────────────────────────
+  Widget _buildRouteRow({
+    required String? fromValue,
+    required String? toValue,
+    required ValueChanged<String?>? onFromChanged,
+    required ValueChanged<String?>? onToChanged,
+    required VoidCallback? onSwap,
+    bool locked = false,
+  }) {
+    final r = R.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStationDropdown(
+            label: 'From',
+            value: fromValue,
+            onChanged: locked ? null : onFromChanged,
+            icon: Icons.radio_button_checked,
+          ),
+        ),
+        GestureDetector(
+          onTap: locked ? null : onSwap,
+          child: Container(
+            margin: EdgeInsets.symmetric(horizontal: r.sp6),
+            padding: EdgeInsets.all(r.sp6),
+            decoration: BoxDecoration(
+              color: locked ? Colors.grey[200] : const Color(0xFF1A3A6B),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.swap_horiz,
+                color: locked ? Colors.grey : Colors.white, size: r.fs18),
+          ),
+        ),
+        Expanded(
+          child: _buildStationDropdown(
+            label: 'To',
+            value: toValue,
+            onChanged: locked ? null : onToChanged,
+            icon: Icons.location_on,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── station dropdown ──────────────────────────────────────────────────────
+  Widget _buildStationDropdown({
+    required String label,
+    required String? value,
+    required ValueChanged<String?>? onChanged,
+    required IconData icon,
+  }) {
+    final r = R.of(context);
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: r.sp10, vertical: r.sp4),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFDDE2EC), width: 1.5),
+        borderRadius: BorderRadius.circular(10),
+        color: onChanged == null ? const Color(0xFFF5F7FA) : Colors.white,
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          hint: Row(
+            children: [
+              Icon(icon, size: r.fs13, color: Colors.grey),
+              SizedBox(width: r.sp4),
+              Text(label,
+                  style: TextStyle(color: Colors.grey, fontSize: r.fs12)),
+            ],
+          ),
+          isExpanded: true,
+          icon: Icon(Icons.keyboard_arrow_down, size: r.fs18, color: Colors.grey),
+          style: TextStyle(fontSize: r.fs13, color: Colors.black87),
+          items: _stations
+              .map((s) => DropdownMenuItem(
+                  value: s,
+                  child: Text(s, style: TextStyle(fontSize: r.fs13))))
+              .toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  // ── date tile ─────────────────────────────────────────────────────────────
+  Widget _buildDateTile({
+    required String label,
+    required String value,
+    required IconData icon,
+    required VoidCallback onTap,
+    Color accent = const Color(0xFF1A3A6B),
+  }) {
+    final r = R.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: r.sp10, vertical: r.sp10),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFDDE2EC), width: 1.5),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: r.fs15, color: accent),
+            SizedBox(width: r.sp6),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: TextStyle(fontSize: r.fs10, color: Colors.grey)),
+                  Text(value,
+                      style: TextStyle(
+                          fontSize: r.fs12, fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── class dropdown ────────────────────────────────────────────────────────
+  Widget _buildClassDropdown(String value, ValueChanged<String?> onChanged,
+      {Color accent = const Color(0xFF1A3A6B)}) {
+    final r = R.of(context);
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: r.sp10, vertical: r.sp4),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFDDE2EC), width: 1.5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          icon: Icon(Icons.keyboard_arrow_down, size: r.fs18, color: accent),
+          style: TextStyle(fontSize: r.fs13, color: Colors.black87),
+          items: _classes
+              .map((c) => DropdownMenuItem(
+                  value: c,
+                  child: Text(c, style: TextStyle(fontSize: r.fs13))))
+              .toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  // ── passenger row ─────────────────────────────────────────────────────────
+  Widget _buildPassengerRow() {
+    final r = R.of(context);
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: r.sp12, vertical: r.sp10),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFDDE2EC), width: 1.5),
+        borderRadius: BorderRadius.circular(10),
+        color: const Color(0xFFF9FAFB),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.people_outline, size: r.fs18, color: const Color(0xFF1A3A6B)),
+          SizedBox(width: r.sp8),
+          Text('Passengers',
+              style: TextStyle(fontSize: r.fs13, color: Colors.grey)),
+          const Spacer(),
+          IconButton(
+            onPressed: _passengers > 1 ? () => setState(() => _passengers--) : null,
+            icon: Icon(Icons.remove_circle_outline, size: r.fs20),
+            color: const Color(0xFF1A3A6B),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: r.sp12),
+            child: Text('$_passengers',
+                style: TextStyle(
+                    fontSize: r.fs16, fontWeight: FontWeight.bold)),
+          ),
+          IconButton(
+            onPressed: _passengers < 4 ? () => setState(() => _passengers++) : null,
+            icon: Icon(Icons.add_circle_outline, size: r.fs20),
+            color: const Color(0xFF1A3A6B),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── quick links ───────────────────────────────────────────────────────────
+  Widget _buildQuickLinks() {
+    final r = R.of(context);
+    final items = [
+      {'icon': Icons.train, 'label': 'Train Info', 'page': () => const TrainListPage()},
+      {'icon': Icons.search, 'label': 'Lost & Found', 'page': () => const LostAndFoundPage()},
+      {'icon': Icons.star_outline, 'label': 'Reviews', 'page': () => const RatingsReviewsPage()},
+      {'icon': Icons.campaign_outlined, 'label': 'News', 'page': () => const AnnouncementPage()},
+    ];
+    return GridView.count(
+      crossAxisCount: r.quickLinkCols > 4 ? 4 : 4,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: items.map((item) {
+        return GestureDetector(
+          onTap: () => Get.to(item['page'] as Widget Function()),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: EdgeInsets.all(r.sp12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(item['icon'] as IconData,
+                    color: Colors.white, size: r.fs22),
+              ),
+              SizedBox(height: r.sp6),
+              Text(item['label'] as String,
+                  style: TextStyle(
+                      color: Colors.white70, fontSize: r.fs11)),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // ── drawer ────────────────────────────────────────────────────────────────
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          const DrawerHeader(
+            decoration: BoxDecoration(color: Color(0xFF0A1628)),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 36,
+                  backgroundImage: AssetImage('assets/trainBackgrong/12.png'),
+                ),
+                SizedBox(height: 10),
+                Text('Amar Rail Sheba', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          _drawerItem(Icons.train, 'Train Information', () => Get.to(() => const TrainListPage())),
+          _drawerItem(Icons.search, 'Lost & Found', () => Get.to(() => const LostAndFoundPage())),
+          _drawerItem(Icons.star_outline, 'Ratings & Reviews', () => Get.to(() => const RatingsReviewsPage())),
+          _drawerItem(Icons.campaign_outlined, 'Announcements', () => Get.to(() => const AnnouncementPage())),
+          _drawerItem(Icons.privacy_tip_outlined, 'Privacy & Policy', () => Get.to(() => const PrivacyPolicyPage())),
+          _drawerItem(Icons.info_outline, 'About', () => Get.to(() => const DeveloperInfoDialog())),
+          _drawerItem(Icons.admin_panel_settings, 'Admin', () => Get.to(() => const AdminPage())),
+        ],
+      ),
+    );
+  }
+
+  Widget _drawerItem(IconData icon, String title, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: const Color(0xFF1A3A6B)),
+      title: Text(title),
+      onTap: () {
+        Navigator.pop(context);
+        onTap();
+      },
+    );
   }
 }

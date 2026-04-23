@@ -1,23 +1,18 @@
-import 'dart:convert';
-import 'package:email_validator/email_validator.dart';
 import 'package:flutter/foundation.dart';
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'package:trackers/Login&Signup/Login.dart';
+import 'package:trackers/services/local_data_service.dart';
+import 'package:trackers/utils/responsive.dart';
 
-class SignUp extends StatefulWidget {
+class SignUp extends StatelessWidget {
   const SignUp({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _SignUpState createState() => _SignUpState();
-}
-
-class _SignUpState extends State<SignUp> {
-  @override
   Widget build(BuildContext context) {
+    final r = R.of(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -25,64 +20,215 @@ class _SignUpState extends State<SignUp> {
         backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.redAccent),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          // Background image
-          Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            decoration: const BoxDecoration(
+          // Background
+          const DecoratedBox(
+            decoration: BoxDecoration(
               image: DecorationImage(
                 image: AssetImage("assets/trainBackgrong/05.jpeg"),
                 fit: BoxFit.cover,
               ),
             ),
           ),
-          if (kIsWeb)
-            SizedBox(
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height,
-            )
-          else
-            SizedBox(
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.45),
             ),
-          Container(
-            margin: const EdgeInsets.only(top: 22.0, left: 20.0, right: 20.0),
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(height: 200.0),
-                  Container(
+          ),
+          // Content
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: r.isPhone ? 20 : r.isTablet ? 80 : 0,
+                  vertical: r.sp24,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Colors.white.withValues(alpha: 0.97),
                       borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      height: MediaQuery.of(context).size.height / 1.9,
-                      width: MediaQuery.of(context).size.width,
-                      decoration: BoxDecoration(
-                        color: Colors.black12,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.black.withOpacity(0.3),
+                      boxShadow: [
+                        BoxShadow(
+                          blurRadius: 20,
+                          color: Colors.black.withValues(alpha: 0.2),
+                          spreadRadius: 2,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            spreadRadius: 2.0,
-                            blurRadius: 10.0,
-                            color: Colors.black.withOpacity(0.1),
-                          ),
-                        ],
-                      ),
-                      child: const LoginFormWidget(),
+                      ],
+                    ),
+                    padding: EdgeInsets.all(r.sp24),
+                    child: const _SignUpForm(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SignUpForm extends StatefulWidget {
+  const _SignUpForm();
+  @override
+  _SignUpFormState createState() => _SignUpFormState();
+}
+
+class _SignUpFormState extends State<_SignUpForm> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+  bool _obscure = true;
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
+
+  InputDecoration _dec(String label, IconData icon) {
+    final r = R.of(context);
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(fontSize: r.fs13),
+      prefixIcon: Icon(icon),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      contentPadding:
+          EdgeInsets.symmetric(horizontal: r.sp16, vertical: r.sp14),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = R.of(context);
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Icon(Icons.person_add_outlined, size: r.sp40, color: const Color(0xFF1A3A6B)),
+          SizedBox(height: r.sp8),
+          Text(
+            'Create Account',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                fontSize: r.fs24,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF1A3A6B)),
+          ),
+          Text(
+            'Register to book your tickets',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: r.fs13, color: Colors.grey),
+          ),
+          SizedBox(height: r.sp24),
+
+          // Name
+          TextFormField(
+            controller: _nameCtrl,
+            style: TextStyle(fontSize: r.fs14),
+            decoration: _dec('Full Name', Icons.person_outline),
+            validator: (v) =>
+                v == null || v.isEmpty ? 'Please enter your name' : null,
+          ),
+          SizedBox(height: r.sp12),
+
+          // Email
+          TextFormField(
+            controller: _emailCtrl,
+            keyboardType: TextInputType.emailAddress,
+            style: TextStyle(fontSize: r.fs14),
+            decoration: _dec('Email', Icons.email_outlined),
+            validator: (v) {
+              if (v == null || v.isEmpty) return 'Please enter your email';
+              if (!EmailValidator.validate(v)) return 'Enter a valid email';
+              return null;
+            },
+          ),
+          SizedBox(height: r.sp12),
+
+          // Phone
+          TextFormField(
+            controller: _phoneCtrl,
+            keyboardType: TextInputType.phone,
+            style: TextStyle(fontSize: r.fs14),
+            decoration: _dec('Phone Number', Icons.phone_outlined),
+            validator: (v) =>
+                v == null || v.isEmpty ? 'Please enter your phone' : null,
+          ),
+          SizedBox(height: r.sp12),
+
+          // Password
+          TextFormField(
+            controller: _passCtrl,
+            obscureText: _obscure,
+            style: TextStyle(fontSize: r.fs14),
+            decoration: _dec('Password', Icons.lock_outline).copyWith(
+              suffixIcon: IconButton(
+                icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                onPressed: () => setState(() => _obscure = !_obscure),
+              ),
+            ),
+            validator: (v) {
+              if (v == null || v.isEmpty) return 'Please enter a password';
+              if (v.length < 6) return 'Minimum 6 characters';
+              return null;
+            },
+          ),
+          SizedBox(height: r.sp24),
+
+          // Register button
+          SizedBox(
+            height: r.btnH,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A3A6B),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: _loading ? null : _submit,
+              child: _loading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : Text('Register',
+                      style: TextStyle(
+                          fontSize: r.fs16, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          SizedBox(height: r.sp12),
+
+          // Login link
+          TextButton(
+            onPressed: () => Get.to(() => const Login()),
+            child: RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: TextStyle(fontSize: r.fs13, color: Colors.grey[700]),
+                children: [
+                  const TextSpan(text: 'Already have an account? '),
+                  TextSpan(
+                    text: 'Login',
+                    style: TextStyle(
+                      color: const Color(0xFF1A3A6B),
+                      fontWeight: FontWeight.bold,
+                      fontSize: r.fs14,
                     ),
                   ),
                 ],
@@ -93,233 +239,47 @@ class _SignUpState extends State<SignUp> {
       ),
     );
   }
-}
 
-class LoginFormWidget extends StatefulWidget {
-  const LoginFormWidget({super.key});
-
-  @override
-  // ignore: library_private_types_in_public_api
-  _LoginFormWidgetState createState() => _LoginFormWidgetState();
-}
-
-class _LoginFormWidgetState extends State<LoginFormWidget> {
-  final _formKey = GlobalKey<FormState>();
-  TextEditingController nameController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController phoneController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
-  // final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  bool isPasswordVisible = true;
-  bool isLoading = false;
-  String? responseMessage;
-
-  @override
-  void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    phoneController.dispose();
-    passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 40.0),
-          // Name field
-          TextFormField(
-            controller: nameController,
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              labelStyle: TextStyle(color: Colors.black),
-              prefixIcon: Icon(Icons.person, color: Colors.black),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your name';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16.0),
-          // Email field
-          TextFormField(
-            controller: emailController,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              labelStyle: TextStyle(color: Colors.black),
-              prefixIcon: Icon(Icons.email, color: Colors.black),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your email';
-              } else if (!EmailValidator.validate(value)) {
-                return 'Please enter a valid email';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16.0),
-          // Phone field
-          TextFormField(
-            controller: phoneController,
-            decoration: const InputDecoration(
-              labelText: 'Phone Number',
-              labelStyle: TextStyle(color: Colors.black),
-              prefixIcon: Icon(Icons.phone, color: Colors.black),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your phone number';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16.0),
-          // Password field
-          TextFormField(
-            controller: passwordController,
-            obscureText: isPasswordVisible,
-            decoration: InputDecoration(
-              labelText: 'Password',
-              labelStyle: const TextStyle(color: Colors.black),
-              prefixIcon: const Icon(Icons.lock, color: Colors.black),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                  color: Colors.black,
-                ),
-                onPressed: () {
-                  setState(() {
-                    isPasswordVisible = !isPasswordVisible;
-                  });
-                },
-              ),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your password';
-              }
-              if (value.length < 6) {
-                return 'Password must be at least 6 characters long';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 24.0),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 96, 180, 219),
-            ),
-            onPressed: () async {
-              if (_formKey.currentState!.validate()) {
-                bool isRegistered = await ApiService().registerUser(
-                  name: nameController.text,
-                  email: emailController.text,
-                  phone: phoneController.text,
-                  password: passwordController.text,
-                );
-
-                if (isRegistered) {
-                  Fluttertoast.showToast(
-                    msg: "User registered successfully",
-                    toastLength: Toast.LENGTH_SHORT,
-                    gravity: ToastGravity.BOTTOM,
-                    timeInSecForIosWeb: 1,
-                    backgroundColor: Colors.green,
-                    textColor: Colors.white,
-                    fontSize: 16.0,
-                  );
-                  // working this one//
-                  Get.offAll(() => const Login());
-                } else {
-                  Fluttertoast.showToast(
-                    msg: "Registration failed",
-                    toastLength: Toast.LENGTH_SHORT,
-                    gravity: ToastGravity.BOTTOM,
-                    timeInSecForIosWeb: 1,
-                    backgroundColor: Colors.red,
-                    textColor: Colors.white,
-                    fontSize: 16.0,
-                  );
-                }
-              } else {
-                Fluttertoast.showToast(
-                  msg: "Please fill all the fields",
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 1,
-                  backgroundColor: Colors.red,
-                  textColor: Colors.white,
-                  fontSize: 16.0,
-                );
-              }
-            },
-            child: const Text(
-              'Register',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Get.to(() => const Login());
-            },
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Already have an account? ",
-                  style: TextStyle(color: Colors.black),
-                ),
-                SizedBox(width: 4),
-                Text(
-                  "Login",
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _loading = true);
+    final ok = await ApiService().registerUser(
+      name: _nameCtrl.text,
+      email: _emailCtrl.text,
+      phone: _phoneCtrl.text,
+      password: _passCtrl.text,
     );
+    setState(() => _loading = false);
+    if (ok) {
+      Fluttertoast.showToast(
+          msg: 'Registered successfully!', backgroundColor: Colors.green);
+      Get.offAll(() => const Login());
+    } else {
+      Fluttertoast.showToast(
+          msg: 'Registration failed', backgroundColor: Colors.red);
+    }
   }
+}
+
+// Backward compat alias
+class LoginFormWidget extends StatelessWidget {
+  const LoginFormWidget({super.key});
+  @override
+  Widget build(BuildContext context) => const _SignUpForm();
 }
 
 class ApiService {
-  //final String baseUrl = "http://192.168.68.103:3000";
-  final String baseUrl = "http://10.15.10.140:3000"; //university wifi ip//
-
   Future<bool> registerUser({
     required String name,
     required String email,
     required String phone,
     required String password,
   }) async {
-    Map<String, String> requestheaders = {
-      "Content-Type": "application/json",
-    };
-    Map<String, String> requestBody = {
-      "name": name,
-      "email": email,
-      "phone": phone,
-      "password": password,
-    };
-    var response = await http.post(Uri.parse("$baseUrl/user/register"),
-        headers: requestheaders, body: jsonEncode(requestBody));
-
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      return false;
-    }
+    final result =
+        await LocalDataService().register(name, email, phone, password);
+    return result['success'] == true;
   }
 }
+
+// suppress unused warning for kIsWeb import
+final _kIsWebRef = kIsWeb;
