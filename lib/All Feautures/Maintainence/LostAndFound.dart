@@ -149,51 +149,128 @@ class _ReportLostItemPageState extends State<ReportLostItemPage> {
   }
 }
 
-class SearchFoundItemsPage extends StatelessWidget {
+class SearchFoundItemsPage extends StatefulWidget {
   const SearchFoundItemsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: SearchBar(),
-      body: const Center(
-        child: Text('Search Found Items Page'),
-      ),
-    );
-  }
+  State<SearchFoundItemsPage> createState() => _SearchFoundItemsPageState();
 }
 
-class SearchBar extends StatelessWidget implements PreferredSizeWidget {
+class _SearchFoundItemsPageState extends State<SearchFoundItemsPage> {
   final TextEditingController _searchController = TextEditingController();
-
-  SearchBar({super.key});
+  List<Map<String, dynamic>> _allItems = [];
+  List<Map<String, dynamic>> _filtered = [];
+  bool _loading = true;
 
   @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      title: TextField(
-        controller: _searchController,
-        decoration: const InputDecoration(
-          hintText: 'Search...',
-          border: InputBorder.none,
-        ),
-        onChanged: (value) {
-          // Implement search logic here
-        },
-      ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.search),
-          onPressed: () {
-            // Implement search button logic here
-          },
-        ),
-      ],
-    );
+  void initState() {
+    super.initState();
+    _loadItems();
+  }
+
+  Future<void> _loadItems() async {
+    try {
+      final items = await FirebaseService().getFoundItems();
+      setState(() {
+        _allItems = items;
+        _filtered = items;
+        _loading = false;
+      });
+    } catch (_) {
+      setState(() => _loading = false);
+    }
+  }
+
+  void _onSearch(String query) {
+    setState(() {
+      _filtered = query.isEmpty
+          ? _allItems
+          : _allItems
+              .where((item) =>
+                  (item['itemName'] ?? '')
+                      .toString()
+                      .toLowerCase()
+                      .contains(query.toLowerCase()) ||
+                  (item['trainDetails'] ?? '')
+                      .toString()
+                      .toLowerCase()
+                      .contains(query.toLowerCase()))
+              .toList();
+    });
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Widget build(BuildContext context) {
+    final r = R.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: TextField(
+          controller: _searchController,
+          decoration: const InputDecoration(
+            hintText: 'Search by item name or train...',
+            border: InputBorder.none,
+          ),
+          onChanged: _onSearch,
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () => _onSearch(_searchController.text),
+          ),
+        ],
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _filtered.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text(
+                          _searchController.text.isEmpty
+                              ? 'No found items reported yet'
+                              : 'No items match your search',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Try a different search term',
+                          style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  padding: EdgeInsets.all(r.sp12),
+                  itemCount: _filtered.length,
+                  itemBuilder: (context, index) {
+                    final item = _filtered[index];
+                    return Card(
+                      margin: EdgeInsets.only(bottom: r.sp8),
+                      child: ListTile(
+                        leading: const Icon(Icons.inventory_2_outlined),
+                        title: Text(item['itemName'] ?? 'Unknown item',
+                            style: TextStyle(fontSize: r.fs14)),
+                        subtitle: Text(
+                          '${item['trainDetails'] ?? ''}\n${item['dateTimeFound'] ?? ''}',
+                          style: TextStyle(fontSize: r.fs13),
+                        ),
+                        isThreeLine: true,
+                      ),
+                    );
+                  },
+                ),
+    );
+  }
 }
 
 class ReportFoundItemPage extends StatefulWidget {

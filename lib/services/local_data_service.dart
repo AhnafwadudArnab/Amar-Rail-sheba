@@ -253,17 +253,36 @@ class LocalDataService {
         .toList();
   }
 
-  // Save user session
+  // Session expiry duration — 30 days
+  static const int _sessionExpiryDays = 30;
+
+  // Save user session with expiry timestamp
   Future<void> saveUserSession(Map<String, dynamic> user) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('current_user', jsonEncode(user));
+    final sessionData = {
+      ...user,
+      'sessionExpiry': DateTime.now()
+          .add(const Duration(days: _sessionExpiryDays))
+          .toIso8601String(),
+    };
+    await prefs.setString('current_user', jsonEncode(sessionData));
   }
 
+  /// Returns the session if valid, null if missing or expired.
   Future<Map<String, dynamic>?> getUserSession() async {
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString('current_user');
     if (userJson == null) return null;
-    return jsonDecode(userJson);
+    final data = jsonDecode(userJson) as Map<String, dynamic>;
+    final expiryStr = data['sessionExpiry'] as String?;
+    if (expiryStr != null) {
+      final expiry = DateTime.tryParse(expiryStr);
+      if (expiry != null && DateTime.now().isAfter(expiry)) {
+        await clearSession(); // expired — force re-login
+        return null;
+      }
+    }
+    return data;
   }
 
   Future<void> clearSession() async {

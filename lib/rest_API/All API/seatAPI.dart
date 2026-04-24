@@ -19,7 +19,7 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      print('User  data inserted successfully');
+      // data inserted successfully
     } else {
       throw Exception('Failed to insert user data: ${response.body}');
     }

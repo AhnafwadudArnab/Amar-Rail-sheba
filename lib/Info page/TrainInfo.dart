@@ -400,7 +400,6 @@ class TrainListPage extends StatelessWidget {
                   title: Text(trainName, style: TextStyle(fontSize: r.fs14)),
                   trailing: Icon(Icons.arrow_forward_ios, size: r.fs14),
                   onTap: () {
-                    if (kDebugMode) print('Navigating to: $trainName');
                     Get.to(() => TrainDetailsPage(
                         trainStations: {trainName: trainStations[trainName] ?? []}));
                   },

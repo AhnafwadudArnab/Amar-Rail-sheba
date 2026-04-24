@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
@@ -44,21 +43,17 @@ class Passenger {
   Passenger(this.name, this.seatNO, this.coachName);
 
   void showDetails() {
-    if (kDebugMode) {
-      Logger().i(
-        'Passenger: $name, Seat: $seatNO, Compartment: $coachName',
-      );
-    }
+    Logger().i(
+      'Passenger: $name, Seat: $seatNO, Compartment: $coachName',
+    );
   }
 }
 
 class Attendant {
   void receiveAlert(Passenger passenger, String? emergencyType) {
-    if (kDebugMode) {
-      Logger().i(
-        'Alert received for Passenger: ${passenger.name}, Seat: ${passenger.seatNO}, Compartment: ${passenger.coachName}, Emergency Type: $emergencyType',
-      );
-    }
+    Logger().i(
+      'Alert received for Passenger: ${passenger.name}, Seat: ${passenger.seatNO}, Compartment: ${passenger.coachName}, Emergency Type: $emergencyType',
+    );
   }
 }
 
@@ -268,13 +263,9 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      if (kDebugMode) {
-        print('Emergency alert saved successfully.');
-      }
+      // Emergency alert saved successfully
     } else {
-      if (kDebugMode) {
-        print('Failed to save emergency alert: ${response.body}');
-      }
+      throw Exception('Failed to save emergency alert: ${response.body}');
     }
   }
   Future<void> getUserDetails(String userId) async {

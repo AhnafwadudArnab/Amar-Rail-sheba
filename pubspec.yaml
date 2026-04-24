@@ -18,7 +18,7 @@ dependencies:
   url_launcher: ^6.0.20
   logger: ^2.5.0
   qr_flutter: ^4.1.0
-  http: any
+  http: ^1.2.0
   fluttertoast: ^8.0.8
   provider: ^6.1.2
   shared_preferences: ^2.3.3

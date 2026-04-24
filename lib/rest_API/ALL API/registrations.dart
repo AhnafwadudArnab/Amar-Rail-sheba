@@ -15,8 +15,8 @@ Future<void> loginUser(String name, String email, String password) async {
   );
 
   if (response.statusCode == 200) {
-    print('Login successful');
+    // login successful
   } else {
-    print('Failed to login: ${response.body}');
+    throw Exception('Failed to login: ${response.body}');
   }
 }

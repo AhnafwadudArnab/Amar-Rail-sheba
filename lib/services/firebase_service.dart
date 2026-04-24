@@ -75,15 +75,24 @@ class FirebaseService {
   /// Get current user profile from DB
   Future<Map<String, dynamic>?> getUserProfile() async {
     if (uid == null) return null;
-    final snap = await _db.child('users/$uid').get();
-    if (!snap.exists) return null;
-    return Map<String, dynamic>.from(snap.value as Map);
+    try {
+      final snap = await _db.child('users/$uid').get();
+      if (!snap.exists || snap.value == null) return null;
+      return Map<String, dynamic>.from(snap.value as Map);
+    } catch (e) {
+      _toast('Failed to load profile', error: true);
+      return null;
+    }
   }
 
   /// Update user profile fields
   Future<void> updateProfile(Map<String, dynamic> data) async {
     if (uid == null) return;
-    await _db.child('users/$uid').update(data);
+    try {
+      await _db.child('users/$uid').update(data);
+    } catch (e) {
+      _toast('Failed to update profile', error: true);
+    }
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -109,44 +118,54 @@ class FirebaseService {
       _toast('Please login first', error: true);
       return null;
     }
-    final ref = _db.child('bookings').push();
-    await ref.set({
-      'userId': uid,
-      'from': from,
-      'to': to,
-      'date': date,
-      'class': travelClass,
-      'trainName': trainName,
-      'trainCode': trainCode,
-      'departureTime': departureTime,
-      'arrivalTime': arrivalTime,
-      'seats': seats,
-      'coachName': coachName,
-      'totalAmount': totalAmount,
-      'isRoundTrip': isRoundTrip,
-      'status': 'confirmed',
-      'createdAt': DateTime.now().toIso8601String(),
-    });
-    return ref.key;
+    try {
+      final ref = _db.child('bookings').push();
+      await ref.set({
+        'userId': uid,
+        'from': from,
+        'to': to,
+        'date': date,
+        'class': travelClass,
+        'trainName': trainName,
+        'trainCode': trainCode,
+        'departureTime': departureTime,
+        'arrivalTime': arrivalTime,
+        'seats': seats,
+        'coachName': coachName,
+        'totalAmount': totalAmount,
+        'isRoundTrip': isRoundTrip,
+        'status': 'confirmed',
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+      return ref.key;
+    } catch (e) {
+      _toast('Failed to save booking. Please try again.', error: true);
+      return null;
+    }
   }
 
   /// Get all bookings for current user (one-time fetch)
   Future<List<Map<String, dynamic>>> getMyBookings() async {
     if (uid == null) return [];
-    final snap = await _db
-        .child('bookings')
-        .orderByChild('userId')
-        .equalTo(uid)
-        .get();
-    if (!snap.exists) return [];
-    final raw = Map<String, dynamic>.from(snap.value as Map);
-    return raw.entries.map((e) {
-      final m = Map<String, dynamic>.from(e.value as Map);
-      m['id'] = e.key;
-      return m;
-    }).toList()
-      ..sort((a, b) => (b['createdAt'] as String)
-          .compareTo(a['createdAt'] as String));
+    try {
+      final snap = await _db
+          .child('bookings')
+          .orderByChild('userId')
+          .equalTo(uid)
+          .get();
+      if (!snap.exists || snap.value == null) return [];
+      final raw = Map<String, dynamic>.from(snap.value as Map);
+      return raw.entries.map((e) {
+        final m = Map<String, dynamic>.from(e.value as Map);
+        m['id'] = e.key;
+        return m;
+      }).toList()
+        ..sort((a, b) => (b['createdAt'] as String)
+            .compareTo(a['createdAt'] as String));
+    } catch (e) {
+      _toast('Failed to load bookings', error: true);
+      return [];
+    }
   }
 
   /// Stream of current user's bookings (real-time)
@@ -198,7 +217,7 @@ class FirebaseService {
   /// Stream real-time location of a train
   Stream<Map<String, dynamic>?> trainLocationStream(String trainId) {
     return _db.child('liveLocation/$trainId').onValue.map((event) {
-      if (!event.snapshot.exists) return null;
+      if (!event.snapshot.exists || event.snapshot.value == null) return null;
       return Map<String, dynamic>.from(event.snapshot.value as Map);
     });
   }
@@ -206,13 +225,17 @@ class FirebaseService {
   /// Update train location (admin/server side)
   Future<void> updateTrainLocation(
       String trainId, double lat, double lng, String nextStation, double speed) async {
-    await _db.child('liveLocation/$trainId').set({
-      'lat': lat,
-      'lng': lng,
-      'nextStation': nextStation,
-      'speed': speed,
-      'updatedAt': DateTime.now().toIso8601String(),
-    });
+    try {
+      await _db.child('liveLocation/$trainId').set({
+        'lat': lat,
+        'lng': lng,
+        'nextStation': nextStation,
+        'speed': speed,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      _toast('Failed to update location', error: true);
+    }
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -221,40 +244,72 @@ class FirebaseService {
 
   /// Report a lost item
   Future<String?> reportLostItem(Map<String, dynamic> data) async {
-    final ref = _db.child('lostFound').push();
-    await ref.set({
-      ...data,
-      'type': 'lost',
-      'userId': uid ?? 'anonymous',
-      'status': 'open',
-      'createdAt': DateTime.now().toIso8601String(),
-    });
-    _toast('Lost item reported!');
-    return ref.key;
+    try {
+      final ref = _db.child('lostFound').push();
+      await ref.set({
+        ...data,
+        'type': 'lost',
+        'userId': uid ?? 'anonymous',
+        'status': 'open',
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+      _toast('Lost item reported!');
+      return ref.key;
+    } catch (e) {
+      _toast('Failed to report item. Try again.', error: true);
+      return null;
+    }
   }
 
   /// Report a found item
   Future<String?> reportFoundItem(Map<String, dynamic> data) async {
-    final ref = _db.child('lostFound').push();
-    await ref.set({
-      ...data,
-      'type': 'found',
-      'userId': uid ?? 'anonymous',
-      'status': 'open',
-      'createdAt': DateTime.now().toIso8601String(),
-    });
-    _toast('Found item reported!');
-    return ref.key;
+    try {
+      final ref = _db.child('lostFound').push();
+      await ref.set({
+        ...data,
+        'type': 'found',
+        'userId': uid ?? 'anonymous',
+        'status': 'open',
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+      _toast('Found item reported!');
+      return ref.key;
+    } catch (e) {
+      _toast('Failed to report item. Try again.', error: true);
+      return null;
+    }
+  }
+
+  /// Get all found items (type == 'found') as a list
+  Future<List<Map<String, dynamic>>> getFoundItems() async {
+    try {
+      final snap = await _db
+          .child('lostFound')
+          .orderByChild('type')
+          .equalTo('found')
+          .get();
+      if (!snap.exists || snap.value == null) return [];
+      final raw = Map<String, dynamic>.from(snap.value as Map);
+      return raw.entries
+          .map((e) => Map<String, dynamic>.from(e.value as Map))
+          .toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   /// Submit a claim
   Future<void> submitClaim(String itemId, Map<String, dynamic> data) async {
-    await _db.child('lostFound/$itemId/claims').push().set({
-      ...data,
-      'userId': uid ?? 'anonymous',
-      'createdAt': DateTime.now().toIso8601String(),
-    });
-    _toast('Claim submitted!');
+    try {
+      await _db.child('lostFound/$itemId/claims').push().set({
+        ...data,
+        'userId': uid ?? 'anonymous',
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+      _toast('Claim submitted!');
+    } catch (e) {
+      _toast('Failed to submit claim. Try again.', error: true);
+    }
   }
 
   /// Stream all lost & found items
@@ -289,13 +344,17 @@ class FirebaseService {
       _toast('Please login to submit a review', error: true);
       return;
     }
-    await _db.child('reviews/$trainId').push().set({
-      'userId': uid,
-      'rating': rating,
-      'comment': comment,
-      'createdAt': DateTime.now().toIso8601String(),
-    });
-    _toast('Review submitted!');
+    try {
+      await _db.child('reviews/$trainId').push().set({
+        'userId': uid,
+        'rating': rating,
+        'comment': comment,
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+      _toast('Review submitted!');
+    } catch (e) {
+      _toast('Failed to submit review. Try again.', error: true);
+    }
   }
 
   /// Stream reviews for a train
@@ -317,14 +376,18 @@ class FirebaseService {
 
   /// Get emergency contacts (one-time)
   Future<List<Map<String, dynamic>>> getEmergencyContacts() async {
-    final snap = await _db.child('emergency').get();
-    if (!snap.exists) return [];
-    final raw = Map<String, dynamic>.from(snap.value as Map);
-    return raw.entries.map((e) {
-      final m = Map<String, dynamic>.from(e.value as Map);
-      m['id'] = e.key;
-      return m;
-    }).toList();
+    try {
+      final snap = await _db.child('emergency').get();
+      if (!snap.exists || snap.value == null) return [];
+      final raw = Map<String, dynamic>.from(snap.value as Map);
+      return raw.entries.map((e) {
+        final m = Map<String, dynamic>.from(e.value as Map);
+        m['id'] = e.key;
+        return m;
+      }).toList();
+    } catch (e) {
+      return [];
+    }
   }
 
   // ════════════════════════════════════════════════════════════════════════════

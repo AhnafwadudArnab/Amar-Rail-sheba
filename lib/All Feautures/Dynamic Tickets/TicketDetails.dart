@@ -138,28 +138,38 @@ class TicketListView extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: tickets.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(tickets[index].title),
-                  subtitle: Text(tickets[index].date.toString()),
-                  onTap: () {
-                    Get.to(() => TrainTicketPage(
-                          name: tickets[index].title,
-                          from: 'From Location',
-                          to: 'To Location',
-                          travelClass: 'Class',
-                          date: tickets[index].date.toString(),
-                          departTime: 'Departure Time',
-                          seat: 'Seat Number',
-                          totalAmount: '',
-                          trainCode: '',
-                        ));
-                  },
-                );
-              },
-            ),
+            child: tickets.isEmpty
+                ? _EmptyState(
+                    icon: Icons.confirmation_number_outlined,
+                    message: title == 'Upcoming Tickets'
+                        ? 'No upcoming tickets'
+                        : 'No past tickets',
+                    subtitle: title == 'Upcoming Tickets'
+                        ? 'Book a train to see your tickets here'
+                        : 'Your completed journeys will appear here',
+                  )
+                : ListView.builder(
+                    itemCount: tickets.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        title: Text(tickets[index].title),
+                        subtitle: Text(tickets[index].date.toString()),
+                        onTap: () {
+                          Get.to(() => TrainTicketPage(
+                                name: tickets[index].title,
+                                from: 'From Location',
+                                to: 'To Location',
+                                travelClass: 'Class',
+                                date: tickets[index].date.toString(),
+                                departTime: 'Departure Time',
+                                seat: 'Seat Number',
+                                totalAmount: '',
+                                trainCode: '',
+                              ));
+                        },
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -172,6 +182,48 @@ class Ticket {
   final DateTime date;
 
   Ticket(this.title, this.date);
+}
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  final String subtitle;
+
+  const _EmptyState({
+    required this.icon,
+    required this.message,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class TrainTicketPage extends StatelessWidget {

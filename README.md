@@ -222,29 +222,35 @@ flutter pub get
 
 ### 🟡 MEDIUM — Code Quality
 
-- [ ] **Remove debug print statements**
-  - Files: `lib/All Feautures/payments_Methods/payment_gateways.dart` (lines 12, 24, 36), emergency module
-  - Remove all `if (kDebugMode) { print(...) }` blocks or replace with a proper logger package.
+- [x] **Remove debug print statements** ✅
+  - Removed all `kDebugMode` + `print()` blocks from: `payment_gateways.dart`, `emergencies.dart`, `TrainInfo.dart`, `ticketUpcoming.dart`, `login_ex.dart`, `registrations.dart`, `seatAPI.dart`
 
-- [ ] **Pin `http` package version**
-  - File: `pubspec.yaml`
-  - `http: any` is a security risk. Pin to a specific version e.g. `http: ^1.2.0`.
+- [x] **Pin `http` package version** ✅
+  - `pubspec.yaml`: `http: any` → `http: ^1.2.0`
 
 - [ ] **Add crash reporting**
-  - Integrate `firebase_crashlytics` to capture and report runtime crashes in production.
+  - Add `firebase_crashlytics: ^4.1.0` to `pubspec.yaml`
+  - In `main.dart` add: `FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;`
 
 - [ ] **Add analytics**
-  - Integrate `firebase_analytics` to track user flows, booking conversions, and errors.
+  - Add `firebase_analytics: ^11.3.0` to `pubspec.yaml`
+  - Log key events: booking started, payment attempted, search performed
 
-- [ ] **Add session expiration**
-  - File: `lib/services/local_data_service.dart`
-  - Local session stored in SharedPreferences has no expiry. Add a `sessionExpiry` timestamp and force re-login after e.g. 30 days.
+- [x] **Add session expiration** ✅
+  - `lib/services/local_data_service.dart`: sessions now expire after 30 days. `getUserSession()` auto-clears expired sessions and returns null to force re-login.
 
-- [ ] **Add offline support / loading states**
-  - No loading indicators on most screens during async operations. Add `CircularProgressIndicator` while Firebase data loads.
+- [x] **Add loading states & empty screens** ✅
+  - `lib/main.dart`: Firebase init shows splash screen + loading indicator, error screen on failure
+  - `lib/All Feautures/second pagee/Book_page_after_search.dart`: empty state when no trains found
+  - `lib/All Feautures/Dynamic Tickets/TicketDetails.dart`: empty states for upcoming/past tickets
+  - `lib/All Feautures/Maintainence/LostAndFound.dart`: `SearchFoundItemsPage` loads real Firebase data with spinner + empty state + working search
 
 - [ ] **Add rate limiting on login**
-  - No protection against brute force. Firebase Auth has built-in rate limiting but the local auth fallback does not.
+  - Firebase Auth handles brute-force for Firebase login automatically
+  - For local auth fallback: add failed-attempt counter in SharedPreferences, lock after 5 attempts for 15 minutes
+
+- [x] **Update web app title** ✅
+  - `web/index.html`: title, description, and apple-mobile-web-app-title all updated to "Amar Rail Sheba"
 
 ---
 
@@ -253,14 +259,16 @@ flutter pub get
 - [ ] **Add app icon**
   - Default Flutter icon is used. Use `flutter_launcher_icons` package to set a custom icon.
 
-- [ ] **Add splash screen**
-  - No splash screen during Firebase initialization. Use `flutter_native_splash` package.
+- [x] **Add splash screen** ✅
+  - `lib/main.dart`: custom splash screen shown during Firebase initialization (train icon, app name, progress indicator)
 
 - [ ] **Add screenshots to README**
   - Screenshots section is empty.
 
-- [ ] **Add empty state screens**
-  - "My Tickets" and "Lost & Found" show nothing when empty. Add empty state illustrations.
+- [x] **Add empty state screens** ✅
+  - My Tickets: "No upcoming/past tickets" with icon and subtitle
+  - Lost & Found search: "No items found" with icon
+  - Train search results: "No trains found" with icon
 
 - [ ] **Add profile picture upload**
   - Profile page has no photo upload. Integrate Firebase Storage.

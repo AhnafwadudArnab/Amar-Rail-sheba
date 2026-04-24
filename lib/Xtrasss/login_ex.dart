@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class LoginEx extends StatefulWidget {
@@ -81,11 +80,7 @@ class _LoginExState extends State<LoginEx> {
                   ),
                   const SizedBox(width: 20),
                   ElevatedButton(
-                    onPressed: () {
-                      if (kDebugMode) {
-                        print("Clicked on login button");
-                      }
-                    },
+                    onPressed: () {},
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                     ),

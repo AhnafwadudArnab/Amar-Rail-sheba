@@ -139,17 +139,43 @@ class _TrainSearchPageState extends State<TrainSearchPage>
         // Round trip step indicator
         if (widget.isRoundTrip) _buildStepIndicator(isReturn),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: trains.length,
-            itemBuilder: (ctx, i) => TrainCard(
-              train: trains[i],
-              passengers: widget.passengers,
-              isReturn: isReturn,
-              isLocked: isReturn && !_outboundConfirmed,
-              onSelect: (train) => _handleSelect(train, isReturn),
-            ),
-          ),
+          child: trains.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.train_outlined, size: 64, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No trains found',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Try a different route or date',
+                          style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: trains.length,
+                  itemBuilder: (ctx, i) => TrainCard(
+                    train: trains[i],
+                    passengers: widget.passengers,
+                    isReturn: isReturn,
+                    isLocked: isReturn && !_outboundConfirmed,
+                    onSelect: (train) => _handleSelect(train, isReturn),
+                  ),
+                ),
         ),
       ],
     );

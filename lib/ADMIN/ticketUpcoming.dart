@@ -45,32 +45,20 @@ class UpcomingTicket extends StatelessWidget {
           ''';
 
           await file.writeAsString(ticketData);
-          if (kDebugMode) {
-            print('Ticket saved at $filePath');
-          }
-          // Optionally show a success message to the user
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Ticket saved at $filePath')),
           );
         } else {
-          if (kDebugMode) {
-            print('Directory is null');
-          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not determine save directory')),
+          );
         }
       } catch (e) {
-        if (kDebugMode) {
-          print('Error saving file: $e');
-        }
-        // Optionally show an error message to the user
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving ticket: $e')),
         );
       }
     } else {
-      if (kDebugMode) {
-        print('Permission denied');
-      }
-      // Optionally show a message to the user
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Storage permission denied')),
       );

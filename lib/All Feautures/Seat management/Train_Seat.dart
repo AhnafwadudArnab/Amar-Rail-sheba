@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:get/get.dart';
@@ -129,26 +130,42 @@ class SeatSelectionPageState extends State<SeatSelectionPage> {
   }
 
   void _confirmBooking() async {
-    // Save booking locally (no MySQL)
+    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'user_local';
+    final arrivalTime = widget.outboundTrain?.arrivalTime ??
+        widget.returnTrain?.arrivalTime ?? '';
+
     final bookingId = 'BK${Random().nextInt(999999).toString().padLeft(6, '0')}';
     final booking = BookingModel(
       bookingId: bookingId,
-      userId: 'user_local',
+      userId: currentUid,
       fromStation: widget.fromStation ?? '',
       toStation: widget.toStation ?? '',
       journeyDate: widget.journeyDate ?? '',
       travelClass: widget.travelClass ?? '',
       trainName: widget.ticketType,
-      trainCode: 'TR001',
+      trainCode: widget.outboundTrain?.trainCode ?? 'TR001',
       departureTime: widget.departureTime ?? '',
-      arrivalTime: '',
+      arrivalTime: arrivalTime,
       seatNumbers: selectedSeats.map((i) => i + 1).toList(),
       coachName: selectedCoach,
       totalAmount: totalPrice * 1.15,
       status: 'confirmed',
       bookingType: widget.isRoundTrip ? 'round_trip' : 'one_way',
     );
-    await LocalDataService().saveBooking(booking);
+
+    try {
+      await LocalDataService().saveBooking(booking);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to save booking. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
 
     Get.offAll(() => PaymentsPage(
           orders: [
