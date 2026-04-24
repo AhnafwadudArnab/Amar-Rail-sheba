@@ -1,22 +1,29 @@
-class UnboardingContent{
-  String Image;
-  String title;
-  String description;
+class UnboardingContent {
+  final String image;
+  final String title;
+  final String description;
 
-  UnboardingContent({required this.description, required this.Image,required this.title });
+  const UnboardingContent({
+    required this.image,
+    required this.title,
+    required this.description,
+  });
 }
-List<UnboardingContent> contents =[
-   UnboardingContent(
-      title: "Easy and Online Booking",
-      description: "  Book your tickets online Secure\n        and fast payment options",
-      Image: "assets/trainBackgrong/155555.jpg"),
+
+const List<UnboardingContent> contents = [
   UnboardingContent(
-      title: "Select Your Train",
-      description: "Choose from a variety of trains\n        More options available",
-      Image: "assets/trainBackgrong/45454545.png"),
- 
+    title: 'Easy and Online Booking',
+    description: 'Book your tickets online with secure and fast payment options.',
+    image: 'assets/trainBackgrong/155555.jpg',
+  ),
   UnboardingContent(
-      title: "Quick and Comfortable Journey",
-      description: "Experience a comfortable journey\n     with our top-notch services",
-      Image: "assets/trainBackgrong/125466.png"),
+    title: 'Select Your Train',
+    description: 'Choose from a variety of trains and travel classes across Bangladesh.',
+    image: 'assets/trainBackgrong/45454545.png',
+  ),
+  UnboardingContent(
+    title: 'Quick and Comfortable Journey',
+    description: 'Experience a comfortable journey with real-time tracking and top-notch services.',
+    image: 'assets/trainBackgrong/125466.png',
+  ),
 ];

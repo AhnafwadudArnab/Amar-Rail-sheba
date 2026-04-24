@@ -102,7 +102,11 @@ class _OnboardState extends State<Onboard> {
   }
 
   Widget _buildPage(BuildContext context, R r, int i) {
-    // Image takes ~55% of available height, rest is text
+    final screenH = MediaQuery.of(context).size.height;
+    // On short screens (< 650px) give image less space
+    final imgFlex = screenH < 650 ? 5 : 6;
+    final txtFlex = screenH < 650 ? 4 : 3;
+
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: r.isPhone ? r.sp20 : r.isTablet ? 60 : 100,
@@ -111,11 +115,11 @@ class _OnboardState extends State<Onboard> {
       child: Column(
         children: [
           Expanded(
-            flex: 6,
+            flex: imgFlex,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Image.asset(
-                contents[i].Image,
+                contents[i].image,
                 width: double.infinity,
                 fit: BoxFit.cover,
               ),
@@ -123,8 +127,9 @@ class _OnboardState extends State<Onboard> {
           ),
           SizedBox(height: r.sp20),
           Expanded(
-            flex: 3,
+            flex: txtFlex,
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text(
                   contents[i].title,
