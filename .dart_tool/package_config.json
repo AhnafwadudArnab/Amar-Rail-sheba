@@ -291,9 +291,9 @@
     },
     {
       "name": "geolocator",
-      "rootUri": "file:///C:/Users/ahana/AppData/Local/Pub/Cache/hosted/pub.dev/geolocator-13.0.4",
+      "rootUri": "file:///C:/Users/ahana/AppData/Local/Pub/Cache/hosted/pub.dev/geolocator-12.0.0",
       "packageUri": "lib/",
-      "languageVersion": "3.5"
+      "languageVersion": "2.15"
     },
     {
       "name": "geolocator_android",

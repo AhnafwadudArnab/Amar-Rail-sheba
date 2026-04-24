@@ -1,29 +1,52 @@
+<div align="center">
+
 # 🚂 Amar Rail Sheba
+### Bangladesh Railway Ticket Booking System
 
-**Bangladesh Railway Ticket Booking System**
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev)
+[![Firebase](https://img.shields.io/badge/Firebase-Realtime_DB-FFCA28?logo=firebase)](https://firebase.google.com)
+[![License](https://img.shields.io/badge/License-Academic-blue)](#license)
 
-A Flutter-based mobile and web application for booking train tickets, tracking live trains, and managing railway services in Bangladesh.
+**Live Web App →** [Firebase](https://railwaysystems-7d372.web.app) · [Vercel](https://amar-rail-sheba.vercel.app)
 
-> 📚 **Academic Project** — DBMS Course (Group 05, United International University)
+> 📚 Academic Project — DBMS Course, Group 05, United International University
+
+</div>
+
+---
+
+## 📱 Screenshots
+
+> _Add screenshots here_
 
 ---
 
 ## ✨ Features
 
-| Feature | Description |
+| Feature | Details |
 |---|---|
-| 🔐 Auth | Firebase login / register / forgot password |
-| 🔍 Train Search | Route, date, class, passenger count (1–4) |
-| 🗺️ 60+ Stations | All 8 divisions of Bangladesh |
-| 💺 Seat Selection | Interactive coach map, passenger-count enforced limit |
-| 🎫 Digital Tickets | PDF download, monthly grouped in My Tickets |
-| 📍 Live Tracking | Real-time train location on Google Maps |
-| 🔔 Push Notifications | Firebase Cloud Messaging |
-| 🧳 Lost & Found | Report + claim system |
-| 🚨 Emergency Contacts | Quick access to railway emergency numbers |
-| ⭐ Ratings & Reviews | Per-train reviews |
-| 🛡️ Admin Panel | Trains, bookings, users, announcements |
-| 📱 Responsive | Phone, tablet, web |
+| 🔐 **Auth** | Firebase login / register / forgot password |
+| 🔍 **Train Search** | Route, date, class, passenger count (1–4) |
+| 🗺️ **60+ Stations** | All 8 divisions of Bangladesh |
+| 💺 **Seat Selection** | Interactive coach map — enforces exact passenger count |
+| 🎫 **Digital Tickets** | PDF download, monthly grouped in My Tickets |
+| � **Weekly Limit** | Max 4 tickets per user per week |
+| �📍 **Live Tracking** | Real-time train location on Google Maps |
+| 🔔 **Push Notifications** | Firebase Cloud Messaging |
+| 🧳 **Lost & Found** | Report + claim system |
+| 🚨 **Emergency Contacts** | Quick access to railway emergency numbers |
+| ⭐ **Ratings & Reviews** | Per-train reviews |
+| 🛡️ **Admin Panel** | Trains, bookings, users, announcements |
+| 📱 **Responsive** | Phone, tablet, web |
+
+---
+
+## 🌐 Live Links
+
+| Platform | URL |
+|---|---|
+| 🔥 Firebase Hosting | https://railwaysystems-7d372.web.app |
+| ▲ Vercel | https://amar-rail-sheba.vercel.app |
 
 ---
 
@@ -57,8 +80,30 @@ flutter pub get
 2. Add your Google Maps API key in `android/app/src/main/AndroidManifest.xml`
 3. `flutter run`
 
-**Firebase project:** `railwaysystems-7d372`
+**Firebase project:** `railwaysystems-7d372`  
 **DB URL:** `https://railwaysystems-7d372-default-rtdb.asia-southeast1.firebasedatabase.app`
+
+---
+
+## 📦 Build & Deploy
+
+### Android APK
+```bash
+flutter build apk --release
+# Output: build/app/outputs/flutter-apk/app-release.apk
+```
+
+### Web → Firebase
+```bash
+flutter build web --release
+firebase deploy --only hosting
+```
+
+### Web → Vercel
+```bash
+vercel deploy --prod
+# Auto-deploys on every push to main branch
+```
 
 ---
 
@@ -68,10 +113,10 @@ flutter pub get
 Search Train → Select Seats → Payment → Ticket Generated → Saved to My Tickets
 ```
 
-- **Seat limit:** Exactly matches passenger count selected at search
-- **Weekly limit:** Max 4 tickets per user per week (Mon–Sun)
-- **Seat locking:** Firebase transaction locks seats for 10 minutes during payment
-- **Payment:** Direct booking confirmation (SSLCommerz integration ready for production)
+- **Seat limit** — exactly matches passenger count selected at search
+- **Weekly limit** — max 4 tickets per user per week (Mon–Sun)
+- **Seat locking** — Firebase transaction locks seats for 10 minutes during payment
+- **Payment** — direct booking confirmation (SSLCommerz integration ready for production)
 
 ---
 
@@ -84,9 +129,23 @@ Search Train → Select Seats → Payment → Ticket Generated → Saved to My T
 
 ---
 
-## 🔐 Firebase Security Rules
+## � Train Routes & Names
 
-Apply these in Firebase Console → Realtime Database → Rules:
+| Route | Trains |
+|---|---|
+| Dhaka ↔ Chattogram | Subarna Express, Sonar Bangla Express, Mahanagar Provati, Turna Nishitha |
+| Dhaka ↔ Sylhet | Parabat Express, Jayantika Express, Upaban Express, Kalni Express |
+| Dhaka ↔ Rajshahi | Silk City Express, Padma Express, Dhumketu Express |
+| Dhaka ↔ Khulna | Sundarban Express, Chitra Express |
+| Dhaka ↔ Rangpur | Rangpur Express, Kurigram Express |
+| Dhaka ↔ Dinajpur | Ekota Express, Drutojan Express |
+| Chattogram ↔ Sylhet | Paharika Express, Udayan Express |
+
+---
+
+## �🔐 Firebase Security Rules
+
+Apply in Firebase Console → Realtime Database → Rules:
 
 ```json
 {
@@ -102,10 +161,10 @@ Apply these in Firebase Console → Realtime Database → Rules:
         ".write": "$uid === auth.uid"
       }
     },
-    "lostFound": { ".read": true, ".write": "auth != null" },
+    "lostFound":    { ".read": true, ".write": "auth != null" },
     "liveLocation": { ".read": true, ".write": "auth.token.admin === true" },
-    "reviews": { ".read": true, ".write": "auth != null" },
-    "emergency": { ".read": true, ".write": "auth.token.admin === true" }
+    "reviews":      { ".read": true, ".write": "auth != null" },
+    "emergency":    { ".read": true, ".write": "auth.token.admin === true" }
   }
 }
 ```
@@ -114,26 +173,12 @@ Apply these in Firebase Console → Realtime Database → Rules:
 
 ---
 
-## 🚆 Train Routes & Names
-
-| Route | Trains |
-|---|---|
-| Dhaka ↔ Chattogram | Subarna Express, Sonar Bangla Express, Mahanagar Provati, Turna Nishitha |
-| Dhaka ↔ Sylhet | Parabat Express, Jayantika Express, Upaban Express, Kalni Express |
-| Dhaka ↔ Rajshahi | Silk City Express, Padma Express, Dhumketu Express |
-| Dhaka ↔ Khulna | Sundarban Express, Chitra Express |
-| Dhaka ↔ Rangpur | Rangpur Express, Kurigram Express |
-| Dhaka ↔ Dinajpur | Ekota Express, Drutojan Express |
-| Chattogram ↔ Sylhet | Paharika Express, Udayan Express |
-
----
-
 ## 🛡️ Admin Panel
 
 Admin access requires Firebase custom claim `admin: true`.
 
-**Grant admin role (run once via Firebase Admin SDK):**
 ```javascript
+// Run once via Firebase Admin SDK (Node.js)
 admin.auth().setCustomUserClaims('USER_UID_HERE', { admin: true });
 ```
 
@@ -147,12 +192,11 @@ Currently uses direct booking confirmation. To enable real SSLCommerz payments:
 
 1. Register at [sslcommerz.com](https://sslcommerz.com) → get Store ID + Store Password
 2. In `lib/All Feautures/payments_Methods/payment_gateways.dart`:
-   ```dart
-   static const _storeId = 'your_real_store_id';
-   static const _storePass = 'your_real_store_password';
-   // isSandbox: true → false
-   ```
-3. Add `webview_flutter` to render the payment page
+```dart
+static const _storeId = 'your_real_store_id';
+static const _storePass = 'your_real_store_password';
+// isSandbox: true → false
+```
 
 ---
 
@@ -193,4 +237,6 @@ Academic purposes only. © 2025 United International University.
 
 ---
 
-<p align="center">Made with ❤️ in Bangladesh 🇧🇩</p>
+<div align="center">
+Made with ❤️ in Bangladesh 🇧🇩
+</div>

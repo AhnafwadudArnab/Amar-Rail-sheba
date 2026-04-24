@@ -31,21 +31,21 @@ if (localPropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.amarrailsheba.app"
+    namespace = "com.example.amarRailSheba"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = "17"
     }
 
     defaultConfig {
-        applicationId = "com.amarrailsheba.app"
+        applicationId = "com.example.amarRailSheba"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

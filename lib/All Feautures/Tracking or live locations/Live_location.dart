@@ -95,18 +95,15 @@ class _LiveLocationState extends State<LiveLocation>
 
     setState(() => _locationGranted = true);
 
-    // LocationSettings: web uses default accuracy (browser decides)
-    final locationSettings = kIsWeb
-        ? const LocationSettings(accuracy: LocationAccuracy.high)
-        : const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            distanceFilter: 10,
-          );
+    const locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10,
+    );
 
     // Get initial position
     try {
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings: locationSettings,
+        desiredAccuracy: LocationAccuracy.high,
       );
       _onPositionUpdate(pos);
     } catch (e) {
