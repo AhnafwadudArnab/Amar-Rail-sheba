@@ -36,4 +36,4 @@ ios/Runner/GoogleService-Info.plist
 # Secrets — never commit these
 **/google-services.json
 **/GoogleService-Info.plist
-lib/firebase_options.dart
+# lib/firebase_options.dart — commented out because web config is safe to commit
