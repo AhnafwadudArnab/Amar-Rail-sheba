@@ -16,6 +16,7 @@ class TrainModel {
   final String arrivalTime;
   final String duration;
   final List<TicketClass> classes;
+  final List<TrainStation> stations;
 
   TrainModel({
     required this.trainId,
@@ -27,6 +28,7 @@ class TrainModel {
     required this.arrivalTime,
     required this.duration,
     required this.classes,
+    this.stations = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -39,6 +41,31 @@ class TrainModel {
         'arrivalTime': arrivalTime,
         'duration': duration,
         'classes': classes.map((c) => c.toJson()).toList(),
+        'stations': stations.map((s) => s.toJson()).toList(),
+      };
+}
+
+class TrainStation {
+  final String name;
+  final String? arrivalTime;
+  final String? departureTime;
+  final String haltTime;
+  final String duration;
+
+  const TrainStation({
+    required this.name,
+    this.arrivalTime,
+    this.departureTime,
+    required this.haltTime,
+    required this.duration,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'arrivalTime': arrivalTime,
+        'departureTime': departureTime,
+        'haltTime': haltTime,
+        'duration': duration,
       };
 }
 
@@ -71,7 +98,7 @@ class BookingModel {
   final String coachName;
   final double totalAmount;
   final String status;
-  final String bookingType; // 'one_way' or 'round_trip'
+  final String bookingType;
   final String? returnBookingId;
 
   BookingModel({
@@ -132,6 +159,121 @@ class BookingModel {
       );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Route-wise static station lists
+// ─────────────────────────────────────────────────────────────────────────────
+
+// DHA–CTG stops
+const _dhaCtgStations = [
+  TrainStation(name: 'Dhaka (Kamalapur)', departureTime: null, haltTime: '0m', duration: '0h 0m'),
+  TrainStation(name: 'Airport',           haltTime: '5m',  duration: '0h 20m'),
+  TrainStation(name: 'Bhairab Bazar',     haltTime: '3m',  duration: '2h 10m'),
+  TrainStation(name: 'Brahman Baria',     haltTime: '2m',  duration: '2h 45m'),
+  TrainStation(name: 'Akhaura',           haltTime: '5m',  duration: '3h 20m'),
+  TrainStation(name: 'Comilla',           haltTime: '2m',  duration: '4h 5m'),
+  TrainStation(name: 'Laksham',           haltTime: '2m',  duration: '4h 30m'),
+  TrainStation(name: 'Feni',              haltTime: '2m',  duration: '5h 0m'),
+  TrainStation(name: 'Chattogram',        haltTime: '0m',  duration: '6h 30m'),
+];
+
+// DHA–SYL stops
+const _dhaSylStations = [
+  TrainStation(name: 'Dhaka (Kamalapur)', haltTime: '0m', duration: '0h 0m'),
+  TrainStation(name: 'Airport',           haltTime: '5m', duration: '0h 20m'),
+  TrainStation(name: 'Bhairab Bazar',     haltTime: '3m', duration: '2h 10m'),
+  TrainStation(name: 'Brahman Baria',     haltTime: '2m', duration: '2h 45m'),
+  TrainStation(name: 'Akhaura',           haltTime: '5m', duration: '3h 20m'),
+  TrainStation(name: 'Sreemangal',        haltTime: '3m', duration: '5h 0m'),
+  TrainStation(name: 'Kulaura',           haltTime: '2m', duration: '5h 45m'),
+  TrainStation(name: 'Moulvibazar',       haltTime: '2m', duration: '6h 10m'),
+  TrainStation(name: 'Sylhet',            haltTime: '0m', duration: '7h 0m'),
+];
+
+// CTG–SYL stops
+const _ctgSylStations = [
+  TrainStation(name: 'Chattogram', haltTime: '0m', duration: '0h 0m'),
+  TrainStation(name: 'Feni',       haltTime: '2m', duration: '1h 30m'),
+  TrainStation(name: 'Laksham',    haltTime: '2m', duration: '2h 0m'),
+  TrainStation(name: 'Akhaura',    haltTime: '5m', duration: '3h 30m'),
+  TrainStation(name: 'Sreemangal', haltTime: '3m', duration: '5h 0m'),
+  TrainStation(name: 'Kulaura',    haltTime: '2m', duration: '5h 45m'),
+  TrainStation(name: 'Sylhet',     haltTime: '0m', duration: '6h 30m'),
+];
+
+// DHA–RAJ stops
+const _dhaRajStations = [
+  TrainStation(name: 'Dhaka (Kamalapur)',   haltTime: '0m', duration: '0h 0m'),
+  TrainStation(name: 'Airport',             haltTime: '5m', duration: '0h 20m'),
+  TrainStation(name: 'Joydebpur',           haltTime: '2m', duration: '0h 50m'),
+  TrainStation(name: 'Bangabandhu Bridge',  haltTime: '5m', duration: '2h 30m'),
+  TrainStation(name: 'Ishwardi',            haltTime: '5m', duration: '4h 30m'),
+  TrainStation(name: 'Natore',              haltTime: '2m', duration: '5h 10m'),
+  TrainStation(name: 'Rajshahi',            haltTime: '0m', duration: '6h 0m'),
+];
+
+// DHA–KHL stops
+const _dhaKhlStations = [
+  TrainStation(name: 'Dhaka (Kamalapur)',  haltTime: '0m', duration: '0h 0m'),
+  TrainStation(name: 'Airport',            haltTime: '5m', duration: '0h 20m'),
+  TrainStation(name: 'Joydebpur',          haltTime: '2m', duration: '0h 50m'),
+  TrainStation(name: 'Poradah',            haltTime: '3m', duration: '3h 30m'),
+  TrainStation(name: 'Kushtia',            haltTime: '3m', duration: '4h 20m'),
+  TrainStation(name: 'Jessore',            haltTime: '5m', duration: '6h 0m'),
+  TrainStation(name: 'Khulna',             haltTime: '0m', duration: '7h 30m'),
+];
+
+// DHA–RNG stops
+const _dhaRngStations = [
+  TrainStation(name: 'Dhaka (Kamalapur)',  haltTime: '0m', duration: '0h 0m'),
+  TrainStation(name: 'Airport',            haltTime: '5m', duration: '0h 20m'),
+  TrainStation(name: 'Joydebpur',          haltTime: '2m', duration: '0h 50m'),
+  TrainStation(name: 'Bangabandhu Bridge', haltTime: '5m', duration: '2h 30m'),
+  TrainStation(name: 'Bogura',             haltTime: '5m', duration: '4h 30m'),
+  TrainStation(name: 'Gaibandha',          haltTime: '3m', duration: '5h 30m'),
+  TrainStation(name: 'Rangpur',            haltTime: '0m', duration: '6h 30m'),
+];
+
+// DHA–DNJ stops
+const _dhaDnjStations = [
+  TrainStation(name: 'Dhaka (Kamalapur)',  haltTime: '0m', duration: '0h 0m'),
+  TrainStation(name: 'Airport',            haltTime: '5m', duration: '0h 20m'),
+  TrainStation(name: 'Joydebpur',          haltTime: '2m', duration: '0h 50m'),
+  TrainStation(name: 'Bangabandhu Bridge', haltTime: '5m', duration: '2h 30m'),
+  TrainStation(name: 'Parbatipur',         haltTime: '5m', duration: '5h 30m'),
+  TrainStation(name: 'Dinajpur',           haltTime: '0m', duration: '6h 30m'),
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Route key helper
+// ─────────────────────────────────────────────────────────────────────────────
+String _routeKey(String from, String to) {
+  final f = from.toLowerCase();
+  final t = to.toLowerCase();
+  bool isDhaka(String s) => s.contains('dhaka') || s.contains('kamalapur');
+  bool isCtg(String s) => s.contains('chattogram') || s.contains('chittagong');
+  bool isSyl(String s) => s.contains('sylhet');
+  bool isRaj(String s) => s.contains('rajshahi');
+  bool isKhl(String s) => s.contains('khulna');
+  bool isRng(String s) => s.contains('rangpur');
+  bool isDnj(String s) => s.contains('dinajpur');
+
+  if (isDhaka(f) && isCtg(t)) return 'dha_ctg';
+  if (isCtg(f) && isDhaka(t)) return 'ctg_dha';
+  if (isDhaka(f) && isSyl(t)) return 'dha_syl';
+  if (isSyl(f) && isDhaka(t)) return 'syl_dha';
+  if (isCtg(f) && isSyl(t))   return 'ctg_syl';
+  if (isSyl(f) && isCtg(t))   return 'syl_ctg';
+  if (isDhaka(f) && isRaj(t)) return 'dha_raj';
+  if (isRaj(f) && isDhaka(t)) return 'raj_dha';
+  if (isDhaka(f) && isKhl(t)) return 'dha_khl';
+  if (isKhl(f) && isDhaka(t)) return 'khl_dha';
+  if (isDhaka(f) && isRng(t)) return 'dha_rng';
+  if (isRng(f) && isDhaka(t)) return 'rng_dha';
+  if (isDhaka(f) && isDnj(t)) return 'dha_dnj';
+  if (isDnj(f) && isDhaka(t)) return 'dnj_dha';
+  return 'other';
+}
+
 class LocalDataService {
   static final LocalDataService _instance = LocalDataService._internal();
   factory LocalDataService() => _instance;
@@ -170,8 +312,6 @@ class LocalDataService {
 
   static const List<String> travelClasses = ['AC', 'Snigdha', 'S_Chair', 'Shulov'];
 
-  /// Fetches trains from Firebase `trains/` node filtered by route.
-  /// Falls back to mock data if Firebase returns nothing (useful for dev/demo).
   Future<List<TrainModel>> getTrainsAsync(String from, String to) async {
     try {
       final db = FirebaseDatabase.instance.ref();
@@ -200,82 +340,163 @@ class LocalDataService {
         }).where((t) =>
             t.fromStation.toLowerCase() == from.toLowerCase() &&
             t.toStation.toLowerCase() == to.toLowerCase()).toList();
-
         if (all.isNotEmpty) return all;
       }
-    } catch (_) {
-      // fall through to mock data
-    }
-    // Fallback: mock data (used when Firebase has no trains yet)
+    } catch (_) {}
     return _mockTrains(from, to);
   }
 
-  /// Synchronous mock — kept for backward compat with existing UI calls.
-  /// Prefer [getTrainsAsync] for production use.
   List<TrainModel> getTrains(String from, String to) => _mockTrains(from, to);
 
   List<TrainModel> _mockTrains(String from, String to) {
+    final key = _routeKey(from, to);
+    switch (key) {
+      case 'dha_ctg':
+      case 'ctg_dha':
+        return _buildDhaCtg(from, to);
+      case 'dha_syl':
+      case 'syl_dha':
+        return _buildDhaSyl(from, to);
+      case 'ctg_syl':
+      case 'syl_ctg':
+        return _buildCtgSyl(from, to);
+      case 'dha_raj':
+      case 'raj_dha':
+        return _buildDhaRaj(from, to);
+      case 'dha_khl':
+      case 'khl_dha':
+        return _buildDhaKhl(from, to);
+      case 'dha_rng':
+      case 'rng_dha':
+        return _buildDhaRng(from, to);
+      case 'dha_dnj':
+      case 'dnj_dha':
+        return _buildDhaDnj(from, to);
+      default:
+        return _buildGeneric(from, to);
+    }
+  }
+
+  // ── DHA ↔ CTG  (4 trains) ────────────────────────────────────────────────
+  List<TrainModel> _buildDhaCtg(String from, String to) {
+    final stns = _maybeReverse(_dhaCtgStations, from, to);
     return [
-      TrainModel(
-        trainId: 'TR001',
-        trainName: 'Subarna Express',
-        trainCode: '701',
-        fromStation: from,
-        toStation: to,
-        departureTime: '07:00 AM',
-        arrivalTime: '01:30 PM',
-        duration: '6h 30m',
-        classes: [
-          TicketClass(type: 'AC', price: 1200, availableSeats: 12),
-          TicketClass(type: 'Snigdha', price: 900, availableSeats: 20),
-          TicketClass(type: 'S_Chair', price: 450, availableSeats: 35),
-        ],
-      ),
-      TrainModel(
-        trainId: 'TR002',
-        trainName: 'Turna Nishitha',
-        trainCode: '741',
-        fromStation: from,
-        toStation: to,
-        departureTime: '11:30 PM',
-        arrivalTime: '05:45 AM',
-        duration: '6h 15m',
-        classes: [
-          TicketClass(type: 'AC', price: 1100, availableSeats: 8),
-          TicketClass(type: 'Snigdha', price: 850, availableSeats: 15),
-          TicketClass(type: 'S_Chair', price: 400, availableSeats: 40),
-        ],
-      ),
-      TrainModel(
-        trainId: 'TR003',
-        trainName: 'Mahanagar Provati',
-        trainCode: '703',
-        fromStation: from,
-        toStation: to,
-        departureTime: '07:45 AM',
-        arrivalTime: '02:15 PM',
-        duration: '6h 30m',
-        classes: [
-          TicketClass(type: 'Snigdha', price: 880, availableSeats: 18),
-          TicketClass(type: 'S_Chair', price: 430, availableSeats: 50),
-          TicketClass(type: 'Shulov', price: 280, availableSeats: 60),
-        ],
-      ),
-      TrainModel(
-        trainId: 'TR004',
-        trainName: 'Sonar Bangla Express',
-        trainCode: '787',
-        fromStation: from,
-        toStation: to,
-        departureTime: '06:20 AM',
-        arrivalTime: '12:00 PM',
-        duration: '5h 40m',
-        classes: [
-          TicketClass(type: 'AC', price: 1300, availableSeats: 6),
-          TicketClass(type: 'Snigdha', price: 950, availableSeats: 22),
-        ],
-      ),
+      _train('TR_CTG_01', 'Subarna Express',      '701', from, to, '07:00 AM', '01:30 PM', '6h 30m',
+          [_cls('AC', 1200, 12), _cls('Snigdha', 900, 20), _cls('S_Chair', 450, 35)], stns),
+      _train('TR_CTG_02', 'Sonar Bangla Express',  '787', from, to, '06:20 AM', '12:00 PM', '5h 40m',
+          [_cls('AC', 1300, 6),  _cls('Snigdha', 950, 22)], stns),
+      _train('TR_CTG_03', 'Mahanagar Provati',     '703', from, to, '07:45 AM', '02:15 PM', '6h 30m',
+          [_cls('Snigdha', 880, 18), _cls('S_Chair', 430, 50), _cls('Shulov', 280, 60)], stns),
+      _train('TR_CTG_04', 'Turna Nishitha',        '741', from, to, '11:30 PM', '05:45 AM', '6h 15m',
+          [_cls('AC', 1100, 8),  _cls('Snigdha', 850, 15), _cls('S_Chair', 400, 40)], stns),
     ];
+  }
+
+  // ── DHA ↔ SYL  (4 trains) ────────────────────────────────────────────────
+  List<TrainModel> _buildDhaSyl(String from, String to) {
+    final stns = _maybeReverse(_dhaSylStations, from, to);
+    return [
+      _train('TR_SYL_01', 'Parabat Express',   '709', from, to, '06:40 AM', '01:40 PM', '7h 0m',
+          [_cls('Snigdha', 420, 20), _cls('S_Chair', 215, 50), _cls('Shulov', 145, 60)], stns),
+      _train('TR_SYL_02', 'Jayantika Express', '775', from, to, '12:00 PM', '07:00 PM', '7h 0m',
+          [_cls('Snigdha', 420, 18), _cls('S_Chair', 215, 45), _cls('Shulov', 145, 55)], stns),
+      _train('TR_SYL_03', 'Upaban Express',    '743', from, to, '09:50 PM', '04:50 AM', '7h 0m',
+          [_cls('AC', 820, 10), _cls('Snigdha', 420, 20), _cls('S_Chair', 215, 40)], stns),
+      _train('TR_SYL_04', 'Kalni Express',     '773', from, to, '03:15 PM', '10:15 PM', '7h 0m',
+          [_cls('S_Chair', 215, 50), _cls('Shulov', 145, 70)], stns),
+    ];
+  }
+
+  // ── CTG ↔ SYL  (2 trains) ────────────────────────────────────────────────
+  List<TrainModel> _buildCtgSyl(String from, String to) {
+    final stns = _maybeReverse(_ctgSylStations, from, to);
+    return [
+      _train('TR_CS_01', 'Paharika Express', '725', from, to, '07:00 AM', '01:30 PM', '6h 30m',
+          [_cls('Snigdha', 380, 18), _cls('S_Chair', 195, 45), _cls('Shulov', 130, 55)], stns),
+      _train('TR_CS_02', 'Udayan Express',   '723', from, to, '09:30 PM', '04:00 AM', '6h 30m',
+          [_cls('AC', 750, 8), _cls('Snigdha', 380, 20), _cls('S_Chair', 195, 40)], stns),
+    ];
+  }
+
+  // ── DHA ↔ RAJ  (3 trains) ────────────────────────────────────────────────
+  List<TrainModel> _buildDhaRaj(String from, String to) {
+    final stns = _maybeReverse(_dhaRajStations, from, to);
+    return [
+      _train('TR_RAJ_01', 'Silk City Express',  '753', from, to, '02:40 PM', '08:40 PM', '6h 0m',
+          [_cls('AC', 1050, 10), _cls('Snigdha', 680, 20), _cls('S_Chair', 340, 40)], stns),
+      _train('TR_RAJ_02', 'Padma Express',      '757', from, to, '11:00 PM', '05:00 AM', '6h 0m',
+          [_cls('AC', 1050, 8),  _cls('Snigdha', 680, 18), _cls('S_Chair', 340, 45)], stns),
+      _train('TR_RAJ_03', 'Dhumketu Express',   '759', from, to, '06:00 AM', '12:00 PM', '6h 0m',
+          [_cls('Snigdha', 680, 22), _cls('S_Chair', 340, 50), _cls('Shulov', 220, 60)], stns),
+    ];
+  }
+
+  // ── DHA ↔ KHL  (2 trains) ────────────────────────────────────────────────
+  List<TrainModel> _buildDhaKhl(String from, String to) {
+    final stns = _maybeReverse(_dhaKhlStations, from, to);
+    return [
+      _train('TR_KHL_01', 'Sundarban Express', '725', from, to, '06:20 AM', '01:50 PM', '7h 30m',
+          [_cls('AC', 1150, 10), _cls('Snigdha', 750, 20), _cls('S_Chair', 375, 40)], stns),
+      _train('TR_KHL_02', 'Chitra Express',    '763', from, to, '08:40 PM', '04:10 AM', '7h 30m',
+          [_cls('AC', 1150, 8),  _cls('Snigdha', 750, 18), _cls('S_Chair', 375, 45)], stns),
+    ];
+  }
+
+  // ── DHA ↔ RNG  (2 trains) ────────────────────────────────────────────────
+  List<TrainModel> _buildDhaRng(String from, String to) {
+    final stns = _maybeReverse(_dhaRngStations, from, to);
+    return [
+      _train('TR_RNG_01', 'Rangpur Express',   '771', from, to, '09:00 AM', '03:30 PM', '6h 30m',
+          [_cls('Snigdha', 600, 20), _cls('S_Chair', 300, 50), _cls('Shulov', 200, 60)], stns),
+      _train('TR_RNG_02', 'Kurigram Express',  '797', from, to, '10:30 PM', '05:00 AM', '6h 30m',
+          [_cls('AC', 1000, 8), _cls('Snigdha', 600, 18), _cls('S_Chair', 300, 45)], stns),
+    ];
+  }
+
+  // ── DHA ↔ DNJ  (2 trains) ────────────────────────────────────────────────
+  List<TrainModel> _buildDhaDnj(String from, String to) {
+    final stns = _maybeReverse(_dhaDnjStations, from, to);
+    return [
+      _train('TR_DNJ_01', 'Ekota Express',    '705', from, to, '10:00 PM', '04:30 AM', '6h 30m',
+          [_cls('AC', 1050, 10), _cls('Snigdha', 680, 20), _cls('S_Chair', 340, 45)], stns),
+      _train('TR_DNJ_02', 'Drutojan Express', '757', from, to, '08:00 AM', '02:30 PM', '6h 30m',
+          [_cls('Snigdha', 680, 22), _cls('S_Chair', 340, 50), _cls('Shulov', 220, 60)], stns),
+    ];
+  }
+
+  // ── Generic fallback (unknown route) ─────────────────────────────────────
+  List<TrainModel> _buildGeneric(String from, String to) {
+    return [
+      _train('TR_GEN_01', 'Intercity Express', '001', from, to, '07:00 AM', '01:00 PM', '6h 0m',
+          [_cls('AC', 900, 10), _cls('Snigdha', 600, 20), _cls('S_Chair', 300, 40)], const []),
+    ];
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  TrainModel _train(
+    String id, String name, String code,
+    String from, String to,
+    String dep, String arr, String dur,
+    List<TicketClass> classes,
+    List<TrainStation> stns,
+  ) =>
+      TrainModel(
+        trainId: id, trainName: name, trainCode: code,
+        fromStation: from, toStation: to,
+        departureTime: dep, arrivalTime: arr, duration: dur,
+        classes: classes, stations: stns,
+      );
+
+  TicketClass _cls(String type, double price, int seats) =>
+      TicketClass(type: type, price: price, availableSeats: seats);
+
+  /// Reverses station list when travelling in opposite direction
+  List<TrainStation> _maybeReverse(List<TrainStation> stns, String from, String to) {
+    final key = _routeKey(from, to);
+    final reversed = key.endsWith('_dha') || key == 'ctg_syl' ||
+        key == 'syl_ctg' || key == 'raj_dha' || key == 'khl_dha' ||
+        key == 'rng_dha' || key == 'dnj_dha';
+    return reversed ? stns.reversed.toList() : List.from(stns);
   }
 
   // Save booking to SharedPreferences
@@ -287,7 +508,6 @@ class LocalDataService {
     return booking.bookingId;
   }
 
-  // Get all bookings for a user
   Future<List<BookingModel>> getUserBookings(String userId) async {
     final prefs = await SharedPreferences.getInstance();
     final bookingsJson = prefs.getStringList('bookings') ?? [];
@@ -297,10 +517,8 @@ class LocalDataService {
         .toList();
   }
 
-  // Session expiry duration — 30 days
   static const int _sessionExpiryDays = 30;
 
-  // Save user session with expiry timestamp
   Future<void> saveUserSession(Map<String, dynamic> user) async {
     final prefs = await SharedPreferences.getInstance();
     final sessionData = {
@@ -312,7 +530,6 @@ class LocalDataService {
     await prefs.setString('current_user', jsonEncode(sessionData));
   }
 
-  /// Returns the session if valid, null if missing or expired.
   Future<Map<String, dynamic>?> getUserSession() async {
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString('current_user');
@@ -322,7 +539,7 @@ class LocalDataService {
     if (expiryStr != null) {
       final expiry = DateTime.tryParse(expiryStr);
       if (expiry != null && DateTime.now().isAfter(expiry)) {
-        await clearSession(); // expired — force re-login
+        await clearSession();
         return null;
       }
     }
@@ -334,9 +551,6 @@ class LocalDataService {
     await prefs.remove('current_user');
   }
 
-  // Simple local auth (stores users in SharedPreferences)
-
-  /// SHA-256 hash of password — never store plain text
   String _hashPassword(String password) =>
       sha256.convert(utf8.encode(password)).toString();
 
@@ -345,17 +559,13 @@ class LocalDataService {
     final prefs = await SharedPreferences.getInstance();
     final usersJson = prefs.getStringList('users') ?? [];
     final users = usersJson.map((j) => jsonDecode(j) as Map<String, dynamic>).toList();
-
     if (users.any((u) => u['email'] == email)) {
       return {'success': false, 'message': 'Email already registered'};
     }
-
     final user = {
       'id': DateTime.now().millisecondsSinceEpoch.toString(),
-      'name': name,
-      'email': email,
-      'phone': phone,
-      'password': _hashPassword(password), // hashed — never plain text
+      'name': name, 'email': email, 'phone': phone,
+      'password': _hashPassword(password),
     };
     usersJson.add(jsonEncode(user));
     await prefs.setStringList('users', usersJson);
@@ -365,8 +575,6 @@ class LocalDataService {
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     final prefs = await SharedPreferences.getInstance();
-
-    // ── Rate limiting: max 5 attempts, 15-min lockout ─────────────────────
     final lockKey = 'login_lock_${email.toLowerCase()}';
     final attemptsKey = 'login_attempts_${email.toLowerCase()}';
     final lockUntilStr = prefs.getString(lockKey);
@@ -374,41 +582,26 @@ class LocalDataService {
       final lockUntil = DateTime.tryParse(lockUntilStr);
       if (lockUntil != null && DateTime.now().isBefore(lockUntil)) {
         final remaining = lockUntil.difference(DateTime.now()).inMinutes + 1;
-        return {
-          'success': false,
-          'message': 'Too many attempts. Try again in $remaining minute(s).',
-        };
+        return {'success': false, 'message': 'Too many attempts. Try again in $remaining minute(s).'};
       } else {
-        // Lock expired — reset
         await prefs.remove(lockKey);
         await prefs.remove(attemptsKey);
       }
     }
-
     final usersJson = prefs.getStringList('users') ?? [];
     final users = usersJson.map((j) => jsonDecode(j) as Map<String, dynamic>).toList();
     final user = users.firstWhereOrNull(
         (u) => u['email'] == email && u['password'] == _hashPassword(password));
-
     if (user == null) {
-      // Increment failed attempts
       final attempts = (prefs.getInt(attemptsKey) ?? 0) + 1;
       await prefs.setInt(attemptsKey, attempts);
       if (attempts >= 5) {
         final lockUntil = DateTime.now().add(const Duration(minutes: 15));
         await prefs.setString(lockKey, lockUntil.toIso8601String());
-        return {
-          'success': false,
-          'message': 'Too many failed attempts. Account locked for 15 minutes.',
-        };
+        return {'success': false, 'message': 'Too many failed attempts. Account locked for 15 minutes.'};
       }
-      return {
-        'success': false,
-        'message': 'Invalid email or password. ${5 - attempts} attempt(s) remaining.',
-      };
+      return {'success': false, 'message': 'Invalid email or password. ${5 - attempts} attempt(s) remaining.'};
     }
-
-    // Success — reset counters
     await prefs.remove(attemptsKey);
     await prefs.remove(lockKey);
     await saveUserSession(user);

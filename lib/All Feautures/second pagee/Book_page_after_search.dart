@@ -333,6 +333,7 @@ class TrainCard extends StatefulWidget {
 
 class _TrainCardState extends State<TrainCard> {
   bool _expanded = false;
+  bool _showStations = false;
   String? _selectedClass;
 
   @override
@@ -429,6 +430,167 @@ class _TrainCardState extends State<TrainCard> {
 
           // Class selector
           if (!widget.isLocked) ...[
+            const Divider(height: 1, color: Color(0xFFF0F0F0)),
+            // Stations toggle
+            if (t.stations.isNotEmpty)
+              InkWell(
+                onTap: () => setState(() => _showStations = !_showStations),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: r.sp14, vertical: r.sp8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.place_outlined, size: r.fs14, color: Colors.grey[600]),
+                      SizedBox(width: r.sp6),
+                      Text(
+                        '${t.stations.length} Stations',
+                        style: TextStyle(fontSize: r.fs12, color: Colors.grey[600]),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _showStations ? 'Hide' : 'View Route',
+                        style: TextStyle(
+                            fontSize: r.fs12,
+                            color: const Color(0xFF1A3A6B),
+                            fontWeight: FontWeight.w600),
+                      ),
+                      SizedBox(width: r.sp4),
+                      Icon(
+                        _showStations ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                        size: r.fs16,
+                        color: const Color(0xFF1A3A6B),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            // Station list
+            if (_showStations && t.stations.isNotEmpty) ...[
+              Container(
+                margin: EdgeInsets.fromLTRB(r.sp14, 0, r.sp14, r.sp8),
+                padding: EdgeInsets.all(r.sp12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F7FA),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  children: List.generate(t.stations.length, (i) {
+                    final s = t.stations[i];
+                    final isFirst = i == 0;
+                    final isLast = i == t.stations.length - 1;
+                    return IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Timeline column
+                          SizedBox(
+                            width: 24,
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 12,
+                                  height: 12,
+                                  margin: const EdgeInsets.only(top: 3),
+                                  decoration: BoxDecoration(
+                                    color: isFirst
+                                        ? const Color(0xFF1A3A6B)
+                                        : isLast
+                                            ? const Color(0xFFE65100)
+                                            : Colors.white,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: isFirst
+                                          ? const Color(0xFF1A3A6B)
+                                          : isLast
+                                              ? const Color(0xFFE65100)
+                                              : Colors.grey,
+                                      width: 2,
+                                    ),
+                                  ),
+                                ),
+                                if (!isLast)
+                                  Expanded(
+                                    child: Container(
+                                      width: 2,
+                                      color: Colors.grey[300],
+                                      margin: const EdgeInsets.symmetric(vertical: 2),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: r.sp8),
+                          // Station info
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(bottom: isLast ? 0 : r.sp12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    s.name,
+                                    style: TextStyle(
+                                      fontSize: r.fs13,
+                                      fontWeight: isFirst || isLast
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                      color: isFirst
+                                          ? const Color(0xFF1A3A6B)
+                                          : isLast
+                                              ? const Color(0xFFE65100)
+                                              : Colors.black87,
+                                    ),
+                                  ),
+                                  SizedBox(height: r.sp4),
+                                  Row(
+                                    children: [
+                                      if (s.departureTime != null) ...[
+                                        Icon(Icons.arrow_circle_right_outlined,
+                                            size: r.fs11, color: Colors.green[600]),
+                                        const SizedBox(width: 3),
+                                        Text(s.departureTime!,
+                                            style: TextStyle(
+                                                fontSize: r.fs11,
+                                                color: Colors.green[700],
+                                                fontWeight: FontWeight.w500)),
+                                        SizedBox(width: r.sp8),
+                                      ],
+                                      if (s.arrivalTime != null && !isFirst) ...[
+                                        Icon(Icons.arrow_circle_left_outlined,
+                                            size: r.fs11, color: Colors.orange[600]),
+                                        const SizedBox(width: 3),
+                                        Text(s.arrivalTime!,
+                                            style: TextStyle(
+                                                fontSize: r.fs11,
+                                                color: Colors.orange[700],
+                                                fontWeight: FontWeight.w500)),
+                                        SizedBox(width: r.sp8),
+                                      ],
+                                      if (s.haltTime != '0m' && !isFirst && !isLast) ...[
+                                        Text('· Halt: ${s.haltTime}',
+                                            style: TextStyle(
+                                                fontSize: r.fs10,
+                                                color: Colors.grey[500])),
+                                      ],
+                                    ],
+                                  ),
+                                  if (!isFirst)
+                                    Text(
+                                      'From start: ${s.duration}',
+                                      style: TextStyle(
+                                          fontSize: r.fs10,
+                                          color: Colors.grey[400]),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ],
             const Divider(height: 1, color: Color(0xFFF0F0F0)),
             InkWell(
               onTap: () => setState(() => _expanded = !_expanded),
