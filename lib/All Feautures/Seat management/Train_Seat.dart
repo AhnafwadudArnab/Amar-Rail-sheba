@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:get/get.dart';
@@ -134,6 +135,48 @@ class SeatSelectionPageState extends State<SeatSelectionPage> {
     final arrivalTime = widget.outboundTrain?.arrivalTime ??
         widget.returnTrain?.arrivalTime ?? '';
 
+    // ── Seat lock via Firebase transaction ───────────────────────────────────
+    final db = FirebaseDatabase.instance.ref();
+    final seatPath =
+        'seatLocks/${widget.outboundTrain?.trainId ?? 'TR001'}/${widget.journeyDate ?? 'unknown'}/$selectedCoach';
+
+    bool lockAcquired = false;
+    try {
+      final result = await db.child(seatPath).runTransaction((current) {
+        final locked = current == null
+            ? <String, dynamic>{}
+            : Map<String, dynamic>.from(current as Map);
+        // Check none of the selected seats are already locked
+        for (final seat in selectedSeats) {
+          if (locked.containsKey('seat_$seat')) return Transaction.abort();
+        }
+        // Lock all selected seats with TTL (10 min)
+        final expiry = DateTime.now()
+            .add(const Duration(minutes: 10))
+            .toIso8601String();
+        for (final seat in selectedSeats) {
+          locked['seat_$seat'] = {'userId': currentUid, 'expiresAt': expiry};
+        }
+        return Transaction.success(locked);
+      });
+      lockAcquired = result.committed;
+    } catch (_) {
+      lockAcquired = false;
+    }
+
+    if (!lockAcquired) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('One or more seats were just booked. Please select again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      setState(() => selectedSeats.clear());
+      return;
+    }
+
     final bookingId = 'BK${Random().nextInt(999999).toString().padLeft(6, '0')}';
     final booking = BookingModel(
       bookingId: bookingId,
@@ -156,6 +199,15 @@ class SeatSelectionPageState extends State<SeatSelectionPage> {
     try {
       await LocalDataService().saveBooking(booking);
     } catch (e) {
+      // Release seat lock on failure
+      await db.child(seatPath).runTransaction((current) {
+        if (current == null) return Transaction.success(current);
+        final locked = Map<String, dynamic>.from(current as Map);
+        for (final seat in selectedSeats) {
+          locked.remove('seat_$seat');
+        }
+        return Transaction.success(locked);
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

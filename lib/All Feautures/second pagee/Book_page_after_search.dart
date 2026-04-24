@@ -38,8 +38,9 @@ class TrainSearchPage extends StatefulWidget {
 class _TrainSearchPageState extends State<TrainSearchPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late List<TrainModel> _outboundTrains;
-  late List<TrainModel> _returnTrains;
+  List<TrainModel> _outboundTrains = [];
+  List<TrainModel> _returnTrains = [];
+  bool _loading = true;
 
   // For round trip: track which outbound train was selected
   TrainModel? _selectedOutbound;
@@ -52,10 +53,23 @@ class _TrainSearchPageState extends State<TrainSearchPage>
       length: widget.isRoundTrip ? 2 : 1,
       vsync: this,
     );
-    _outboundTrains = LocalDataService().getTrains(widget.fromStation, widget.toStation);
-    _returnTrains = widget.isRoundTrip
-        ? LocalDataService().getTrains(widget.toStation, widget.fromStation)
-        : [];
+    _loadTrains();
+  }
+
+  Future<void> _loadTrains() async {
+    final outbound = await LocalDataService()
+        .getTrainsAsync(widget.fromStation, widget.toStation);
+    final ret = widget.isRoundTrip
+        ? await LocalDataService()
+            .getTrainsAsync(widget.toStation, widget.fromStation)
+        : <TrainModel>[];
+    if (mounted) {
+      setState(() {
+        _outboundTrains = outbound;
+        _returnTrains = ret;
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -116,7 +130,9 @@ class _TrainSearchPageState extends State<TrainSearchPage>
               )
             : null,
       ),
-      body: widget.isRoundTrip
+      body: _loading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF1A3A6B)))
+          : widget.isRoundTrip
           ? TabBarView(
               controller: _tabController,
               physics: _outboundConfirmed

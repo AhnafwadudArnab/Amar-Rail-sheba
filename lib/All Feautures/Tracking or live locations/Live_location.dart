@@ -109,7 +109,10 @@ class _LiveLocationState extends State<LiveLocation>
         accuracy: LocationAccuracy.high,
         distanceFilter: 10,
       ),
-    ).listen(_onPositionUpdate);
+    ).listen(
+      _onPositionUpdate,
+      onError: (e) => _showSnack('Location stream error. Check GPS settings.'),
+    );
   }
 
   void _onPositionUpdate(Position pos) {

@@ -31,6 +31,9 @@ dependencies:
   firebase_auth: ^6.4.0
   cloud_firestore: ^6.3.0
   firebase_database: ^12.3.0
+  firebase_crashlytics: ^4.1.0
+  firebase_analytics: ^11.3.0
+  firebase_messaging: ^15.1.0
 
   
 
@@ -40,10 +43,25 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.1
 
 flutter:
   uses-material-design: true
 
   assets:
     - assets/trainBackgrong/
+
+# ── App Icon config ───────────────────────────────────────────────────────────
+# 1. Place your icon at assets/icon/app_icon.png (1024×1024, no transparency)
+# 2. Run: flutter pub run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+  windows:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
     

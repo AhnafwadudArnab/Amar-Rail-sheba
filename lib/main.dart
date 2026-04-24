@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:amarRailSheba/OnBoards/FrontPage.dart';
+import 'package:amarRailSheba/services/notification_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -26,7 +28,12 @@ class _AppLoaderState extends State<AppLoader> {
     super.initState();
     _init = Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
-    );
+    ).then((_) async {
+      // Pass all uncaught Flutter errors to Crashlytics
+      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+      // Init push notifications
+      await NotificationService().init();
+    });
   }
 
   @override

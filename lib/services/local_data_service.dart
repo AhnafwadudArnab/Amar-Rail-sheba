@@ -2,6 +2,7 @@
 // All data is stored locally using SharedPreferences + in-memory mock data
 
 import 'dart:convert';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TrainModel {
@@ -168,9 +169,52 @@ class LocalDataService {
 
   static const List<String> travelClasses = ['AC', 'Snigdha', 'S_Chair', 'Shulov'];
 
-  // Mock train data
-  List<TrainModel> getTrains(String from, String to) {
-    final mockTrains = [
+  /// Fetches trains from Firebase `trains/` node filtered by route.
+  /// Falls back to mock data if Firebase returns nothing (useful for dev/demo).
+  Future<List<TrainModel>> getTrainsAsync(String from, String to) async {
+    try {
+      final db = FirebaseDatabase.instance.ref();
+      final snap = await db.child('trains').get();
+      if (snap.exists && snap.value != null) {
+        final raw = Map<String, dynamic>.from(snap.value as Map);
+        final all = raw.entries.map((e) {
+          final m = Map<String, dynamic>.from(e.value as Map);
+          return TrainModel(
+            trainId: e.key,
+            trainName: m['trainName'] ?? '',
+            trainCode: m['trainCode'] ?? '',
+            fromStation: m['fromStation'] ?? from,
+            toStation: m['toStation'] ?? to,
+            departureTime: m['departureTime'] ?? '',
+            arrivalTime: m['arrivalTime'] ?? '',
+            duration: m['duration'] ?? '',
+            classes: [
+              TicketClass(
+                type: m['classType'] ?? 'AC',
+                price: (m['price'] as num?)?.toDouble() ?? 0,
+                availableSeats: (m['availableSeats'] as num?)?.toInt() ?? 40,
+              ),
+            ],
+          );
+        }).where((t) =>
+            t.fromStation.toLowerCase() == from.toLowerCase() &&
+            t.toStation.toLowerCase() == to.toLowerCase()).toList();
+
+        if (all.isNotEmpty) return all;
+      }
+    } catch (_) {
+      // fall through to mock data
+    }
+    // Fallback: mock data (used when Firebase has no trains yet)
+    return _mockTrains(from, to);
+  }
+
+  /// Synchronous mock — kept for backward compat with existing UI calls.
+  /// Prefer [getTrainsAsync] for production use.
+  List<TrainModel> getTrains(String from, String to) => _mockTrains(from, to);
+
+  List<TrainModel> _mockTrains(String from, String to) {
+    return [
       TrainModel(
         trainId: 'TR001',
         trainName: 'Subarna Express',
@@ -231,7 +275,6 @@ class LocalDataService {
         ],
       ),
     ];
-    return mockTrains;
   }
 
   // Save booking to SharedPreferences
@@ -316,15 +359,52 @@ class LocalDataService {
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     final prefs = await SharedPreferences.getInstance();
+
+    // ── Rate limiting: max 5 attempts, 15-min lockout ─────────────────────
+    final lockKey = 'login_lock_${email.toLowerCase()}';
+    final attemptsKey = 'login_attempts_${email.toLowerCase()}';
+    final lockUntilStr = prefs.getString(lockKey);
+    if (lockUntilStr != null) {
+      final lockUntil = DateTime.tryParse(lockUntilStr);
+      if (lockUntil != null && DateTime.now().isBefore(lockUntil)) {
+        final remaining = lockUntil.difference(DateTime.now()).inMinutes + 1;
+        return {
+          'success': false,
+          'message': 'Too many attempts. Try again in $remaining minute(s).',
+        };
+      } else {
+        // Lock expired — reset
+        await prefs.remove(lockKey);
+        await prefs.remove(attemptsKey);
+      }
+    }
+
     final usersJson = prefs.getStringList('users') ?? [];
     final users = usersJson.map((j) => jsonDecode(j) as Map<String, dynamic>).toList();
-
     final user = users.firstWhereOrNull(
         (u) => u['email'] == email && u['password'] == password);
 
     if (user == null) {
-      return {'success': false, 'message': 'Invalid email or password'};
+      // Increment failed attempts
+      final attempts = (prefs.getInt(attemptsKey) ?? 0) + 1;
+      await prefs.setInt(attemptsKey, attempts);
+      if (attempts >= 5) {
+        final lockUntil = DateTime.now().add(const Duration(minutes: 15));
+        await prefs.setString(lockKey, lockUntil.toIso8601String());
+        return {
+          'success': false,
+          'message': 'Too many failed attempts. Account locked for 15 minutes.',
+        };
+      }
+      return {
+        'success': false,
+        'message': 'Invalid email or password. ${5 - attempts} attempt(s) remaining.',
+      };
     }
+
+    // Success — reset counters
+    await prefs.remove(attemptsKey);
+    await prefs.remove(lockKey);
     await saveUserSession(user);
     return {'success': true, 'user': user};
   }

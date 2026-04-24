@@ -189,9 +189,34 @@ class FirebaseService {
     });
   }
 
-  /// Cancel a booking
+  /// Cancel a booking and record refund amount
   Future<void> cancelBooking(String bookingId) async {
-    await _db.child('bookings/$bookingId').update({'status': 'cancelled'});
+    try {
+      final snap = await _db.child('bookings/$bookingId').get();
+      if (!snap.exists || snap.value == null) {
+        _toast('Booking not found', error: true);
+        return;
+      }
+      final booking = Map<String, dynamic>.from(snap.value as Map);
+      final total = (booking['totalAmount'] as num?)?.toDouble() ?? 0;
+      // Refund policy: 100% if cancelled 24h+ before journey, 50% otherwise
+      final journeyDate = DateTime.tryParse(booking['date'] ?? '');
+      final hoursUntil = journeyDate != null
+          ? journeyDate.difference(DateTime.now()).inHours
+          : 0;
+      final refundPct = hoursUntil >= 24 ? 1.0 : 0.5;
+      final refundAmount = (total * refundPct).toStringAsFixed(2);
+
+      await _db.child('bookings/$bookingId').update({
+        'status': 'cancelled',
+        'cancelledAt': DateTime.now().toIso8601String(),
+        'refundAmount': refundAmount,
+        'refundStatus': 'pending',
+      });
+      _toast('Booking cancelled. Refund ৳$refundAmount will be processed within 3-5 days.');
+    } catch (e) {
+      _toast('Failed to cancel booking. Try again.', error: true);
+    }
   }
 
   // ════════════════════════════════════════════════════════════════════════════

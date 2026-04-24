@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:email_validator/email_validator.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:amarRailSheba/Login&Signup/sign_up.dart';
 import 'package:amarRailSheba/All%20Feautures/firstpage/booking.dart';
@@ -135,8 +136,11 @@ class _LoginFormState extends State<_LoginForm> {
               contentPadding: EdgeInsets.symmetric(
                   horizontal: r.sp16, vertical: r.sp14),
             ),
-            validator: (v) =>
-                v == null || v.isEmpty ? 'Please enter your email' : null,
+            validator: (v) {
+              if (v == null || v.isEmpty) return 'Please enter your email';
+              if (!EmailValidator.validate(v)) return 'Enter a valid email';
+              return null;
+            },
           ),
           SizedBox(height: r.sp14),
 

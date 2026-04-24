@@ -336,8 +336,28 @@ class PaymentsPageState extends State<PaymentsPage> {
   }
 
   Future<void> _pay() async {
+    // Validate amount
+    if (totalAmount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid payment amount.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (widget.selectedSeats.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No seats selected.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _processing = true);
-    // Simulate payment processing (no MySQL)
+    // TODO: Replace with real payment gateway call
     await Future.delayed(const Duration(seconds: 2));
     setState(() => _processing = false);
 

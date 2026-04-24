@@ -265,6 +265,18 @@ class _SearchFoundItemsPageState extends State<SearchFoundItemsPage> {
                           style: TextStyle(fontSize: r.fs13),
                         ),
                         isThreeLine: true,
+                        trailing: TextButton(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ClaimProcessPage(
+                                itemId: item['id'] ?? '',
+                                itemName: item['itemName'] ?? 'Unknown Item',
+                              ),
+                            ),
+                          ),
+                          child: const Text('Claim'),
+                        ),
                       ),
                     );
                   },
@@ -369,7 +381,14 @@ class _ReportFoundItemPageState extends State<ReportFoundItemPage> {
 }
 
 class ClaimProcessPage extends StatefulWidget {
-  const ClaimProcessPage({super.key});
+  final String itemId;
+  final String itemName;
+
+  const ClaimProcessPage({
+    super.key,
+    this.itemId = '',
+    this.itemName = 'Unknown Item',
+  });
 
   @override
   _ClaimProcessPageState createState() => _ClaimProcessPageState();
@@ -394,6 +413,25 @@ class _ClaimProcessPageState extends State<ClaimProcessPage> {
             child: ListView(
               padding: EdgeInsets.all(r.sp16),
               children: [
+                if (widget.itemName.isNotEmpty && widget.itemName != 'Unknown Item')
+                  Container(
+                    margin: EdgeInsets.only(bottom: r.sp12),
+                    padding: EdgeInsets.all(r.sp12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A3A6B).withOpacity(0.07),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.inventory_2_outlined, color: Color(0xFF1A3A6B)),
+                        SizedBox(width: r.sp8),
+                        Expanded(
+                          child: Text('Claiming: ${widget.itemName}',
+                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: r.fs13)),
+                        ),
+                      ],
+                    ),
+                  ),
                 _buildTextField(descriptionController, 'Description or Evidence', r),
                 _buildTextField(serialNumberController, 'Serial Number (if applicable)', r),
                 SizedBox(height: r.sp8),
@@ -417,7 +455,16 @@ class _ClaimProcessPageState extends State<ClaimProcessPage> {
                   child: ElevatedButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        await FirebaseService().submitClaim('unknown', {
+                        if (widget.itemId.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('No item selected to claim.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+                        await FirebaseService().submitClaim(widget.itemId, {
                           'description': descriptionController.text,
                           'serialNumber': serialNumberController.text,
                           'collectionOption': collectionOption ?? '',

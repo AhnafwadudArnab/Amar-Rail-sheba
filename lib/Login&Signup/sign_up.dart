@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -166,8 +165,14 @@ class _SignUpFormState extends State<_SignUpForm> {
             keyboardType: TextInputType.phone,
             style: TextStyle(fontSize: r.fs14),
             decoration: _dec('Phone Number', Icons.phone_outlined),
-            validator: (v) =>
-                v == null || v.isEmpty ? 'Please enter your phone' : null,
+            validator: (v) {
+              if (v == null || v.isEmpty) return 'Please enter your phone';
+              final bd = RegExp(r'^01[3-9]\d{8}$');
+              if (!bd.hasMatch(v.trim())) {
+                return 'Enter a valid BD number (01XXXXXXXXX)';
+              }
+              return null;
+            },
           ),
           SizedBox(height: r.sp12),
 
@@ -257,6 +262,3 @@ class _SignUpFormState extends State<_SignUpForm> {
     }
   }
 }
-
-// suppress unused warning for kIsWeb import
-const _kIsWebRef = kIsWeb;
