@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:amarRailSheba/utils/responsive.dart';
 import '../firstpage/booking.dart';
 
@@ -68,25 +69,57 @@ class EmergencyScreen extends StatefulWidget {
 
 class EmergencyScreenState extends State<EmergencyScreen> {
   final Attendant attendant = Attendant();
-  final Passenger passenger = Passenger('Ahnaf', '8', 'C1');
+  Passenger? passenger; // Make nullable to load from Firebase
   final ApiService apiService = ApiService();
   User? user;
   String? _selectedEmergencyType;
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    fetchUserFromDatabase().then((fetchedUser ) {
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      // Fetch user from database
+      final fetchedUser = await fetchUserFromDatabase();
+      // Fetch passenger details from Firebase/local storage
+      final passengerData = await _fetchPassengerDetails();
+      
       setState(() {
-        user = fetchedUser ;
+        user = fetchedUser;
+        passenger = passengerData;
+        _loading = false;
       });
-    });
+    } catch (e) {
+      Logger().e('Failed to load user data: $e');
+      setState(() {
+        _loading = false;
+        // Fallback to default passenger
+        passenger = Passenger('Guest', 'N/A', 'N/A');
+      });
+    }
+  }
+
+  Future<Passenger> _fetchPassengerDetails() async {
+    // Try to get passenger details from local storage or Firebase
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final name = prefs.getString('passenger_name') ?? 'Guest';
+      final seat = prefs.getString('passenger_seat') ?? 'N/A';
+      final coach = prefs.getString('passenger_coach') ?? 'N/A';
+      return Passenger(name, seat, coach);
+    } catch (e) {
+      Logger().e('Failed to fetch passenger details: $e');
+      return Passenger('Guest', 'N/A', 'N/A');
+    }
   }
 
   Future<User> fetchUserFromDatabase() async {
-    // Simulate fetching user from a database
-    await Future.delayed(const Duration(seconds: 2));
-    return User('attendant'); // Example user role
+    await Future.delayed(const Duration(seconds: 1));
+    return User('passenger'); // Default role
   }
 
   @override
@@ -97,112 +130,110 @@ class EmergencyScreenState extends State<EmergencyScreen> {
         backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.redAccent),
-          onPressed: () {
-            
-           Navigator.pop(context);
-            //Get.to(() => const MainHomeScreen());
-          },
+          onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
-          'Emergency Alert',
-          style: TextStyle(fontSize: 24),
-        ),
+        title: const Text('Emergency Alert', style: TextStyle(fontSize: 24)),
       ),
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/trainBackgrong/em.jpg'),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 500),
-                  child: Builder(builder: (ctx) {
-                    final r = R.of(ctx);
-                    return Container(
-                      padding: EdgeInsets.all(r.sp20),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.15),
-                            spreadRadius: 3,
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildInfoCard('Name: ${passenger.name}', r),
-                          SizedBox(height: r.sp12),
-                          _buildInfoCard('Seat Number: ${passenger.seatNO}', r),
-                          SizedBox(height: r.sp12),
-                          _buildInfoCard('Compartment: ${passenger.coachName}', r),
-                          SizedBox(height: r.sp16),
-                          Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.symmetric(horizontal: r.sp12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                isExpanded: true,
-                                dropdownColor: Colors.grey[200],
-                                hint: Text('Select Emergency Type', style: TextStyle(fontSize: r.fs13)),
-                                value: _selectedEmergencyType,
-                                items: <String>['Fire', 'Medical', 'Security', 'Other']
-                                    .map((v) => DropdownMenuItem(
-                                          value: v,
-                                          child: Text(v, style: TextStyle(fontSize: r.fs13)),
-                                        ))
-                                    .toList(),
-                                onChanged: (v) {
-                                  setState(() => _selectedEmergencyType = v);
-                                  Logger().i('Selected Emergency Type: $v');
-                                },
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: r.sp20),
-                          SizedBox(
-                            width: double.infinity,
-                            height: r.btnH,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepOrangeAccent,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10)),
-                              ),
-                              onPressed: _alertAttendant,
-                              child: Text(
-                                'Press in case of emergency',
-                                style: TextStyle(color: Colors.white, fontSize: r.fs14),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator(color: Colors.redAccent))
+          : Stack(
+              children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/trainBackgrong/em.jpg'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
-              ),
+                SafeArea(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 500),
+                        child: Builder(builder: (ctx) {
+                          final r = R.of(ctx);
+                          return Container(
+                            padding: EdgeInsets.all(r.sp20),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  spreadRadius: 3,
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: passenger == null
+                                ? const Center(child: Text('No passenger data available'))
+                                : Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      _buildInfoCard('Name: ${passenger!.name}', r),
+                                      SizedBox(height: r.sp12),
+                                      _buildInfoCard('Seat Number: ${passenger!.seatNO}', r),
+                                      SizedBox(height: r.sp12),
+                                      _buildInfoCard('Compartment: ${passenger!.coachName}', r),
+                                      SizedBox(height: r.sp16),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: EdgeInsets.symmetric(horizontal: r.sp12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[200],
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: DropdownButtonHideUnderline(
+                                          child: DropdownButton<String>(
+                                            isExpanded: true,
+                                            dropdownColor: Colors.grey[200],
+                                            hint: Text('Select Emergency Type',
+                                                style: TextStyle(fontSize: r.fs13)),
+                                            value: _selectedEmergencyType,
+                                            items: <String>['Fire', 'Medical', 'Security', 'Other']
+                                                .map((v) => DropdownMenuItem(
+                                                      value: v,
+                                                      child: Text(v, style: TextStyle(fontSize: r.fs13)),
+                                                    ))
+                                                .toList(),
+                                            onChanged: (v) {
+                                              setState(() => _selectedEmergencyType = v);
+                                              Logger().i('Selected Emergency Type: $v');
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(height: r.sp20),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: r.btnH,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.deepOrangeAccent,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(10)),
+                                          ),
+                                          onPressed: _alertAttendant,
+                                          child: Text(
+                                            'Press in case of emergency',
+                                            style: TextStyle(color: Colors.white, fontSize: r.fs14),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          );
+                        }),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -223,22 +254,39 @@ class EmergencyScreenState extends State<EmergencyScreen> {
   }
 
   void _alertAttendant() async {
-    if (user != null && (user!.role == 'admin' || user!.role == 'attendant')) {
-      attendant.receiveAlert(passenger, _selectedEmergencyType);
-      Logger().i('Attendant has been alerted!');
-      try {
-        await apiService.sendEmergencyAlert(
-          seatNumber: passenger.seatNO,
-          emergencyType: _selectedEmergencyType ?? 'Unknown',
-          coachNo: passenger.coachName,
-        );
-        Get.snackbar('Success', 'Emergency alert sent successfully!');
-      } catch (e) {
-        Logger().e('Failed to send emergency alert: $e');
-        Get.snackbar('Error', 'Failed to send emergency alert.');
-      }
-    } else {
-      Get.snackbar('Error', 'User  is not authorized to send alerts.');
+    if (passenger == null) {
+      Get.snackbar('Error', 'No passenger data available');
+      return;
+    }
+
+    if (_selectedEmergencyType == null) {
+      Get.snackbar('Error', 'Please select an emergency type');
+      return;
+    }
+
+    attendant.receiveAlert(passenger!, _selectedEmergencyType);
+    Logger().i('Attendant has been alerted!');
+    
+    try {
+      await apiService.sendEmergencyAlert(
+        seatNumber: passenger!.seatNO,
+        emergencyType: _selectedEmergencyType!,
+        coachNo: passenger!.coachName,
+      );
+      Get.snackbar(
+        'Success',
+        'Emergency alert sent successfully!',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Logger().e('Failed to send emergency alert: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to send emergency alert. Please try again.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 }

@@ -27,47 +27,65 @@ class _LostAndFoundPageState extends State<LostAndFoundPage> {
       ),
       body: Container(
         color: const Color.fromARGB(255, 242, 141, 39),
-        child: LayoutBuilder(builder: (ctx, constraints) {
-          final r = R.of(ctx);
-          final cols = constraints.maxWidth > 500 ? 4 : 2;
-          return GridView.count(
-            crossAxisCount: cols,
-            padding: EdgeInsets.all(r.sp8),
-            childAspectRatio: 3 / 2,
-            children: [
-              _buildCard('Report\nLost Item', r, () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const ReportLostItemPage()));
-              }),
-              _buildCard('Search Found\nItems', r, () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const SearchFoundItemsPage()));
-              }),
-              _buildCard('Report\nFound Item', r, () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const ReportFoundItemPage()));
-              }),
-              _buildCard('Claim Process', r, () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const ClaimProcessPage()));
-              }),
-            ],
-          );
-        }),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Builder(builder: (ctx) {
+              final r = R.of(ctx);
+              return ListView(
+                padding: EdgeInsets.all(r.sp16),
+                children: [
+                  _buildCard('Report\nLost Item', r, () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const ReportLostItemPage()));
+                  }),
+                  SizedBox(height: r.sp12),
+                  _buildCard('Search Found\nItems', r, () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const SearchFoundItemsPage()));
+                  }),
+                  SizedBox(height: r.sp12),
+                  _buildCard('Report\nFound Item', r, () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const ReportFoundItemPage()));
+                  }),
+                  SizedBox(height: r.sp12),
+                  _buildCard('Claim Process', r, () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (_) => const ClaimProcessPage()));
+                  }),
+                ],
+              );
+            }),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildCard(String title, R r, VoidCallback onTap) {
-    return Padding(
-      padding: EdgeInsets.all(r.sp8),
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: ListTile(
-          title: Text(title, style: TextStyle(fontSize: r.fs14)),
-          trailing: Icon(Icons.arrow_forward_ios, size: r.fs16),
-          contentPadding: EdgeInsets.symmetric(horizontal: r.sp16),
-          onTap: onTap,
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: r.sp16, vertical: r.sp20),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: r.fs15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios, size: r.fs18, color: const Color(0xFF1A3A6B)),
+            ],
+          ),
         ),
       ),
     );
