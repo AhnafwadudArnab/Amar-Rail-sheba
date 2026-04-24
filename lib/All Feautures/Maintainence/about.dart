@@ -53,7 +53,7 @@ class DeveloperInfoPage extends StatelessWidget {
                 const Divider(),
                 const SizedBox(height: 16),
                 // Developer card
-                _DeveloperCard(
+                const _DeveloperCard(
                   name: 'Ahnaf Wadud Arnab',
                   role: 'Lead Developer',
                   email: 'aarnab222126@bscse.uiu.ac.bd',
@@ -65,9 +65,9 @@ class DeveloperInfoPage extends StatelessWidget {
                 const Divider(),
                 const SizedBox(height: 16),
                 // App info
-                _InfoTile(Icons.info_outline, 'Version', '1.0.0'),
-                _InfoTile(Icons.school_outlined, 'Institution', 'United International University'),
-                _InfoTile(Icons.group_outlined, 'Group', 'Group 05 — DBMS Project'),
+                const _InfoTile(Icons.info_outline, 'Version', '1.0.0'),
+                const _InfoTile(Icons.school_outlined, 'Institution', 'United International University'),
+                const _InfoTile(Icons.group_outlined, 'Group', 'Group 05 — DBMS Project'),
                 const SizedBox(height: 32),
               ],
             ),

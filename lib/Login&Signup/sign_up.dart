@@ -259,4 +259,4 @@ class _SignUpFormState extends State<_SignUpForm> {
 }
 
 // suppress unused warning for kIsWeb import
-final _kIsWebRef = kIsWeb;
+const _kIsWebRef = kIsWeb;

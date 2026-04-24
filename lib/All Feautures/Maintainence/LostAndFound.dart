@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:amarRailSheba/All%20Feautures/firstpage/booking.dart';
 import 'package:amarRailSheba/services/firebase_service.dart';
+import 'package:amarRailSheba/utils/responsive.dart';
 
 class LostAndFoundPage extends StatefulWidget {
   const LostAndFoundPage({super.key});
@@ -26,52 +27,46 @@ class _LostAndFoundPageState extends State<LostAndFoundPage> {
       ),
       body: Container(
         color: const Color.fromARGB(255, 242, 141, 39),
-        child: GridView.count(
-          crossAxisCount: 2,
-          padding: const EdgeInsets.all(8.0),
-          childAspectRatio: 3 / 2,
-          children: [
-            _buildCard('Report \nLost \nItem', () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ReportLostItemPage()),
-              );
-            }),
-            _buildCard('Search Found \nItems', () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SearchFoundItemsPage()),
-              );
-            }),
-            _buildCard('Report \nFound \nItem', () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ReportFoundItemPage()),
-              );
-            }),
-            _buildCard('Claim Process', () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ClaimProcessPage()),
-              );
-            }),
-          ],
-        ),
+        child: LayoutBuilder(builder: (ctx, constraints) {
+          final r = R.of(ctx);
+          final cols = constraints.maxWidth > 500 ? 4 : 2;
+          return GridView.count(
+            crossAxisCount: cols,
+            padding: EdgeInsets.all(r.sp8),
+            childAspectRatio: 3 / 2,
+            children: [
+              _buildCard('Report\nLost Item', r, () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const ReportLostItemPage()));
+              }),
+              _buildCard('Search Found\nItems', r, () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const SearchFoundItemsPage()));
+              }),
+              _buildCard('Report\nFound Item', r, () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const ReportFoundItemPage()));
+              }),
+              _buildCard('Claim Process', r, () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const ClaimProcessPage()));
+              }),
+            ],
+          );
+        }),
       ),
     );
   }
 
-  Widget _buildCard(String title, VoidCallback onTap) {
+  Widget _buildCard(String title, R r, VoidCallback onTap) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: EdgeInsets.all(r.sp8),
       child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.0),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: ListTile(
-          title: Text(title, style: const TextStyle(fontSize: 17)),
-          trailing: const Icon(Icons.arrow_forward_ios, size: 30.0),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20.0),
+          title: Text(title, style: TextStyle(fontSize: r.fs14)),
+          trailing: Icon(Icons.arrow_forward_ios, size: r.fs16),
+          contentPadding: EdgeInsets.symmetric(horizontal: r.sp16),
           onTap: onTap,
         ),
       ),
@@ -88,7 +83,6 @@ class ReportLostItemPage extends StatefulWidget {
 
 class _ReportLostItemPageState extends State<ReportLostItemPage> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController itemNameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController dateTimeLostController = TextEditingController();
@@ -97,52 +91,60 @@ class _ReportLostItemPageState extends State<ReportLostItemPage> {
 
   @override
   Widget build(BuildContext context) {
+    final r = R.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Report Lost Item'),
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            _buildTextField(itemNameController, 'Name of the Item'),
-            _buildTextField(descriptionController, 'Description'),
-            _buildTextField(dateTimeLostController, 'Date & Time Lost'),
-            _buildTextField(trainDetailsController, 'Train Name/Number or Station'),
-            _buildTextField(contactDetailsController, 'Contact Details'),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                if (_formKey.currentState!.validate()) {
-                  await FirebaseService().reportLostItem({
-                    'itemName': itemNameController.text,
-                    'description': descriptionController.text,
-                    'dateTimeLost': dateTimeLostController.text,
-                    'trainDetails': trainDetailsController.text,
-                    'contactDetails': contactDetailsController.text,
-                  });
-                  if (context.mounted) Navigator.pop(context);
-                }
-              },
-              child: const Text('Submit'),
+      appBar: AppBar(title: Text('Report Lost Item', style: TextStyle(fontSize: r.fs16))),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: EdgeInsets.all(r.sp16),
+              children: [
+                _buildTextField(itemNameController, 'Name of the Item', r),
+                _buildTextField(descriptionController, 'Description', r),
+                _buildTextField(dateTimeLostController, 'Date & Time Lost', r),
+                _buildTextField(trainDetailsController, 'Train Name/Number or Station', r),
+                _buildTextField(contactDetailsController, 'Contact Details', r),
+                SizedBox(height: r.sp20),
+                SizedBox(
+                  height: r.btnH,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        await FirebaseService().reportLostItem({
+                          'itemName': itemNameController.text,
+                          'description': descriptionController.text,
+                          'dateTimeLost': dateTimeLostController.text,
+                          'trainDetails': trainDetailsController.text,
+                          'contactDetails': contactDetailsController.text,
+                        });
+                        if (context.mounted) Navigator.pop(context);
+                      }
+                    },
+                    child: Text('Submit', style: TextStyle(fontSize: r.fs14)),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  TextFormField _buildTextField(TextEditingController controller, String label) {
+  TextFormField _buildTextField(TextEditingController controller, String label, R r) {
     return TextFormField(
       controller: controller,
-      decoration: InputDecoration(labelText: label),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter $label';
-        }
-        return null;
-      },
+      style: TextStyle(fontSize: r.fs13),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(fontSize: r.fs13),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: EdgeInsets.symmetric(horizontal: r.sp12, vertical: r.sp12),
+      ),
+      validator: (v) => (v == null || v.isEmpty) ? 'Please enter $label' : null,
     );
   }
 }
@@ -203,7 +205,6 @@ class ReportFoundItemPage extends StatefulWidget {
 
 class _ReportFoundItemPageState extends State<ReportFoundItemPage> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController itemNameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController dateTimeFoundController = TextEditingController();
@@ -214,71 +215,78 @@ class _ReportFoundItemPageState extends State<ReportFoundItemPage> {
 
   @override
   Widget build(BuildContext context) {
+    final r = R.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Report Found Item'),
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            _buildTextField(itemNameController, 'Name of the Item'),
-            _buildTextField(descriptionController, 'Description'),
-            _buildTextField(dateTimeFoundController, 'Date & Time Found'),
-            _buildTextField(trainDetailsController, 'Train Name/Number or Station'),
-            _buildTextField(contactDetailsController, 'Contact Details'),
-            _buildTextField(foundAtController, 'Found at (optional)'),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(labelText: 'Contact Preference'),
-              items: const [
-                DropdownMenuItem(value: 'Direct', child: Text('Direct')),
-                DropdownMenuItem(value: 'Via Railway Authority', child: Text('Via Railway Authority')),
+      appBar: AppBar(title: Text('Report Found Item', style: TextStyle(fontSize: r.fs16))),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: EdgeInsets.all(r.sp16),
+              children: [
+                _buildTextField(itemNameController, 'Name of the Item', r),
+                _buildTextField(descriptionController, 'Description', r),
+                _buildTextField(dateTimeFoundController, 'Date & Time Found', r),
+                _buildTextField(trainDetailsController, 'Train Name/Number or Station', r),
+                _buildTextField(contactDetailsController, 'Contact Details', r),
+                _buildTextField(foundAtController, 'Found at (optional)', r),
+                SizedBox(height: r.sp8),
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: 'Contact Preference',
+                    labelStyle: TextStyle(fontSize: r.fs13),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    contentPadding: EdgeInsets.symmetric(horizontal: r.sp12, vertical: r.sp12),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'Direct', child: Text('Direct')),
+                    DropdownMenuItem(value: 'Via Railway Authority', child: Text('Via Railway Authority')),
+                  ],
+                  onChanged: (v) => contactPreference = v,
+                  validator: (v) => v == null ? 'Please select a contact preference' : null,
+                ),
+                SizedBox(height: r.sp20),
+                SizedBox(
+                  height: r.btnH,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        await FirebaseService().reportFoundItem({
+                          'itemName': itemNameController.text,
+                          'description': descriptionController.text,
+                          'dateTimeFound': dateTimeFoundController.text,
+                          'trainDetails': trainDetailsController.text,
+                          'contactDetails': contactDetailsController.text,
+                          'foundAt': foundAtController.text,
+                          'contactPreference': contactPreference ?? '',
+                        });
+                        if (context.mounted) Navigator.pop(context);
+                      }
+                    },
+                    child: Text('Submit', style: TextStyle(fontSize: r.fs14)),
+                  ),
+                ),
               ],
-              onChanged: (value) {
-                contactPreference = value;
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'Please select a contact preference';
-                }
-                return null;
-              },
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                if (_formKey.currentState!.validate()) {
-                  await FirebaseService().reportFoundItem({
-                    'itemName': itemNameController.text,
-                    'description': descriptionController.text,
-                    'dateTimeFound': dateTimeFoundController.text,
-                    'trainDetails': trainDetailsController.text,
-                    'contactDetails': contactDetailsController.text,
-                    'foundAt': foundAtController.text,
-                    'contactPreference': contactPreference ?? '',
-                  });
-                  if (context.mounted) Navigator.pop(context);
-                }
-              },
-              child: const Text('Submit'),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  TextFormField _buildTextField(TextEditingController controller, String label) {
+  TextFormField _buildTextField(TextEditingController controller, String label, R r) {
     return TextFormField(
       controller: controller,
-      decoration: InputDecoration(labelText: label),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter $label';
-        }
-        return null;
-      },
+      style: TextStyle(fontSize: r.fs13),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(fontSize: r.fs13),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: EdgeInsets.symmetric(horizontal: r.sp12, vertical: r.sp12),
+      ),
+      validator: (v) => (v == null || v.isEmpty) ? 'Please enter $label' : null,
     );
   }
 }
@@ -292,70 +300,76 @@ class ClaimProcessPage extends StatefulWidget {
 
 class _ClaimProcessPageState extends State<ClaimProcessPage> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController serialNumberController = TextEditingController();
   String? collectionOption;
 
   @override
   Widget build(BuildContext context) {
+    final r = R.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Claim Process'),
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            _buildTextField(descriptionController, 'Description or Evidence'),
-            _buildTextField(serialNumberController, 'Serial Number (if applicable)'),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(labelText: 'Collection Option'),
-              items: const [
-                DropdownMenuItem(value: 'In-person', child: Text('In-person')),
-                DropdownMenuItem(value: 'Delivery', child: Text('Delivery')),
+      appBar: AppBar(title: Text('Claim Process', style: TextStyle(fontSize: r.fs16))),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: EdgeInsets.all(r.sp16),
+              children: [
+                _buildTextField(descriptionController, 'Description or Evidence', r),
+                _buildTextField(serialNumberController, 'Serial Number (if applicable)', r),
+                SizedBox(height: r.sp8),
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: 'Collection Option',
+                    labelStyle: TextStyle(fontSize: r.fs13),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    contentPadding: EdgeInsets.symmetric(horizontal: r.sp12, vertical: r.sp12),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'In-person', child: Text('In-person')),
+                    DropdownMenuItem(value: 'Delivery', child: Text('Delivery')),
+                  ],
+                  onChanged: (v) => collectionOption = v,
+                  validator: (v) => v == null ? 'Please select a collection option' : null,
+                ),
+                SizedBox(height: r.sp20),
+                SizedBox(
+                  height: r.btnH,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        await FirebaseService().submitClaim('unknown', {
+                          'description': descriptionController.text,
+                          'serialNumber': serialNumberController.text,
+                          'collectionOption': collectionOption ?? '',
+                        });
+                        if (context.mounted) Navigator.pop(context);
+                      }
+                    },
+                    child: Text('Submit', style: TextStyle(fontSize: r.fs14)),
+                  ),
+                ),
               ],
-              onChanged: (value) {
-                collectionOption = value;
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'Please select a collection option';
-                }
-                return null;
-              },
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                if (_formKey.currentState!.validate()) {
-                  await FirebaseService().submitClaim('unknown', {
-                    'description': descriptionController.text,
-                    'serialNumber': serialNumberController.text,
-                    'collectionOption': collectionOption ?? '',
-                  });
-                  if (context.mounted) Navigator.pop(context);
-                }
-              },
-              child: const Text('Submit'),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  TextFormField _buildTextField(TextEditingController controller, String label) {
+  TextFormField _buildTextField(TextEditingController controller, String label, R r) {
     return TextFormField(
       controller: controller,
-      decoration: InputDecoration(labelText: label),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter $label';
-        }
-        return null;
-      },
+      style: TextStyle(fontSize: r.fs13),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(fontSize: r.fs13),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: EdgeInsets.symmetric(horizontal: r.sp12, vertical: r.sp12),
+      ),
+      validator: (v) => (v == null || v.isEmpty) ? 'Please enter $label' : null,
     );
   }
 }

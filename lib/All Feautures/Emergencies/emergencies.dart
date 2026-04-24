@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
 import 'package:http/http.dart' as http;
+import 'package:amarRailSheba/utils/responsive.dart';
 import '../firstpage/booking.dart';
 
 class User {
@@ -118,67 +119,90 @@ class EmergencyScreenState extends State<EmergencyScreen> {
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/trainBackgrong/em.jpg'), // Replace with your image path
+                image: AssetImage('assets/trainBackgrong/em.jpg'),
                 fit: BoxFit.cover,
               ),
             ),
           ),
-          Center(
-            child: Container(
-              height: 500,
-              margin: const EdgeInsets.all(16.0),
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(10.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.5),
-                    spreadRadius: 5,
-                    blurRadius: 7,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildInfoCard('Name: ${passenger.name}'),
-                  const SizedBox(height: 20),
-                  _buildInfoCard('Seat Number: ${passenger.seatNO}'),
-                  const SizedBox(height: 20),
-                  _buildInfoCard('Compartment: ${passenger.coachName}'),
-                  const SizedBox(height: 20),
-                  DropdownButton<String>(
-                    dropdownColor: Colors.grey[200],
-                    hint: const Text('Select Emergency Type'),
-                    value: _selectedEmergencyType,
-                    items: <String>['Fire', 'Medical', 'Security', 'Other']
-                        .map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedEmergencyType = newValue;
-                      });
-                      Logger().i('Selected Emergency Type: $newValue');
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepOrangeAccent,
-                    ),
-                    onPressed: _alertAttendant,
-                    child: const Text(
-                      'Press in case of emergency',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 500),
+                  child: Builder(builder: (ctx) {
+                    final r = R.of(ctx);
+                    return Container(
+                      padding: EdgeInsets.all(r.sp20),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            spreadRadius: 3,
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildInfoCard('Name: ${passenger.name}', r),
+                          SizedBox(height: r.sp12),
+                          _buildInfoCard('Seat Number: ${passenger.seatNO}', r),
+                          SizedBox(height: r.sp12),
+                          _buildInfoCard('Compartment: ${passenger.coachName}', r),
+                          SizedBox(height: r.sp16),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(horizontal: r.sp12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                dropdownColor: Colors.grey[200],
+                                hint: Text('Select Emergency Type', style: TextStyle(fontSize: r.fs13)),
+                                value: _selectedEmergencyType,
+                                items: <String>['Fire', 'Medical', 'Security', 'Other']
+                                    .map((v) => DropdownMenuItem(
+                                          value: v,
+                                          child: Text(v, style: TextStyle(fontSize: r.fs13)),
+                                        ))
+                                    .toList(),
+                                onChanged: (v) {
+                                  setState(() => _selectedEmergencyType = v);
+                                  Logger().i('Selected Emergency Type: $v');
+                                },
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: r.sp20),
+                          SizedBox(
+                            width: double.infinity,
+                            height: r.btnH,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepOrangeAccent,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                              ),
+                              onPressed: _alertAttendant,
+                              child: Text(
+                                'Press in case of emergency',
+                                style: TextStyle(color: Colors.white, fontSize: r.fs14),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
               ),
             ),
           ),
@@ -187,19 +211,18 @@ class EmergencyScreenState extends State<EmergencyScreen> {
     );
   }
 
-  Widget _buildInfoCard(String text) {
+  Widget _buildInfoCard(String text, R r) {
     return Container(
-      width: 300,
-      height: 70,
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: r.sp12, horizontal: r.sp16),
       decoration: BoxDecoration(
-        shape: BoxShape.rectangle,
         color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: Center(
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-        ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: r.fs13),
       ),
     );
   }

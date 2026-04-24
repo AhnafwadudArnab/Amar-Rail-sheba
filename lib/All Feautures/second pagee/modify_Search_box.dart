@@ -254,7 +254,7 @@ class ModifySearchBoxState extends State<ModifySearchBox> {
                                             decoration: const InputDecoration(
                                                 icon: Icon(Icons.train_rounded),
                                                 labelText: 'From'),
-                                            value:
+                                            initialValue:
                                                 fromStationController.text.isEmpty
                                                     ? null
                                                     : fromStationController.text,
@@ -311,7 +311,7 @@ class ModifySearchBoxState extends State<ModifySearchBox> {
                                             decoration: const InputDecoration(
                                                 icon: Icon(Icons.train_rounded),
                                                 labelText: 'To'),
-                                            value: toStationController.text.isEmpty
+                                            initialValue: toStationController.text.isEmpty
                                                 ? null
                                                 : toStationController.text,
                                             items: editableStations.map((station) {
@@ -348,7 +348,7 @@ class ModifySearchBoxState extends State<ModifySearchBox> {
                                         child: DropdownButtonFormField<String>(
                                           decoration: const InputDecoration(
                                               labelText: 'Class'),
-                                          value: selectedClass,
+                                          initialValue: selectedClass,
                                           items: ['AC', 'Cabin', 'S_chair']
                                               .map((classType) => DropdownMenuItem(
                                                     value: classType,
@@ -412,7 +412,7 @@ class ModifySearchBoxState extends State<ModifySearchBox> {
                                               decoration: const InputDecoration(
                                                   icon: Icon(Icons.train_rounded),
                                                   labelText: 'Return From'),
-                                              value: returnFromStationController
+                                              initialValue: returnFromStationController
                                                       .text.isEmpty
                                                   ? null
                                                   : returnFromStationController
@@ -466,7 +466,7 @@ class ModifySearchBoxState extends State<ModifySearchBox> {
                                               decoration: const InputDecoration(
                                                   icon: Icon(Icons.train_rounded),
                                                   labelText: 'Return To'),
-                                              value: returnToStationController
+                                              initialValue: returnToStationController
                                                       .text.isEmpty
                                                   ? null
                                                   : returnToStationController.text,
@@ -495,7 +495,7 @@ class ModifySearchBoxState extends State<ModifySearchBox> {
                                           child: DropdownButtonFormField<String>(
                                             decoration: const InputDecoration(
                                                 labelText: 'Return Class'),
-                                            value: selectedReturnClass,
+                                            initialValue: selectedReturnClass,
                                             items: ['AC', 'Cabin', 'S_chair']
                                                 .map(
                                                     (classType) => DropdownMenuItem(

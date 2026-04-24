@@ -334,7 +334,7 @@ class FirebaseService {
   void _toast(String msg, {bool error = false}) {
     Fluttertoast.showToast(
       msg: msg,
-      backgroundColor: error ? Color(0xFFD32F2F) : Color(0xFF388E3C),
+      backgroundColor: error ? const Color(0xFFD32F2F) : const Color(0xFF388E3C),
       toastLength: Toast.LENGTH_SHORT,
     );
   }

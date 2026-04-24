@@ -150,6 +150,8 @@ class TrainTicketPage extends StatelessWidget {
   final String date;
   final String departTime;
   final String seat;
+  final String? totalAmount;
+  final String? trainCode;
 
   const TrainTicketPage({
     super.key,
@@ -160,6 +162,8 @@ class TrainTicketPage extends StatelessWidget {
     required this.date,
     required this.departTime,
     required this.seat,
+    this.totalAmount,
+    this.trainCode,
   });
 
   @override
@@ -177,13 +181,12 @@ class TrainTicketPage extends StatelessWidget {
         centerTitle: true,
         title: const Text('My Tickets'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          const SizedBox(height: 100),
-          Container(
-            height: MediaQuery.of(context).size.height * 0.38,
-            width: MediaQuery.of(context).size.width * 0.9,
+      body: Center(
+        child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Container(
             decoration: BoxDecoration(
               color: Colors.orangeAccent,
               borderRadius: BorderRadius.circular(12),
@@ -459,7 +462,7 @@ class TrainTicketPage extends StatelessWidget {
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

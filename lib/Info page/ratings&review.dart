@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:amarRailSheba/utils/responsive.dart';
 import 'package:amarRailSheba/All%20Feautures/firstpage/booking.dart';
 
 class RatingsReviewsPage extends StatefulWidget {
@@ -15,110 +16,89 @@ class _RatingsReviewsPageState extends State<RatingsReviewsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final r = R.of(context);
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text('Ratings & Reviews'),
+        title: Text('Ratings & Reviews', style: TextStyle(fontSize: r.fs16)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-           Get.to(() => const MainHomeScreen());
-          },
+          onPressed: () => Get.to(() => const MainHomeScreen()),
         ),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: _buildContent(),
+        padding: EdgeInsets.all(r.sp16),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: _buildContent(r),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(R r) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildOverallRatingsOverview(),
-        const SizedBox(height: 20),
-        _buildRecentReviewsSection(),
-        const SizedBox(height: 20),
-        _buildWriteReviewButton(),
+        _buildOverallRatingsOverview(r),
+        SizedBox(height: r.sp20),
+        _buildRecentReviewsSection(r),
+        SizedBox(height: r.sp20),
+        _buildWriteReviewButton(r),
       ],
     );
   }
 
-  Widget _buildOverallRatingsOverview() {
-    return const Column(
+  Widget _buildOverallRatingsOverview(R r) {
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Overall Ratings',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 10),
+        Text('Overall Ratings',
+            style: TextStyle(fontSize: r.fs16, fontWeight: FontWeight.bold)),
+        SizedBox(height: r.sp10),
         Row(
           children: [
-            Icon(Icons.star, color: Colors.amber, size: 30),
-            SizedBox(width: 5),
-            Text(
-              '4.9/5',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+            Icon(Icons.star, color: Colors.amber, size: r.fs28),
+            SizedBox(width: r.sp6),
+            Text('4.9/5',
+                style: TextStyle(fontSize: r.fs22, fontWeight: FontWeight.bold)),
           ],
         ),
-        SizedBox(height: 10),
-        Text('Rating Distribution:'),
-        SizedBox(height: 10),
-        Text('222126 reviews'),
+        SizedBox(height: r.sp10),
+        Text('Rating Distribution:', style: TextStyle(fontSize: r.fs13)),
+        SizedBox(height: r.sp8),
+        Text('222126 reviews', style: TextStyle(fontSize: r.fs13, color: Colors.grey)),
       ],
     );
   }
 
-  Widget _buildFilterSortOptions() {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Filter & Sort Options',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 10),
-        Text('Filters:'),
-        SizedBox(height: 10),
-        Text('Sort Options:'),
-      ],
-    );
-  }
-  Widget _buildRecentReviewsSection() {
+  Widget _buildRecentReviewsSection(R r) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Recent Reviews',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 10),
-        ..._reviews.map((review) => ReviewCard(
-              review: review,
-              userName: 'Anonymous', // Replace with actual user name if available
-            )),
+        Text('Recent Reviews',
+            style: TextStyle(fontSize: r.fs16, fontWeight: FontWeight.bold)),
+        SizedBox(height: r.sp10),
+        ..._reviews.map((review) => ReviewCard(review: review, userName: 'Anonymous')),
       ],
     );
   }
 
-  Widget _buildWriteReviewButton() {
+  Widget _buildWriteReviewButton(R r) {
     return Center(
-      child: ElevatedButton(
-        onPressed: () async {
-          final result = await Get.to(() => WriteReviewPage());
-          if (result != null && result is String) {
-            setState(() {
-              _reviews.add(result);
-            });
-          }
-        },
-        child: const Text('Write a Review'),
+      child: SizedBox(
+        height: r.btnH,
+        child: ElevatedButton(
+          onPressed: () async {
+            final result = await Get.to(() => WriteReviewPage());
+            if (result != null && result is String) {
+              setState(() => _reviews.add(result));
+            }
+          },
+          child: Text('Write a Review', style: TextStyle(fontSize: r.fs14)),
+        ),
       ),
     );
   }
@@ -131,50 +111,57 @@ class WriteReviewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = R.of(context);
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text('Write a Review'),
+        title: Text('Write a Review', style: TextStyle(fontSize: r.fs16)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Get.back();
-          },
+          onPressed: () => Get.back(),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Your Review',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Padding(
+            padding: EdgeInsets.all(r.sp16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Your Review',
+                    style: TextStyle(fontSize: r.fs16, fontWeight: FontWeight.bold)),
+                SizedBox(height: r.sp10),
+                TextField(
+                  controller: _reviewController,
+                  maxLines: 5,
+                  style: TextStyle(fontSize: r.fs13),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    hintText: 'Write your review here...',
+                    hintStyle: TextStyle(fontSize: r.fs13),
+                  ),
+                ),
+                SizedBox(height: r.sp20),
+                Center(
+                  child: SizedBox(
+                    height: r.btnH,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final review = _reviewController.text;
+                        if (review.isNotEmpty) {
+                          Get.back(result: review);
+                        } else {
+                          Get.snackbar('Error', 'Please write a review before submitting.');
+                        }
+                      },
+                      child: Text('Submit Review', style: TextStyle(fontSize: r.fs14)),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _reviewController,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Write your review here...',
-              ),
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  String review = _reviewController.text;
-                  if (review.isNotEmpty) {
-                    Get.back(result: review);
-                  } else {
-                    Get.snackbar('Error', 'Please write a review before submitting.');
-                  }
-                },
-                child: const Text('Submit Review'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -189,24 +176,23 @@ class ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = R.of(context);
     return Container(
-      height: 80, // Set the height
       width: double.infinity,
-      color: const Color.fromARGB(188, 207, 197, 197),
-      margin: const EdgeInsets.symmetric(vertical: 26),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              userName,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            Text(review),
-          ],
-        ),
+      margin: EdgeInsets.only(bottom: r.sp12),
+      padding: EdgeInsets.all(r.sp14),
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(188, 207, 197, 197),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(userName,
+              style: TextStyle(fontSize: r.fs14, fontWeight: FontWeight.bold)),
+          SizedBox(height: r.sp6),
+          Text(review, style: TextStyle(fontSize: r.fs13)),
+        ],
       ),
     );
   }

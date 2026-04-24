@@ -141,7 +141,7 @@ class _LiveLocationState extends State<LiveLocation>
         points: points,
         color: Color(route.color),
         width: 5,
-        patterns: [],
+        patterns: const [],
         jointType: JointType.round,
         endCap: Cap.roundCap,
         startCap: Cap.roundCap,

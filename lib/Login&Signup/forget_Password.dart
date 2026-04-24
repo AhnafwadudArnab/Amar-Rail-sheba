@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:amarRailSheba/Login&Signup/Login.dart';
+import 'package:amarRailSheba/services/firebase_service.dart';
+import 'package:amarRailSheba/utils/responsive.dart';
 
 class ForgetPassword extends StatelessWidget {
   const ForgetPassword({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final r = R.of(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -14,53 +17,53 @@ class ForgetPassword extends StatelessWidget {
         backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.redAccent),
-          onPressed: () {
-        Get.to(() => const Login());
-          },
+          onPressed: () => Get.to(() => const Login()),
         ),
       ),
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          // Image background
-          Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            decoration: const BoxDecoration(
+          // Background
+          const DecoratedBox(
+            decoration: BoxDecoration(
               image: DecorationImage(
                 image: AssetImage("assets/trainBackgrong/05.jpeg"),
                 fit: BoxFit.cover,
               ),
             ),
           ),
-          // Transparent container for form fields
-          Container(
-            margin: const EdgeInsets.only(top: 22.0, left: 20.0, right: 20.0),
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  // box location up->down//
-                  const SizedBox(height: 280.0),
-                  Container(
+          // Dark overlay
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.45),
+            ),
+          ),
+          // Content
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: r.isPhone ? 20 : r.isTablet ? 80 : 0,
+                  vertical: r.sp24,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Container(
                     decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.95),
                       borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-                      //box height//
-                      height: MediaQuery.of(context).size.height / 3.5,
-                      width: MediaQuery.of(context).size.width,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 1.0,
+                      boxShadow: [
+                        BoxShadow(
+                          blurRadius: 20,
+                          color: Colors.black.withValues(alpha: 0.2),
+                          spreadRadius: 2,
                         ),
-                      ),
-                      child: const ForgetPasswordFormWidget(),
+                      ],
                     ),
+                    padding: EdgeInsets.all(r.sp24),
+                    child: const _ForgetPasswordForm(),
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -70,69 +73,151 @@ class ForgetPassword extends StatelessWidget {
   }
 }
 
-class ForgetPasswordFormWidget extends StatefulWidget {
-  const ForgetPasswordFormWidget({super.key});
+class _ForgetPasswordForm extends StatefulWidget {
+  const _ForgetPasswordForm();
 
   @override
-  // ignore: library_private_types_in_public_api
-  _ForgetPasswordFormWidgetState createState() =>
-      _ForgetPasswordFormWidgetState();
+  _ForgetPasswordFormState createState() => _ForgetPasswordFormState();
 }
 
-class _ForgetPasswordFormWidgetState extends State<ForgetPasswordFormWidget> {
+class _ForgetPasswordFormState extends State<_ForgetPasswordForm> {
   final _formKey = GlobalKey<FormState>();
-  final emailTextController = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  bool _loading = false;
+  bool _sent = false;
 
   @override
   void dispose() {
-    emailTextController.dispose();
+    _emailCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _loading = true);
+    await FirebaseService().resetPassword(_emailCtrl.text.trim());
+    setState(() { _loading = false; _sent = true; });
   }
 
   @override
   Widget build(BuildContext context) {
+    final r = R.of(context);
     return Form(
       key: _formKey,
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 70.0),
-        // Email field
-        TextFormField(
-        controller: emailTextController,
-        decoration: const InputDecoration(
-          labelText: 'Email',
-          labelStyle: TextStyle(color: Colors.black, fontSize: 20, fontFamily: 'Roboto'), // Set label text color and font size to black
-          prefixIcon: Icon(Icons.email, color: Colors.black), // Set icon color to black
-        ),
-        style: const TextStyle(color: Colors.black, fontSize: 20), // Set input text color and font size to black
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-          return 'Please enter your email';
-          } else if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-          return 'Please enter a valid email';
-          }
-          return null;
-        },
-        ),
-            const SizedBox(height: 24.0),
-            ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor:const Color.fromARGB(255, 96, 180, 219), // Set the button color to brown
+          // Icon
+          Icon(Icons.lock_reset, size: r.sp40, color: const Color(0xFF1A3A6B)),
+          SizedBox(height: r.sp8),
+          Text(
+            'Reset Password',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: r.fs22,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF1A3A6B),
             ),
-            onPressed: () {
-              if (_formKey.currentState?.validate() ?? false) {
-              // Handle forget password logic here
-              Get.snackbar('Success', 'Password reset link sent to your email');
-              }
-            },
-            child: const Text('Reset Password', style: TextStyle(color: Colors.white,)),
-            ),
-            const SizedBox(height: 16.0),
+          ),
+          SizedBox(height: r.sp6),
+          Text(
+            'Enter your email and we\'ll send you a reset link',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: r.fs13, color: Colors.grey[600]),
+          ),
+          SizedBox(height: r.sp24),
 
+          if (_sent) ...[
+            Container(
+              padding: EdgeInsets.all(r.sp16),
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green),
+                  SizedBox(width: r.sp10),
+                  Expanded(
+                    child: Text(
+                      'Reset link sent! Check your email.',
+                      style: TextStyle(color: Colors.green, fontSize: r.fs13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: r.sp16),
+          ],
+
+          // Email field
+          TextFormField(
+            controller: _emailCtrl,
+            keyboardType: TextInputType.emailAddress,
+            style: TextStyle(fontSize: r.fs14),
+            decoration: InputDecoration(
+              labelText: 'Email',
+              labelStyle: TextStyle(fontSize: r.fs13),
+              prefixIcon: const Icon(Icons.email_outlined),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding: EdgeInsets.symmetric(
+                  horizontal: r.sp16, vertical: r.sp14),
+            ),
+            validator: (v) {
+              if (v == null || v.isEmpty) return 'Please enter your email';
+              if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v)) {
+                return 'Please enter a valid email';
+              }
+              return null;
+            },
+          ),
+          SizedBox(height: r.sp20),
+
+          // Submit button
+          SizedBox(
+            height: r.btnH,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A3A6B),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: _loading ? null : _submit,
+              child: _loading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : Text('Send Reset Link',
+                      style: TextStyle(
+                          fontSize: r.fs15, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          SizedBox(height: r.sp12),
+
+          // Back to login
+          TextButton(
+            onPressed: () => Get.to(() => const Login()),
+            child: Text(
+              'Back to Login',
+              style: TextStyle(
+                  color: const Color(0xFF1A3A6B),
+                  fontSize: r.fs13,
+                  fontWeight: FontWeight.w600),
+            ),
+          ),
         ],
-        ),
+      ),
     );
   }
-  }
-  
+}
+
+// Keep old class name for backward compat
+class ForgetPasswordFormWidget extends StatelessWidget {
+  const ForgetPasswordFormWidget({super.key});
+  @override
+  Widget build(BuildContext context) => const _ForgetPasswordForm();
+}

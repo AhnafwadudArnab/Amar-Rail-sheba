@@ -82,10 +82,10 @@ class PaymentsPageState extends State<PaymentsPage> {
       widget.orders.fold<double>(0.0, (sum, o) => sum + o.total) + 20;
 
   final List<Map<String, dynamic>> _methods = [
-    {'id': 'bkash', 'label': 'bKash', 'color': Color(0xFFE2136E), 'icon': Icons.phone_android},
-    {'id': 'nagad', 'label': 'Nagad', 'color': Color(0xFFFF6600), 'icon': Icons.account_balance_wallet},
-    {'id': 'card', 'label': 'Card', 'color': Color(0xFF1A3A6B), 'icon': Icons.credit_card},
-    {'id': 'rocket', 'label': 'Rocket', 'color': Color(0xFF8B1A8B), 'icon': Icons.rocket_launch},
+    {'id': 'bkash', 'label': 'bKash', 'color': const Color(0xFFE2136E), 'icon': Icons.phone_android},
+    {'id': 'nagad', 'label': 'Nagad', 'color': const Color(0xFFFF6600), 'icon': Icons.account_balance_wallet},
+    {'id': 'card', 'label': 'Card', 'color': const Color(0xFF1A3A6B), 'icon': Icons.credit_card},
+    {'id': 'rocket', 'label': 'Rocket', 'color': const Color(0xFF8B1A8B), 'icon': Icons.rocket_launch},
   ];
 
   @override

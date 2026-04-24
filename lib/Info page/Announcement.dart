@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:amarRailSheba/utils/responsive.dart';
 
 import '../All Feautures/firstpage/booking.dart';
 class AnnouncementPage extends StatefulWidget {
@@ -27,144 +28,152 @@ class _AnnouncementPageState extends State<AnnouncementPage> {
 
   @override
   Widget build(BuildContext context) {
+    final r = R.of(context);
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text('Announcement'),
+        title: Text('Announcement', style: TextStyle(fontSize: r.fs16)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Get.to(() => const MainHomeScreen());
-          },
+          onPressed: () => Get.to(() => const MainHomeScreen()),
         ),
       ),
-      body: Column(
-        children: [
-          _buildSearchBar(),
-          _buildCategoryTabs(),
-          _buildPinnedSection(),
-          Expanded(child: _buildAnnouncementList()),
-        ],
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
+          child: Column(
+            children: [
+              _buildSearchBar(r),
+              _buildCategoryTabs(r),
+              _buildPinnedSection(r),
+              Expanded(child: _buildAnnouncementList(r)),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(R r) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: EdgeInsets.all(r.sp8),
       child: TextField(
-        decoration: const InputDecoration(
+        style: TextStyle(fontSize: r.fs13),
+        decoration: InputDecoration(
           hintText: 'Search announcements...',
-          prefixIcon: Icon(Icons.search),
-          border: OutlineInputBorder(),
+          hintStyle: TextStyle(fontSize: r.fs13),
+          prefixIcon: const Icon(Icons.search),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          contentPadding: EdgeInsets.symmetric(vertical: r.sp10),
         ),
-        onChanged: (value) {
-          setState(() {
-            searchQuery = value;
-          });
-        },
+        onChanged: (value) => setState(() => searchQuery = value),
       ),
     );
   }
 
-  Widget _buildCategoryTabs() {
+  Widget _buildCategoryTabs(R r) {
     final categories = ['All', 'Schedule Updates', 'Promotions', 'Safety Alerts', 'Service Enhancements'];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.symmetric(horizontal: r.sp8),
       child: Row(
         children: categories.map((category) {
-          return ChoiceChip(
-            label: Text(category),
-            selected: selectedCategory == category,
-            onSelected: (selected) {
-              setState(() {
-                selectedCategory = category;
-              });
-            },
+          return Padding(
+            padding: EdgeInsets.only(right: r.sp6),
+            child: ChoiceChip(
+              label: Text(category, style: TextStyle(fontSize: r.fs12)),
+              selected: selectedCategory == category,
+              onSelected: (_) => setState(() => selectedCategory = category),
+            ),
           );
         }).toList(),
       ),
     );
   }
 
-  Widget _buildPinnedSection() {
-    // Example pinned announcement
-    final pinnedAnnouncement = Announcement(
+  Widget _buildPinnedSection(R r) {
+    final pinned = Announcement(
       title: 'Emergency Alert',
       description: 'This is a critical update.',
       timestamp: 'Just now',
       category: 'Safety Alerts',
     );
-
     return Card(
+      margin: EdgeInsets.symmetric(horizontal: r.sp8, vertical: r.sp4),
       color: Colors.redAccent,
-      child: ListTile(
-        leading: const Icon(Icons.warning, color: Colors.white),
-        title: Text(pinnedAnnouncement.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        subtitle: Text(pinnedAnnouncement.description, style: const TextStyle(color: Colors.white)),
-        trailing: Text(pinnedAnnouncement.timestamp, style: const TextStyle(color: Colors.white)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: r.sp12, vertical: r.sp10),
+        child: Row(
+          children: [
+            const Icon(Icons.warning, color: Colors.white),
+            SizedBox(width: r.sp10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(pinned.title,
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: r.fs13)),
+                  Text(pinned.description,
+                      style: TextStyle(color: Colors.white70, fontSize: r.fs12)),
+                ],
+              ),
+            ),
+            SizedBox(width: r.sp8),
+            Text(pinned.timestamp,
+                style: TextStyle(color: Colors.white70, fontSize: r.fs11)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildAnnouncementList() {
-    final filteredAnnouncements = announcements.where((announcement) {
-      final matchesCategory = selectedCategory == 'All' || announcement.category == selectedCategory;
-      final matchesSearch = announcement.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
-          announcement.description.toLowerCase().contains(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+  Widget _buildAnnouncementList(R r) {
+    final filtered = announcements.where((a) {
+      final matchCat = selectedCategory == 'All' || a.category == selectedCategory;
+      final matchSearch = a.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          a.description.toLowerCase().contains(searchQuery.toLowerCase());
+      return matchCat && matchSearch;
     }).toList();
 
     return ListView.builder(
-      itemCount: filteredAnnouncements.length,
+      padding: EdgeInsets.symmetric(horizontal: r.sp8),
+      itemCount: filtered.length,
       itemBuilder: (context, index) {
-        final announcement = filteredAnnouncements[index];
-        final isRead = readAnnouncements.contains(announcement);
-        final isSaved = savedAnnouncements.contains(announcement);
-
+        final a = filtered[index];
+        final isRead = readAnnouncements.contains(a);
+        final isSaved = savedAnnouncements.contains(a);
         return Card(
+          margin: EdgeInsets.only(bottom: r.sp8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           child: ListTile(
-            leading: Icon(_getIconForCategory(announcement.category)),
-            title: Text(
-              announcement.title,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isRead ? Colors.grey : Colors.black,
-              ),
-            ),
-            subtitle: Text(announcement.description),
+            leading: Icon(_getIconForCategory(a.category), size: r.fs20),
+            title: Text(a.title,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: r.fs13,
+                    color: isRead ? Colors.grey : Colors.black)),
+            subtitle: Text(a.description, style: TextStyle(fontSize: r.fs12)),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border),
-                  onPressed: () {
-                    setState(() {
-                      if (isSaved) {
-                        savedAnnouncements.remove(announcement);
-                      } else {
-                        savedAnnouncements.add(announcement);
-                      }
-                    });
-                  },
+                  icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, size: r.fs18),
+                  onPressed: () => setState(() {
+                    isSaved ? savedAnnouncements.remove(a) : savedAnnouncements.add(a);
+                  }),
                 ),
                 IconButton(
-                  icon: Icon(isRead ? Icons.mark_email_read : Icons.mark_email_unread),
-                  onPressed: () {
-                    setState(() {
-                      if (isRead) {
-                        readAnnouncements.remove(announcement);
-                      } else {
-                        readAnnouncements.add(announcement);
-                      }
-                    });
-                  },
+                  icon: Icon(isRead ? Icons.mark_email_read : Icons.mark_email_unread, size: r.fs18),
+                  onPressed: () => setState(() {
+                    isRead ? readAnnouncements.remove(a) : readAnnouncements.add(a);
+                  }),
                 ),
               ],
             ),
-            onTap: () {
-              // Optional: Expand card to show full details
-            },
           ),
         );
       },

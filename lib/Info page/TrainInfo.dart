@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:amarRailSheba/utils/responsive.dart';
 
 import '../All Feautures/firstpage/booking.dart';
 
@@ -43,42 +44,47 @@ class TrainDetailsPage extends StatelessWidget {
           },
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            const Text(
-              "Runs On: Fri Sat Sun Mon Tue Wed Thu",
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemCount: stations.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 8.0),
-                    padding: const EdgeInsets.all(12.0),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8.0),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
-                          spreadRadius: 2,
-                          blurRadius: 5,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
+          child: Builder(builder: (ctx) {
+            final r = R.of(ctx);
+            return Padding(
+              padding: EdgeInsets.all(r.sp16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Runs On: Fri Sat Sun Mon Tue Wed Thu",
+                      style: TextStyle(color: Colors.grey, fontSize: r.fs12)),
+                  SizedBox(height: r.sp16),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: stations.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          margin: EdgeInsets.symmetric(vertical: r.sp8),
+                          padding: EdgeInsets.all(r.sp12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withValues(alpha: 0.3),
+                                spreadRadius: 1,
+                                blurRadius: 5,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: StationWidget(station: stations[index]),
+                        );
+                      },
                     ),
-                    child: StationWidget(station: stations[index]),
-                  );
-                },
+                  ),
+                ],
               ),
-            ),
-          ],
+            );
+          }),
         ),
       ),
     );
@@ -108,29 +114,31 @@ class StationWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = R.of(context);
     return Column(
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.place, color: Colors.green),
-            const SizedBox(width: 8),
+            Icon(Icons.place, color: Colors.green, size: r.fs20),
+            SizedBox(width: r.sp8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     station.name,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: r.fs15, fontWeight: FontWeight.bold),
                   ),
                   if (station.arrivalTime != null)
-                    Text("Arrival: ${station.arrivalTime} BST"),
+                    Text("Arrival: ${station.arrivalTime} BST",
+                        style: TextStyle(fontSize: r.fs13)),
                   if (station.departureTime != null)
-                    Text("Depart: ${station.departureTime} BST"),
-                  const SizedBox(height: 4),
-                  Text("Halt: ${station.haltTime}"),
-                  Text("Duration: ${station.duration}"),
+                    Text("Depart: ${station.departureTime} BST",
+                        style: TextStyle(fontSize: r.fs13)),
+                  SizedBox(height: r.sp4),
+                  Text("Halt: ${station.haltTime}", style: TextStyle(fontSize: r.fs12)),
+                  Text("Duration: ${station.duration}", style: TextStyle(fontSize: r.fs12)),
                 ],
               ),
             ),
@@ -365,44 +373,42 @@ class TrainListPage extends StatelessWidget {
         ],
       ),
       // ...existing code...
-      body: ListView.builder(
-        itemCount: trainStations.keys.length,
-        itemBuilder: (context, index) {
-          String trainName = trainStations.keys.elementAt(index);
-          return Container(
-            margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-            padding: const EdgeInsets.all(12.0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: ListView.builder(
+            itemCount: trainStations.keys.length,
+            itemBuilder: (context, index) {
+              final r = R.of(context);
+              String trainName = trainStations.keys.elementAt(index);
+              return Container(
+                margin: EdgeInsets.symmetric(vertical: r.sp8, horizontal: r.sp16),
+                padding: EdgeInsets.all(r.sp12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withValues(alpha: 0.3),
+                      spreadRadius: 1,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: ListTile(
-              title: Text(trainName),
-              // ...existing code...
-              onTap: () {
-                String trainName = trainStations.keys.elementAt(index);
-                if (kDebugMode) {
-                  print('Navigating to TrainDetailsPage with train: $trainName');
-                }
-                if (kDebugMode) {
-                  print('Stations: ${trainStations[trainName]}');
-                }
-                Get.to(() => TrainDetailsPage(trainStations: {
-                      trainName: trainStations[trainName] ?? []
-                    }));
-              },
-// ...existing code...
-            ),
-          );
-        },
+                child: ListTile(
+                  title: Text(trainName, style: TextStyle(fontSize: r.fs14)),
+                  trailing: Icon(Icons.arrow_forward_ios, size: r.fs14),
+                  onTap: () {
+                    if (kDebugMode) print('Navigating to: $trainName');
+                    Get.to(() => TrainDetailsPage(
+                        trainStations: {trainName: trainStations[trainName] ?? []}));
+                  },
+                ),
+              );
+            },
+          ),
+        ),
       ),
 // ...existing code...
     );

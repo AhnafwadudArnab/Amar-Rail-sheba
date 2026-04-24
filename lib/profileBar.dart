@@ -116,10 +116,10 @@ class _ProfileBarState extends State<ProfileBar> {
                     child: const Icon(Icons.person, size: 60, color: Colors.orange),
                   ),
                   if (isEditing)
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 16,
                       backgroundColor: Colors.orange,
-                      child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                      child: Icon(Icons.camera_alt, size: 16, color: Colors.white),
                     ),
                 ],
               ),
