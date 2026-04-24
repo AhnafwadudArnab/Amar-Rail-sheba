@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:trackers/Login&Signup/sign_up.dart';
-import 'package:trackers/All%20Feautures/firstpage/booking.dart';
-import 'package:trackers/services/local_data_service.dart';
-import 'package:trackers/utils/responsive.dart';
+import 'package:amarRailSheba/Login&Signup/sign_up.dart';
+import 'package:amarRailSheba/All%20Feautures/firstpage/booking.dart';
+import 'package:amarRailSheba/services/firebase_service.dart';
+import 'package:amarRailSheba/utils/responsive.dart';
 
 class Login extends StatelessWidget {
   const Login({super.key});
@@ -218,9 +218,12 @@ class _LoginFormState extends State<_LoginForm> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
-    final result = await loginUser(_emailCtrl.text, _passCtrl.text);
+    final ok = await FirebaseService().login(
+      _emailCtrl.text.trim(),
+      _passCtrl.text,
+    );
     setState(() => _loading = false);
-    if (result['success'] == true) {
+    if (ok) {
       Fluttertoast.showToast(msg: 'Login successful');
       if (mounted) {
         Navigator.pushReplacement(
@@ -228,10 +231,6 @@ class _LoginFormState extends State<_LoginForm> {
           MaterialPageRoute(builder: (_) => const MainHomeScreen()),
         );
       }
-    } else {
-      Fluttertoast.showToast(
-          msg: result['message'] ?? 'Failed to login',
-          backgroundColor: Colors.red);
     }
   }
 }
@@ -241,8 +240,4 @@ class LoginFormWidget extends StatelessWidget {
   const LoginFormWidget({super.key});
   @override
   Widget build(BuildContext context) => const _LoginForm();
-}
-
-Future<Map<String, dynamic>> loginUser(String email, String password) async {
-  return await LocalDataService().login(email, password);
 }

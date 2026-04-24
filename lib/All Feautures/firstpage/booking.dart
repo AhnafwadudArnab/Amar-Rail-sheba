@@ -1,18 +1,18 @@
 // ignore_for_file: camel_case_types, library_private_types_in_public_api
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:trackers/All%20Feautures/Emergencies/emergencies.dart';
-import 'package:trackers/All%20Feautures/Maintainence/LostAndFound.dart';
-import 'package:trackers/All%20Feautures/Maintainence/about.dart';
-import 'package:trackers/All%20Feautures/Maintainence/privacy%20&%20policy.dart';
-import 'package:trackers/All%20Feautures/Tracking%20or%20live%20locations/Live_location.dart';
-import 'package:trackers/All%20Feautures/second%20pagee/Book_page_after_search.dart';
-import 'package:trackers/Info%20page/Announcement.dart';
-import 'package:trackers/Info%20page/TrainInfo.dart';
-import 'package:trackers/Info%20page/ratings&review.dart';
-import 'package:trackers/profileBar.dart';
-import 'package:trackers/services/local_data_service.dart';
-import 'package:trackers/utils/responsive.dart';
+import 'package:amarRailSheba/All%20Feautures/Emergencies/emergencies.dart';
+import 'package:amarRailSheba/All%20Feautures/Maintainence/LostAndFound.dart';
+import 'package:amarRailSheba/All%20Feautures/Maintainence/about.dart';
+import 'package:amarRailSheba/All%20Feautures/Maintainence/privacy%20&%20policy.dart';
+import 'package:amarRailSheba/All%20Feautures/Tracking%20or%20live%20locations/Live_location.dart';
+import 'package:amarRailSheba/All%20Feautures/second%20pagee/Book_page_after_search.dart';
+import 'package:amarRailSheba/Info%20page/Announcement.dart';
+import 'package:amarRailSheba/Info%20page/TrainInfo.dart';
+import 'package:amarRailSheba/Info%20page/ratings&review.dart';
+import 'package:amarRailSheba/profileBar.dart';
+import 'package:amarRailSheba/services/local_data_service.dart';
+import 'package:amarRailSheba/utils/responsive.dart';
 import '../../ADMIN/ticketUpcoming.dart';
 import '../../ADMIN/adminPage.dart';
 

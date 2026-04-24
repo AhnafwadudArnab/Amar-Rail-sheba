@@ -2,7 +2,7 @@
 // The main train listing is now in Book_page_after_search.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:trackers/All%20Feautures/Seat%20management/Train_Seat.dart';
+import 'package:amarRailSheba/All%20Feautures/Seat%20management/Train_Seat.dart';
 
 // TicketType kept for backward compat
 class TicketType {

@@ -2,8 +2,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:get/get.dart';
-import 'package:trackers/services/local_data_service.dart';
-import 'package:trackers/utils/responsive.dart';
+import 'package:amarRailSheba/services/local_data_service.dart';
+import 'package:amarRailSheba/utils/responsive.dart';
 import '../payments_Methods/Payments.dart';
 
 class SeatController extends GetxController {

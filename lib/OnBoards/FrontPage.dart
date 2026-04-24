@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:trackers/Login&Signup/sign_up.dart';
-import 'package:trackers/utils/responsive.dart';
+import 'package:amarRailSheba/Login&Signup/sign_up.dart';
+import 'package:amarRailSheba/utils/responsive.dart';
 import 'Big_Contents_models.dart';
 
 class Onboard extends StatefulWidget {

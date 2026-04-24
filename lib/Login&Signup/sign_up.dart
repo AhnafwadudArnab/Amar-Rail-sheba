@@ -3,9 +3,9 @@ import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
-import 'package:trackers/Login&Signup/Login.dart';
-import 'package:trackers/services/local_data_service.dart';
-import 'package:trackers/utils/responsive.dart';
+import 'package:amarRailSheba/Login&Signup/Login.dart';
+import 'package:amarRailSheba/services/firebase_service.dart';
+import 'package:amarRailSheba/utils/responsive.dart';
 
 class SignUp extends StatelessWidget {
   const SignUp({super.key});
@@ -243,10 +243,10 @@ class _SignUpFormState extends State<_SignUpForm> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
-    final ok = await ApiService().registerUser(
-      name: _nameCtrl.text,
-      email: _emailCtrl.text,
-      phone: _phoneCtrl.text,
+    final ok = await FirebaseService().register(
+      name: _nameCtrl.text.trim(),
+      email: _emailCtrl.text.trim(),
+      phone: _phoneCtrl.text.trim(),
       password: _passCtrl.text,
     );
     setState(() => _loading = false);
@@ -254,30 +254,7 @@ class _SignUpFormState extends State<_SignUpForm> {
       Fluttertoast.showToast(
           msg: 'Registered successfully!', backgroundColor: Colors.green);
       Get.offAll(() => const Login());
-    } else {
-      Fluttertoast.showToast(
-          msg: 'Registration failed', backgroundColor: Colors.red);
     }
-  }
-}
-
-// Backward compat alias
-class LoginFormWidget extends StatelessWidget {
-  const LoginFormWidget({super.key});
-  @override
-  Widget build(BuildContext context) => const _SignUpForm();
-}
-
-class ApiService {
-  Future<bool> registerUser({
-    required String name,
-    required String email,
-    required String phone,
-    required String password,
-  }) async {
-    final result =
-        await LocalDataService().register(name, email, phone, password);
-    return result['success'] == true;
   }
 }
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:trackers/All%20Feautures/Dynamic%20Tickets/TicketDetails.dart';
-import 'package:trackers/All%20Feautures/firstpage/booking.dart';
-import 'package:trackers/services/local_data_service.dart';
-import 'package:trackers/utils/responsive.dart';
+import 'package:amarRailSheba/All%20Feautures/Dynamic%20Tickets/TicketDetails.dart';
+import 'package:amarRailSheba/All%20Feautures/firstpage/booking.dart';
+import 'package:amarRailSheba/services/local_data_service.dart';
+import 'package:amarRailSheba/utils/responsive.dart';
 
 // ── Order model ───────────────────────────────────────────────────────────────
 class Order {

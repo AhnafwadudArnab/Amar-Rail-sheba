@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:trackers/Login&Signup/forget_Password.dart';
-import 'package:trackers/services/local_data_service.dart';
+import 'package:amarRailSheba/Login&Signup/forget_Password.dart';
+import 'package:amarRailSheba/services/firebase_service.dart';
 import 'All Feautures/Maintainence/about.dart';
 import 'Login&Signup/Login.dart';
 import 'Login&Signup/sign_up.dart';
@@ -30,23 +30,21 @@ class _ProfileBarState extends State<ProfileBar> {
   }
 
   Future<void> _loadUser() async {
-    final session = await LocalDataService().getUserSession();
+    final profile = await FirebaseService().getUserProfile();
     setState(() {
-      _user = session;
+      _user = profile;
       _loading = false;
-      if (session != null) {
-        _nameCtrl.text = session['name'] ?? '';
-        _emailCtrl.text = session['email'] ?? '';
-        _phoneCtrl.text = session['phone'] ?? '';
+      if (profile != null) {
+        _nameCtrl.text = profile['name'] ?? '';
+        _emailCtrl.text = profile['email'] ?? '';
+        _phoneCtrl.text = profile['phone'] ?? '';
       }
     });
   }
 
   Future<void> _logout() async {
-    await LocalDataService().clearSession();
-    if (mounted) {
-      Get.offAll(() => const _LoggedOutProfile());
-    }
+    await FirebaseService().logout();
+    if (mounted) Get.offAll(() => const _LoggedOutProfile());
   }
 
   @override

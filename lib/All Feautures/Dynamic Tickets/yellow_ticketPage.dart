@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:trackers/All%20Feautures/firstpage/booking.dart';
+import 'package:amarRailSheba/All%20Feautures/firstpage/booking.dart';
 
 class TrainTicketPage extends StatelessWidget {
   final String name;

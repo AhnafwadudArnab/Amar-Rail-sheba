@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:trackers/All%20Feautures/firstpage/booking.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:amarRailSheba/All%20Feautures/firstpage/booking.dart';
+import 'package:amarRailSheba/services/firebase_service.dart';
 
 class LostAndFoundPage extends StatefulWidget {
   const LostAndFoundPage({super.key});
@@ -89,7 +88,6 @@ class ReportLostItemPage extends StatefulWidget {
 
 class _ReportLostItemPageState extends State<ReportLostItemPage> {
   final _formKey = GlobalKey<FormState>();
-  final ApiService apiService = ApiService();
 
   final TextEditingController itemNameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
@@ -117,25 +115,14 @@ class _ReportLostItemPageState extends State<ReportLostItemPage> {
             ElevatedButton(
               onPressed: () async {
                 if (_formKey.currentState!.validate()) {
-                  final data = {
+                  await FirebaseService().reportLostItem({
                     'itemName': itemNameController.text,
                     'description': descriptionController.text,
                     'dateTimeLost': dateTimeLostController.text,
                     'trainDetails': trainDetailsController.text,
                     'contactDetails': contactDetailsController.text,
-                  };
-                  try {
-                    final response = await apiService.reportLostItem(data);
-                    // Handle success response
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Lost item reported successfully!')),
-                    );
-                  } catch (e) {
-                    // Handle error response
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
-                    );
-                  }
+                  });
+                  if (context.mounted) Navigator.pop(context);
                 }
               },
               child: const Text('Submit'),
@@ -216,7 +203,6 @@ class ReportFoundItemPage extends StatefulWidget {
 
 class _ReportFoundItemPageState extends State<ReportFoundItemPage> {
   final _formKey = GlobalKey<FormState>();
-  final ApiService apiService = ApiService();
 
   final TextEditingController itemNameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
@@ -263,7 +249,7 @@ class _ReportFoundItemPageState extends State<ReportFoundItemPage> {
             ElevatedButton(
               onPressed: () async {
                 if (_formKey.currentState!.validate()) {
-                  final data = {
+                  await FirebaseService().reportFoundItem({
                     'itemName': itemNameController.text,
                     'description': descriptionController.text,
                     'dateTimeFound': dateTimeFoundController.text,
@@ -271,19 +257,8 @@ class _ReportFoundItemPageState extends State<ReportFoundItemPage> {
                     'contactDetails': contactDetailsController.text,
                     'foundAt': foundAtController.text,
                     'contactPreference': contactPreference ?? '',
-                  };
-                  try {
-                    final response = await apiService.reportFoundItem(data);
-                    // Handle success response
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Found item reported successfully!')),
-                    );
-                  } catch (e) {
-                    // Handle error response
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
-                    );
-                  }
+                  });
+                  if (context.mounted) Navigator.pop(context);
                 }
               },
               child: const Text('Submit'),
@@ -317,7 +292,6 @@ class ClaimProcessPage extends StatefulWidget {
 
 class _ClaimProcessPageState extends State<ClaimProcessPage> {
   final _formKey = GlobalKey<FormState>();
-  final ApiService apiService = ApiService();
 
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController serialNumberController = TextEditingController();
@@ -356,23 +330,12 @@ class _ClaimProcessPageState extends State<ClaimProcessPage> {
             ElevatedButton(
               onPressed: () async {
                 if (_formKey.currentState!.validate()) {
-                  final data = {
+                  await FirebaseService().submitClaim('unknown', {
                     'description': descriptionController.text,
                     'serialNumber': serialNumberController.text,
                     'collectionOption': collectionOption ?? '',
-                  };
-                  try {
-                    final response = await apiService.claimProcess(data);
-                    // Handle success response
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Claim process submitted successfully!')),
-                    );
-                  } catch (e) {
-                    // Handle error response
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
-                    );
-                  }
+                  });
+                  if (context.mounted) Navigator.pop(context);
                 }
               },
               child: const Text('Submit'),
@@ -394,49 +357,5 @@ class _ClaimProcessPageState extends State<ClaimProcessPage> {
         return null;
       },
     );
-  }
-}
-
-class ApiService {
-  final String baseUrl = 'http://10.15.10.140:3000';
-
-  Future<Map<String, dynamic>> reportLostItem(Map<String, String> data) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/report-lost'),
-      body: json.encode(data),
-      headers: {'Content-Type': 'application/json'},
-    );
-    return _handleResponse(response);
-  }
-
-  Future<Map<String, dynamic>> searchFoundItems() async {
-    final response = await http.get(Uri.parse('$baseUrl/search-found'));
-    return _handleResponse(response);
-  }
-
-  Future<Map<String, dynamic>> reportFoundItem(Map<String, String> data) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/report-found'),
-      body: json.encode(data),
-      headers: {'Content-Type': 'application/json'},
-    );
-    return _handleResponse(response);
-  }
-
-  Future<Map<String, dynamic>> claimProcess(Map<String, String> data) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/claim-process'),
-      body: json.encode(data),
-      headers: {'Content-Type': 'application/json'},
-    );
-    return _handleResponse(response);
-  }
-
-  Map<String, dynamic> _handleResponse(http.Response response) {
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to load data: ${response.statusCode}');
-    }
   }
 }

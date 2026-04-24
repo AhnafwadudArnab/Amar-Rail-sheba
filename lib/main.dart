@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:trackers/All%20Feautures/firstpage/booking.dart';
-import 'package:trackers/OnBoards/FrontPage.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:amarRailSheba/All%20Feautures/firstpage/booking.dart';
+import 'package:amarRailSheba/OnBoards/FrontPage.dart';
 //import 'package:get/get_connect/http/src/utils/utils.dart';
-//import 'package:trackers/All%20Feautures/second%20pagee/Book_page_after_search.dart';
-//import 'package:trackers/OnBoards/FrontPage.dart';
+//import 'package:amarRailSheba/All%20Feautures/second%20pagee/Book_page_after_search.dart';
+//import 'package:amarRailSheba/OnBoards/FrontPage.dart';
 //import 'All Feautures/Seat management/Train_Seat.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  FirebaseDatabase.instance.databaseURL =
+      'https://railwaysystems-7d372-default-rtdb.asia-southeast1.firebasedatabase.app';
   runApp(const MyApp());
 }
 

@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'package:trackers/All%20Feautures/firstpage/booking.dart';
+import 'package:amarRailSheba/All%20Feautures/firstpage/booking.dart';
 
 class MainTicketPage extends StatefulWidget {
   const MainTicketPage({

@@ -5,7 +5,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:trackers/Login&Signup/sign_up.dart';
+import 'package:amarRailSheba/Login&Signup/sign_up.dart';
 
 class AdminPage extends StatefulWidget {
   const AdminPage({super.key});

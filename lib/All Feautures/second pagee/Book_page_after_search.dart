@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:trackers/All%20Feautures/Seat%20management/Train_Seat.dart';
-import 'package:trackers/services/local_data_service.dart';
-import 'package:trackers/utils/responsive.dart';
+import 'package:amarRailSheba/All%20Feautures/Seat%20management/Train_Seat.dart';
+import 'package:amarRailSheba/services/local_data_service.dart';
+import 'package:amarRailSheba/utils/responsive.dart';
 
 // ignore: must_be_immutable
 class TrainSearchPage extends StatefulWidget {

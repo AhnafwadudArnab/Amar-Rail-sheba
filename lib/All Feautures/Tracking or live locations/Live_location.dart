@@ -5,8 +5,8 @@ import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
-import 'package:trackers/services/train_route_data.dart';
-import 'package:trackers/utils/responsive.dart';
+import 'package:amarRailSheba/services/train_route_data.dart';
+import 'package:amarRailSheba/utils/responsive.dart';
 
 class LiveLocation extends StatefulWidget {
   const LiveLocation({super.key});

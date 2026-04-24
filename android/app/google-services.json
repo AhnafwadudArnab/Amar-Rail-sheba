@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "480104228682",
+    "project_id": "railwaysystems-7d372",
+    "storage_bucket": "railwaysystems-7d372.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:480104228682:android:26a0841e7e1a8838cbc3b3",
+        "android_client_info": {
+          "package_name": "com.example.amarRailSheba"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmjucqapzZ7RDckE41hkZmY2w9OBSHMKo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
