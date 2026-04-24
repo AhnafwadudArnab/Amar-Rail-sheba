@@ -13,6 +13,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   get: ^4.6.6
   google_maps_flutter: ^2.10.0
+  google_maps_flutter_web: ^0.5.10
   location: ^7.0.1
   email_validator: ^2.0.1
   url_launcher: ^6.0.20
@@ -27,13 +28,14 @@ dependencies:
   flutter_polyline_points: ^2.1.0
   geolocator: ^13.0.2
   intl: ^0.19.0
-  firebase_core: ^4.7.0
-  firebase_auth: ^6.4.0
-  cloud_firestore: ^6.3.0
-  firebase_database: ^12.3.0
-  firebase_crashlytics: ^4.1.0
-  firebase_analytics: ^11.3.0
-  firebase_messaging: ^15.1.0
+  crypto: ^3.0.3
+  firebase_core: ^3.13.0
+  firebase_auth: ^5.5.0
+  cloud_firestore: ^5.6.0
+  firebase_database: ^11.3.0
+  firebase_crashlytics: ^4.3.0
+  firebase_analytics: ^11.4.0
+  firebase_messaging: ^15.2.5
 
   
 

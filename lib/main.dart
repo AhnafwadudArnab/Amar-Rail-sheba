@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -29,8 +30,11 @@ class _AppLoaderState extends State<AppLoader> {
     _init = Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     ).then((_) async {
-      // Pass all uncaught Flutter errors to Crashlytics
-      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+      // Crashlytics is not supported on web — only wire it on mobile/desktop
+      if (!kIsWeb) {
+        FlutterError.onError =
+            FirebaseCrashlytics.instance.recordFlutterFatalError;
+      }
       // Init push notifications
       await NotificationService().init();
     });

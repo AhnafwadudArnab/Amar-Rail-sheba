@@ -40,10 +40,17 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <!-- Use placeholder for API Key to enable substitution -->
+        <!-- Google Maps API Key — loaded from local.properties (gitignored)
+             Set MAPS_API_KEY in android/local.properties:
+               MAPS_API_KEY=your_actual_key_here
+             Then restrict the key in Google Cloud Console:
+               APIs & Services → Credentials → your key
+               → Application restrictions: Android apps
+               → Add: com.amarrailsheba.app + your SHA-1 fingerprint
+        -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyC9MXVfuyl5waFhrAlyg_cW0XwMdGLaQO8" />
+            android:value="${MAPS_API_KEY}" />
     </application>
 
     <!-- Required to query activities that can process text, see:

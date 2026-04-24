@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -69,10 +70,14 @@ class _LiveLocationState extends State<LiveLocation>
 
   // ── Location init ─────────────────────────────────────────────────────────
   Future<void> _initLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      _showSnack('Location services are disabled. Please enable GPS.');
-      return;
+    // On web, Geolocator uses the browser's Geolocation API
+    // isLocationServiceEnabled() always returns true on web
+    if (!kIsWeb) {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        _showSnack('Location services are disabled. Please enable GPS.');
+        return;
+      }
     }
 
     LocationPermission permission = await Geolocator.checkPermission();
@@ -90,13 +95,18 @@ class _LiveLocationState extends State<LiveLocation>
 
     setState(() => _locationGranted = true);
 
+    // LocationSettings: web uses default accuracy (browser decides)
+    final locationSettings = kIsWeb
+        ? const LocationSettings(accuracy: LocationAccuracy.high)
+        : const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 10,
+          );
+
     // Get initial position
     try {
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 10,
-        ),
+        locationSettings: locationSettings,
       );
       _onPositionUpdate(pos);
     } catch (e) {
@@ -105,10 +115,7 @@ class _LiveLocationState extends State<LiveLocation>
 
     // Stream updates
     _positionStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10,
-      ),
+      locationSettings: locationSettings,
     ).listen(
       _onPositionUpdate,
       onError: (e) => _showSnack('Location stream error. Check GPS settings.'),

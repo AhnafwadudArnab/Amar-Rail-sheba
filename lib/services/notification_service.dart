@@ -1,4 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -12,14 +13,15 @@ class NotificationService {
   final _fcm = FirebaseMessaging.instance;
 
   Future<void> init() async {
-    // Request permission (iOS + Android 13+)
+    // Request permission (iOS + Android 13+; web shows browser prompt)
     await _fcm.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
 
-    // Save FCM token to Firebase so server can target this device
+    // On web, FCM uses VAPID key — set it here if you have one
+    // final token = await _fcm.getToken(vapidKey: 'YOUR_VAPID_KEY');
     final token = await _fcm.getToken();
     debugPrint('FCM Token: $token');
     // TODO: Save token to Firebase users/{uid}/fcmToken
@@ -29,11 +31,18 @@ class NotificationService {
       final title = msg.notification?.title ?? '';
       final body = msg.notification?.body ?? '';
       if (title.isNotEmpty || body.isNotEmpty) {
-        Fluttertoast.showToast(
-          msg: '$title\n$body'.trim(),
-          toastLength: Toast.LENGTH_LONG,
-          backgroundColor: const Color(0xFF1A3A6B),
-        );
+        // fluttertoast doesn't work on web — use SnackBar fallback
+        if (kIsWeb) {
+          // Web: handled via service worker / browser notification
+          // The notification will appear as a browser notification when app is in background
+          debugPrint('FCM (web foreground): $title — $body');
+        } else {
+          Fluttertoast.showToast(
+            msg: '$title\n$body'.trim(),
+            toastLength: Toast.LENGTH_LONG,
+            backgroundColor: const Color(0xFF1A3A6B),
+          );
+        }
       }
     });
 

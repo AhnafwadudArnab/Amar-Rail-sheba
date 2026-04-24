@@ -1,12 +1,12 @@
 {
-    "name": "trackers",
-    "short_name": "trackers",
+    "name": "Amar Rail Sheba",
+    "short_name": "Rail Sheba",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#0A1628",
+    "theme_color": "#1A3A6B",
+    "description": "Bangladesh Railway Ticket Booking System",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

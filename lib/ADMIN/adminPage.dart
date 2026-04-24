@@ -1,4 +1,5 @@
 // ignore_for_file: library_private_types_in_public_api
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -8,7 +9,10 @@ import 'package:amarRailSheba/Login&Signup/Login.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADMIN PANEL — tabbed layout
-// Tabs: Dashboard | Trains | Bookings | Users | Announcements | Lost & Found
+// Access: Firebase custom claim `admin: true` required.
+//
+// To grant admin to a user, run in Firebase Admin SDK / Cloud Functions:
+//   admin.auth().setCustomUserClaims(uid, { admin: true });
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AdminPage extends StatefulWidget {
@@ -20,12 +24,18 @@ class AdminPage extends StatefulWidget {
 class _AdminPageState extends State<AdminPage>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
+  bool _checking = true;
+  bool _isAdmin = false;
 
   static const _tabs = [
     Tab(icon: Icon(Icons.dashboard_outlined), text: 'Dashboard'),
     Tab(icon: Icon(Icons.train_outlined), text: 'Trains'),
     Tab(icon: Icon(Icons.confirmation_num_outlined), text: 'Bookings'),
-    Tab(icon: Icon(Icons.people_outline), text: 'Users'),
+    Tab(icon: Icon(Icons.manage_accounts_outlined), text: 'Users'),
+    Tab(icon: Icon(Icons.payment_outlined), text: 'Payments'),
+    Tab(icon: Icon(Icons.bar_chart_outlined), text: 'Reports'),
+    Tab(icon: Icon(Icons.security_outlined), text: 'Security'),
+    Tab(icon: Icon(Icons.settings_outlined), text: 'Config'),
     Tab(icon: Icon(Icons.campaign_outlined), text: 'News'),
     Tab(icon: Icon(Icons.search_outlined), text: 'Lost & Found'),
   ];
@@ -33,7 +43,25 @@ class _AdminPageState extends State<AdminPage>
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: _tabs.length, vsync: this);
+    _tab = TabController(length: 10, vsync: this);
+    _checkAdminRole();
+  }
+
+  /// Verifies Firebase custom claim `admin: true`.
+  /// Force-refreshes the token to get latest claims.
+  Future<void> _checkAdminRole() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() { _checking = false; _isAdmin = false; });
+      return;
+    }
+    try {
+      final token = await user.getIdTokenResult(true); // force refresh
+      final isAdmin = token.claims?['admin'] == true;
+      setState(() { _checking = false; _isAdmin = isAdmin; });
+    } catch (_) {
+      setState(() { _checking = false; _isAdmin = false; });
+    }
   }
 
   @override
@@ -45,6 +73,53 @@ class _AdminPageState extends State<AdminPage>
   @override
   Widget build(BuildContext context) {
     final r = R.of(context);
+
+    // Loading while checking role
+    if (_checking) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0A1628),
+        body: Center(child: CircularProgressIndicator(color: Color(0xFFE8A838))),
+      );
+    }
+
+    // Access denied
+    if (!_isAdmin) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF0A1628),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.lock_outline, size: 64, color: Color(0xFFE8A838)),
+                const SizedBox(height: 16),
+                const Text(
+                  'Access Denied',
+                  style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'You do not have admin privileges.\nContact the system administrator.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white60, fontSize: 14),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton(
+                  onPressed: () => Get.back(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE8A838),
+                    foregroundColor: Colors.black,
+                  ),
+                  child: const Text('Go Back'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4F8),
       appBar: AppBar(
@@ -85,6 +160,10 @@ class _AdminPageState extends State<AdminPage>
           _TrainsTab(),
           _BookingsTab(),
           _UsersTab(),
+          _PaymentsTab(),
+          _ReportsTab(),
+          _SecurityTab(),
+          _SystemConfigTab(),
           _AnnouncementsTab(),
           _LostFoundTab(),
         ],
@@ -713,86 +792,282 @@ class _BookingsTabState extends State<_BookingsTab> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// USERS TAB — real-time user list
+// USERS TAB — real-time user list with block/suspend/activate controls
 // ─────────────────────────────────────────────────────────────────────────────
-class _UsersTab extends StatelessWidget {
+class _UsersTab extends StatefulWidget {
   const _UsersTab();
+  @override
+  State<_UsersTab> createState() => _UsersTabState();
+}
+
+class _UsersTabState extends State<_UsersTab> {
+  String _filter = 'all'; // all | active | suspended | blocked
+  final _searchCtrl = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _setUserStatus(String uid, String status) async {
+    await FirebaseDatabase.instance.ref('users/$uid').update({'status': status});
+  }
+
+  Future<void> _showEditDialog(BuildContext context, Map<String, dynamic> user) async {
+    final nameCtrl = TextEditingController(text: user['name'] ?? '');
+    final phoneCtrl = TextEditingController(text: user['phone'] ?? '');
+    final r = R.of(context);
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit User Info'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              decoration: InputDecoration(
+                labelText: 'Name',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+            SizedBox(height: r.sp10),
+            TextField(
+              controller: phoneCtrl,
+              decoration: InputDecoration(
+                labelText: 'Phone',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1A3A6B), foregroundColor: Colors.white),
+            onPressed: () async {
+              await FirebaseDatabase.instance.ref('users/${user['uid']}').update({
+                'name': nameCtrl.text.trim(),
+                'phone': phoneCtrl.text.trim(),
+              });
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    nameCtrl.dispose();
+    phoneCtrl.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final r = R.of(context);
-    return StreamBuilder<DatabaseEvent>(
-      stream: FirebaseDatabase.instance.ref('users').onValue,
-      builder: (ctx, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (!snap.hasData || !snap.data!.snapshot.exists) {
-          return Center(child: Text('No users found', style: TextStyle(color: Colors.grey, fontSize: r.fs13)));
-        }
-        final raw = Map<String, dynamic>.from(snap.data!.snapshot.value as Map);
-        final users = raw.entries.map((e) {
-          final m = Map<String, dynamic>.from(e.value as Map);
-          m['uid'] = e.key;
-          return m;
-        }).toList();
+    return Column(
+      children: [
+        // Search + filter bar
+        Container(
+          color: Colors.white,
+          padding: EdgeInsets.symmetric(horizontal: r.sp16, vertical: r.sp10),
+          child: Column(
+            children: [
+              TextField(
+                controller: _searchCtrl,
+                style: TextStyle(fontSize: r.fs13),
+                decoration: InputDecoration(
+                  hintText: 'Search by name or email…',
+                  hintStyle: TextStyle(fontSize: r.fs13),
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  contentPadding: EdgeInsets.symmetric(horizontal: r.sp12, vertical: r.sp8),
+                ),
+                onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+              ),
+              SizedBox(height: r.sp8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    Text('Status: ', style: TextStyle(fontSize: r.fs13, color: Colors.grey)),
+                    SizedBox(width: r.sp8),
+                    ...[('all', 'All'), ('active', 'Active'), ('suspended', 'Suspended'), ('blocked', 'Blocked')]
+                        .map((f) => Padding(
+                              padding: EdgeInsets.only(right: r.sp8),
+                              child: ChoiceChip(
+                                label: Text(f.$2, style: TextStyle(fontSize: r.fs12)),
+                                selected: _filter == f.$1,
+                                selectedColor: const Color(0xFF1A3A6B),
+                                labelStyle: TextStyle(
+                                    color: _filter == f.$1 ? Colors.white : Colors.black87,
+                                    fontSize: r.fs12),
+                                onSelected: (_) => setState(() => _filter = f.$1),
+                              ),
+                            )),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<DatabaseEvent>(
+            stream: FirebaseDatabase.instance.ref('users').onValue,
+            builder: (ctx, snap) {
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (!snap.hasData || !snap.data!.snapshot.exists) {
+                return Center(child: Text('No users found', style: TextStyle(color: Colors.grey, fontSize: r.fs13)));
+              }
+              final raw = Map<String, dynamic>.from(snap.data!.snapshot.value as Map);
+              var users = raw.entries.map((e) {
+                final m = Map<String, dynamic>.from(e.value as Map);
+                m['uid'] = e.key;
+                return m;
+              }).toList();
 
-        return Column(
-          children: [
-            Container(
-              color: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: r.sp16, vertical: r.sp12),
-              child: Row(
+              // Apply status filter
+              if (_filter != 'all') {
+                users = users.where((u) {
+                  final s = u['status'] ?? 'active';
+                  return s == _filter;
+                }).toList();
+              }
+              // Apply search
+              if (_searchQuery.isNotEmpty) {
+                users = users.where((u) {
+                  final name = (u['name'] ?? '').toString().toLowerCase();
+                  final email = (u['email'] ?? '').toString().toLowerCase();
+                  return name.contains(_searchQuery) || email.contains(_searchQuery);
+                }).toList();
+              }
+
+              return Column(
                 children: [
-                  Icon(Icons.people, color: const Color(0xFF1A3A6B), size: r.fs18),
-                  SizedBox(width: r.sp8),
-                  Text('${users.length} Registered Users',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: r.fs14)),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.all(r.sp12),
-                itemCount: users.length,
-                itemBuilder: (ctx2, i) {
-                  final u = users[i];
-                  return Card(
-                    margin: EdgeInsets.only(bottom: r.sp8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: const Color(0xFF1A3A6B).withValues(alpha: 0.1),
-                        child: Text(
-                          (u['name'] ?? 'U').substring(0, 1).toUpperCase(),
-                          style: TextStyle(color: const Color(0xFF1A3A6B), fontWeight: FontWeight.bold, fontSize: r.fs14),
-                        ),
-                      ),
-                      title: Text(u['name'] ?? 'Unknown',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: r.fs13)),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(u['email'] ?? '', style: TextStyle(fontSize: r.fs11, color: Colors.grey)),
-                          if (u['phone'] != null)
-                            Text(u['phone'], style: TextStyle(fontSize: r.fs11, color: Colors.grey)),
-                        ],
-                      ),
-                      trailing: Text(
-                        u['createdAt'] != null
-                            ? u['createdAt'].toString().substring(0, 10)
-                            : '',
-                        style: TextStyle(fontSize: r.fs10, color: Colors.grey),
-                      ),
-                      isThreeLine: true,
+                  Container(
+                    color: const Color(0xFFF0F4F8),
+                    padding: EdgeInsets.symmetric(horizontal: r.sp16, vertical: r.sp8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.people, color: const Color(0xFF1A3A6B), size: r.fs18),
+                        SizedBox(width: r.sp8),
+                        Text('${users.length} Users',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: r.fs14)),
+                      ],
                     ),
-                  );
-                },
-              ),
-            ),
-          ],
-        );
-      },
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: EdgeInsets.all(r.sp12),
+                      itemCount: users.length,
+                      itemBuilder: (ctx2, i) {
+                        final u = users[i];
+                        final status = u['status'] ?? 'active';
+                        Color statusColor;
+                        IconData statusIcon;
+                        switch (status) {
+                          case 'blocked':
+                            statusColor = Colors.red;
+                            statusIcon = Icons.block;
+                            break;
+                          case 'suspended':
+                            statusColor = Colors.orange;
+                            statusIcon = Icons.pause_circle_outline;
+                            break;
+                          default:
+                            statusColor = Colors.green;
+                            statusIcon = Icons.check_circle_outline;
+                        }
+                        return Card(
+                          margin: EdgeInsets.only(bottom: r.sp8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          child: Padding(
+                            padding: EdgeInsets.all(r.sp12),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: const Color(0xFF1A3A6B).withValues(alpha: 0.1),
+                                  child: Text(
+                                    (u['name'] ?? 'U').substring(0, 1).toUpperCase(),
+                                    style: TextStyle(color: const Color(0xFF1A3A6B), fontWeight: FontWeight.bold, fontSize: r.fs14),
+                                  ),
+                                ),
+                                SizedBox(width: r.sp12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(u['name'] ?? 'Unknown',
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: r.fs13)),
+                                      Text(u['email'] ?? '',
+                                          style: TextStyle(fontSize: r.fs11, color: Colors.grey)),
+                                      if (u['phone'] != null)
+                                        Text(u['phone'], style: TextStyle(fontSize: r.fs11, color: Colors.grey)),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(statusIcon, color: statusColor, size: r.fs14),
+                                        SizedBox(width: r.sp4),
+                                        Text(status,
+                                            style: TextStyle(color: statusColor, fontSize: r.fs11, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                    SizedBox(height: r.sp6),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // Edit button
+                                        InkWell(
+                                          onTap: () => _showEditDialog(context, u),
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(horizontal: r.sp6, vertical: r.sp4),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF1A3A6B).withValues(alpha: 0.1),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Icon(Icons.edit_outlined, size: r.fs14, color: const Color(0xFF1A3A6B)),
+                                          ),
+                                        ),
+                                        SizedBox(width: r.sp6),
+                                        // Status action button
+                                        PopupMenuButton<String>(
+                                          icon: Icon(Icons.more_vert, size: r.fs16, color: Colors.grey),
+                                          onSelected: (val) => _setUserStatus(u['uid'], val),
+                                          itemBuilder: (_) => [
+                                            if (status != 'active')
+                                              const PopupMenuItem(value: 'active', child: Row(children: [Icon(Icons.check_circle_outline, color: Colors.green, size: 18), SizedBox(width: 8), Text('Activate')])),
+                                            if (status != 'suspended')
+                                              const PopupMenuItem(value: 'suspended', child: Row(children: [Icon(Icons.pause_circle_outline, color: Colors.orange, size: 18), SizedBox(width: 8), Text('Suspend')])),
+                                            if (status != 'blocked')
+                                              const PopupMenuItem(value: 'blocked', child: Row(children: [Icon(Icons.block, color: Colors.red, size: 18), SizedBox(width: 8), Text('Block')])),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

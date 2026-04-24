@@ -2,6 +2,7 @@
 // All data is stored locally using SharedPreferences + in-memory mock data
 
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -334,6 +335,11 @@ class LocalDataService {
   }
 
   // Simple local auth (stores users in SharedPreferences)
+
+  /// SHA-256 hash of password — never store plain text
+  String _hashPassword(String password) =>
+      sha256.convert(utf8.encode(password)).toString();
+
   Future<Map<String, dynamic>> register(
       String name, String email, String phone, String password) async {
     final prefs = await SharedPreferences.getInstance();
@@ -349,7 +355,7 @@ class LocalDataService {
       'name': name,
       'email': email,
       'phone': phone,
-      'password': password,
+      'password': _hashPassword(password), // hashed — never plain text
     };
     usersJson.add(jsonEncode(user));
     await prefs.setStringList('users', usersJson);
@@ -382,7 +388,7 @@ class LocalDataService {
     final usersJson = prefs.getStringList('users') ?? [];
     final users = usersJson.map((j) => jsonDecode(j) as Map<String, dynamic>).toList();
     final user = users.firstWhereOrNull(
-        (u) => u['email'] == email && u['password'] == password);
+        (u) => u['email'] == email && u['password'] == _hashPassword(password));
 
     if (user == null) {
       // Increment failed attempts
