@@ -1448,3 +1448,47 @@ class _LostFoundTabState extends State<_LostFoundTab> {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAYMENTS TAB
+// ─────────────────────────────────────────────────────────────────────────────
+class _PaymentsTab extends StatelessWidget {
+  const _PaymentsTab();
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('Payments — Coming Soon'));
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REPORTS TAB
+// ─────────────────────────────────────────────────────────────────────────────
+class _ReportsTab extends StatelessWidget {
+  const _ReportsTab();
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('Reports — Coming Soon'));
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECURITY TAB
+// ─────────────────────────────────────────────────────────────────────────────
+class _SecurityTab extends StatelessWidget {
+  const _SecurityTab();
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('Security — Coming Soon'));
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SYSTEM CONFIG TAB
+// ─────────────────────────────────────────────────────────────────────────────
+class _SystemConfigTab extends StatelessWidget {
+  const _SystemConfigTab();
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('System Config — Coming Soon'));
+  }
+}
