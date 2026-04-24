@@ -45,6 +45,7 @@ class _AppLoaderState extends State<AppLoader> {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Amar Rail Sheba',
+      unknownRoute: GetPage(name: '/notfound', page: () => const Onboard()),
       home: FutureBuilder<void>(
         future: _init,
         builder: (context, snapshot) {

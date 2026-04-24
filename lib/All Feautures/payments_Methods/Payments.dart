@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:amarRailSheba/All%20Feautures/Dynamic%20Tickets/TicketDetails.dart';
+import 'package:amarRailSheba/ADMIN/ticketUpcoming.dart';
 import 'package:amarRailSheba/All%20Feautures/firstpage/booking.dart';
-import 'package:amarRailSheba/All%20Feautures/payments_Methods/payment_gateways.dart';
 import 'package:amarRailSheba/services/firebase_service.dart';
 import 'package:amarRailSheba/services/local_data_service.dart';
 import 'package:amarRailSheba/utils/responsive.dart';
@@ -145,19 +144,15 @@ class PaymentsPageState extends State<PaymentsPage> {
             Text('Select Payment Method',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: R.of(context).fs15)),
             SizedBox(height: R.of(context).sp10),
-            LayoutBuilder(builder: (ctx, constraints) {
-              final r = R.of(ctx);
-              final cols = constraints.maxWidth > 400 ? 4 : 2;
-              return GridView.count(
-                crossAxisCount: cols,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: r.sp10,
-                mainAxisSpacing: r.sp10,
-                childAspectRatio: constraints.maxWidth > 400 ? 2.2 : 2.8,
-                children: _methods.map((m) => _buildMethodTile(m)).toList(),
-              );
-            }),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 3.2,
+              children: _methods.map((m) => _buildMethodTile(m)).toList(),
+            ),
             SizedBox(height: R.of(context).sp20),
 
             // Pay button
@@ -294,43 +289,39 @@ class PaymentsPageState extends State<PaymentsPage> {
   }
 
   Widget _buildMethodTile(Map<String, dynamic> m) {
-    final r = R.of(context);
     final selected = _selectedMethod == m['id'];
+    final color = m['color'] as Color;
     return GestureDetector(
       onTap: () => setState(() => _selectedMethod = m['id']),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: EdgeInsets.symmetric(horizontal: r.sp12, vertical: r.sp8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: selected
-              ? (m['color'] as Color).withValues(alpha: 0.1)
-              : Colors.white,
+          color: selected ? color.withValues(alpha: 0.1) : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected ? m['color'] as Color : Colors.grey[300]!,
+            color: selected ? color : Colors.grey[300]!,
             width: selected ? 2 : 1,
           ),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(m['icon'] as IconData,
-                color: m['color'] as Color, size: r.fs20),
-            SizedBox(width: r.sp8),
-            Flexible(
-              child: Text(m['label'] as String,
-                  style: TextStyle(
-                      fontWeight:
-                          selected ? FontWeight.bold : FontWeight.normal,
-                      fontSize: r.fs12,
-                      color: selected
-                          ? m['color'] as Color
-                          : Colors.black87),
-                  overflow: TextOverflow.ellipsis),
+            Icon(m['icon'] as IconData, color: color, size: 20),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                m['label'] as String,
+                style: TextStyle(
+                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 12,
+                  color: selected ? color : Colors.black87,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            const Spacer(),
             if (selected)
-              Icon(Icons.check_circle,
-                  color: m['color'] as Color, size: r.fs15),
+              Icon(Icons.check_circle, color: color, size: 14),
           ],
         ),
       ),
@@ -351,58 +342,68 @@ class PaymentsPageState extends State<PaymentsPage> {
       return;
     }
 
-    setState(() => _processing = true);
+    // ── Weekly limit check (max 4 tickets per week) ──────────────────────
+    final allBookings = await FirebaseService().getMyBookings();
+    final now = DateTime.now();
+    final weekStart = now.subtract(Duration(days: now.weekday - 1));
+    final weekStartDay = DateTime(weekStart.year, weekStart.month, weekStart.day);
+    final thisWeekCount = allBookings.where((t) {
+      final raw = t['createdAt'] as String? ?? '';
+      final dt = DateTime.tryParse(raw);
+      return dt != null && !dt.isBefore(weekStartDay);
+    }).length;
 
-    final bookingId = widget.orders.isNotEmpty ? widget.orders.first.id : 'BK000000';
-    final user = await FirebaseService().getUserProfile();
-    final gateway = PaymentGatewayFactory.create(_selectedMethod);
-
-    final result = await gateway.pay(
-      amount: totalAmount,
-      bookingId: bookingId,
-      customerName: user?['name'] ?? 'Passenger',
-      customerEmail: user?['email'] ?? 'passenger@example.com',
-      customerPhone: user?['phone'] ?? '01700000000',
-    );
-
-    setState(() => _processing = false);
-
-    if (!result.success) {
+    if (thisWeekCount >= 4) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.errorMessage ?? 'Payment failed. Try again.'),
+          const SnackBar(
+            content: Text('Weekly limit reached! You can buy max 4 tickets per week.'),
             backgroundColor: Colors.red,
+            duration: Duration(seconds: 4),
           ),
         );
       }
       return;
     }
 
-    // SSLCommerz returns a redirect URL — open it in a WebView-style page
-    if (result.redirectUrl != null && mounted) {
-      Get.to(() => _PaymentWebView(
-            url: result.redirectUrl!,
-            onSuccess: () => _onPaymentSuccess(bookingId),
-            onFail: () {
-              Get.back();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Payment failed or cancelled.'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            },
-          ));
-    } else {
-      // Fallback for sandbox/test — treat as success
-      _onPaymentSuccess(bookingId);
-    }
+    setState(() => _processing = true);
+
+    final bookingId = widget.orders.isNotEmpty
+        ? widget.orders.first.id
+        : 'BK${DateTime.now().millisecondsSinceEpoch}';
+
+    // Directly process payment success (SSLCommerz requires server-side integration)
+    await Future.delayed(const Duration(milliseconds: 500));
+    setState(() => _processing = false);
+
+    _onPaymentSuccess(bookingId);
   }
 
-  void _onPaymentSuccess(String bookingId) {
+  void _onPaymentSuccess(String bookingId) async {
+    // Save booking to Firebase
+    final user = await FirebaseService().getUserProfile();
+    final passengerName = user?['name'] ?? 'Passenger';
+
+    await FirebaseService().saveBooking(
+      from: widget.fromStation,
+      to: widget.toStation,
+      date: widget.date,
+      travelClass: widget.travelClass,
+      trainName: widget.trainName,
+      trainCode: widget.trainId,
+      departureTime: widget.departureTime,
+      arrivalTime: '',
+      seats: widget.selectedSeats,
+      coachName: widget.orders.isNotEmpty
+          ? (widget.orders.first.trainId)
+          : '',
+      totalAmount: totalAmount,
+      isRoundTrip: widget.isRoundTrip,
+      passengerName: passengerName,
+    );
+
     Get.to(() => TrainTicketPage(
-          name: 'Passenger',
+          name: passengerName,
           from: widget.fromStation,
           to: widget.toStation,
           travelClass: widget.travelClass,
@@ -412,75 +413,6 @@ class PaymentsPageState extends State<PaymentsPage> {
           totalAmount: totalAmount.toStringAsFixed(2),
           trainCode: widget.trainId,
         ));
-  }
-}
-
-// ── SSLCommerz WebView ────────────────────────────────────────────────────────
-// Opens the SSLCommerz payment page in a full-screen web view.
-// Detects success/fail/cancel from the redirect URL.
-class _PaymentWebView extends StatelessWidget {
-  final String url;
-  final VoidCallback onSuccess;
-  final VoidCallback onFail;
-
-  const _PaymentWebView({
-    required this.url,
-    required this.onSuccess,
-    required this.onFail,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1A3A6B),
-        foregroundColor: Colors.white,
-        title: const Text('Complete Payment', style: TextStyle(fontSize: 15)),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: onFail,
-        ),
-      ),
-      // NOTE: To render the actual SSLCommerz page, add webview_flutter:
-      //   flutter pub add webview_flutter
-      // Then replace this placeholder with:
-      //   WebViewWidget(controller: WebViewController()..loadRequest(Uri.parse(url)))
-      // and detect success/fail by intercepting navigation to your success_url / fail_url.
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.payment, size: 64, color: Color(0xFF1A3A6B)),
-              const SizedBox(height: 16),
-              const Text(
-                'Payment Gateway',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Add webview_flutter package to render the payment page.\n\nURL: $url',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              const SizedBox(height: 32),
-              // Sandbox test buttons
-              ElevatedButton(
-                onPressed: onSuccess,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                child: const Text('Simulate Success (sandbox)', style: TextStyle(color: Colors.white)),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton(
-                onPressed: onFail,
-                child: const Text('Simulate Fail (sandbox)'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 

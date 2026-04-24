@@ -113,6 +113,7 @@ class FirebaseService {
     required String coachName,
     required double totalAmount,
     bool isRoundTrip = false,
+    String passengerName = '',
   }) async {
     if (uid == null) {
       _toast('Please login first', error: true);
@@ -122,6 +123,7 @@ class FirebaseService {
       final ref = _db.child('bookings').push();
       await ref.set({
         'userId': uid,
+        'name': passengerName,
         'from': from,
         'to': to,
         'date': date,
@@ -148,23 +150,44 @@ class FirebaseService {
   Future<List<Map<String, dynamic>>> getMyBookings() async {
     if (uid == null) return [];
     try {
+      // Try indexed query first
       final snap = await _db
           .child('bookings')
           .orderByChild('userId')
           .equalTo(uid)
           .get();
-      if (!snap.exists || snap.value == null) return [];
-      final raw = Map<String, dynamic>.from(snap.value as Map);
-      return raw.entries.map((e) {
-        final m = Map<String, dynamic>.from(e.value as Map);
-        m['id'] = e.key;
-        return m;
-      }).toList()
-        ..sort((a, b) => (b['createdAt'] as String)
-            .compareTo(a['createdAt'] as String));
-    } catch (e) {
-      _toast('Failed to load bookings', error: true);
+      if (snap.exists && snap.value != null) {
+        final raw = Map<String, dynamic>.from(snap.value as Map);
+        return raw.entries.map((e) {
+          final m = Map<String, dynamic>.from(e.value as Map);
+          m['id'] = e.key;
+          return m;
+        }).toList()
+          ..sort((a, b) => (b['createdAt'] as String? ?? '')
+              .compareTo(a['createdAt'] as String? ?? ''));
+      }
       return [];
+    } catch (_) {
+      // Fallback: fetch all bookings and filter client-side
+      // (works without Firebase index rule)
+      try {
+        final snap = await _db.child('bookings').get();
+        if (!snap.exists || snap.value == null) return [];
+        final raw = Map<String, dynamic>.from(snap.value as Map);
+        return raw.entries
+            .map((e) {
+              final m = Map<String, dynamic>.from(e.value as Map);
+              m['id'] = e.key;
+              return m;
+            })
+            .where((m) => m['userId'] == uid)
+            .toList()
+          ..sort((a, b) => (b['createdAt'] as String? ?? '')
+              .compareTo(a['createdAt'] as String? ?? ''));
+      } catch (e) {
+        _toast('Failed to load bookings', error: true);
+        return [];
+      }
     }
   }
 

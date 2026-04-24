@@ -280,13 +280,17 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
         constraints: const BoxConstraints(maxWidth: 600),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            color: Colors.white.withValues(alpha: 0.13),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.25),
+              width: 1.5,
+            ),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.18),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8)),
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10)),
             ],
           ),
           child: Column(
@@ -376,7 +380,7 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
                               fontWeight: FontWeight.bold),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1A3A6B),
+                          backgroundColor: const Color(0xFF2E7D32),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
@@ -395,9 +399,9 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
   // ── trip type tabs ────────────────────────────────────────────────────────
   Widget _buildTripTypeTabs() {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFF5F7FA),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Row(
         children: [
@@ -417,20 +421,22 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFF1A3A6B) : Colors.transparent,
+            color: selected 
+                ? Colors.white.withValues(alpha: 0.25)
+                : Colors.transparent,
             borderRadius: index == 0
-                ? const BorderRadius.only(topLeft: Radius.circular(16))
-                : const BorderRadius.only(topRight: Radius.circular(16)),
+                ? const BorderRadius.only(topLeft: Radius.circular(20))
+                : const BorderRadius.only(topRight: Radius.circular(20)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 16, color: selected ? Colors.white : Colors.grey),
+              Icon(icon, size: 16, color: selected ? Colors.white : Colors.white60),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
-                  color: selected ? Colors.white : Colors.grey[600],
+                  color: selected ? Colors.white : Colors.white60,
                   fontWeight: selected ? FontWeight.bold : FontWeight.normal,
                   fontSize: 14,
                 ),
@@ -447,11 +453,13 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
     final r = R.of(context);
     return Row(
       children: [
-        Icon(icon, size: r.fs16, color: color),
+        Icon(icon, size: r.fs16, color: Colors.white70),
         SizedBox(width: r.sp6),
         Text(text,
             style: TextStyle(
-                color: color, fontWeight: FontWeight.w600, fontSize: r.fs13)),
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: r.fs13)),
       ],
     );
   }
@@ -482,11 +490,14 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
             margin: EdgeInsets.symmetric(horizontal: r.sp6),
             padding: EdgeInsets.all(r.sp6),
             decoration: BoxDecoration(
-              color: locked ? Colors.grey[200] : const Color(0xFF1A3A6B),
+              color: locked
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.white.withValues(alpha: 0.25),
               shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
             ),
             child: Icon(Icons.swap_horiz,
-                color: locked ? Colors.grey : Colors.white, size: r.fs18),
+                color: locked ? Colors.white30 : Colors.white, size: r.fs18),
           ),
         ),
         Expanded(
@@ -512,28 +523,31 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: r.sp10, vertical: r.sp4),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDE2EC), width: 1.5),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
         borderRadius: BorderRadius.circular(10),
-        color: onChanged == null ? const Color(0xFFF5F7FA) : Colors.white,
+        color: onChanged == null
+            ? Colors.white.withValues(alpha: 0.06)
+            : Colors.white.withValues(alpha: 0.12),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           hint: Row(
             children: [
-              Icon(icon, size: r.fs13, color: Colors.grey),
+              Icon(icon, size: r.fs13, color: Colors.white70),
               SizedBox(width: r.sp4),
               Text(label,
-                  style: TextStyle(color: Colors.grey, fontSize: r.fs12)),
+                  style: TextStyle(color: Colors.white70, fontSize: r.fs12)),
             ],
           ),
           isExpanded: true,
-          icon: Icon(Icons.keyboard_arrow_down, size: r.fs18, color: Colors.grey),
-          style: TextStyle(fontSize: r.fs13, color: Colors.black87),
+          dropdownColor: const Color(0xFF1A3A6B),
+          icon: Icon(Icons.keyboard_arrow_down, size: r.fs18, color: Colors.white70),
+          style: TextStyle(fontSize: r.fs13, color: Colors.white),
           items: _stations
               .map((s) => DropdownMenuItem(
                   value: s,
-                  child: Text(s, style: TextStyle(fontSize: r.fs13))))
+                  child: Text(s, style: TextStyle(fontSize: r.fs13, color: Colors.white))))
               .toList(),
           onChanged: onChanged,
         ),
@@ -555,22 +569,25 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: r.sp10, vertical: r.sp10),
         decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFDDE2EC), width: 1.5),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
           borderRadius: BorderRadius.circular(10),
+          color: Colors.white.withValues(alpha: 0.12),
         ),
         child: Row(
           children: [
-            Icon(icon, size: r.fs15, color: accent),
+            Icon(icon, size: r.fs15, color: Colors.white70),
             SizedBox(width: r.sp6),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                      style: TextStyle(fontSize: r.fs10, color: Colors.grey)),
+                      style: TextStyle(fontSize: r.fs10, color: Colors.white60)),
                   Text(value,
                       style: TextStyle(
-                          fontSize: r.fs12, fontWeight: FontWeight.w600),
+                          fontSize: r.fs12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white),
                       overflow: TextOverflow.ellipsis),
                 ],
               ),
@@ -588,19 +605,21 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: r.sp10, vertical: r.sp4),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDE2EC), width: 1.5),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
         borderRadius: BorderRadius.circular(10),
+        color: Colors.white.withValues(alpha: 0.12),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          icon: Icon(Icons.keyboard_arrow_down, size: r.fs18, color: accent),
-          style: TextStyle(fontSize: r.fs13, color: Colors.black87),
+          dropdownColor: const Color(0xFF1A3A6B),
+          icon: Icon(Icons.keyboard_arrow_down, size: r.fs18, color: Colors.white70),
+          style: TextStyle(fontSize: r.fs13, color: Colors.white),
           items: _classes
               .map((c) => DropdownMenuItem(
                   value: c,
-                  child: Text(c, style: TextStyle(fontSize: r.fs13))))
+                  child: Text(c, style: TextStyle(fontSize: r.fs13, color: Colors.white))))
               .toList(),
           onChanged: onChanged,
         ),
@@ -614,21 +633,21 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: r.sp12, vertical: r.sp10),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDE2EC), width: 1.5),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
         borderRadius: BorderRadius.circular(10),
-        color: const Color(0xFFF9FAFB),
+        color: Colors.white.withValues(alpha: 0.12),
       ),
       child: Row(
         children: [
-          Icon(Icons.people_outline, size: r.fs18, color: const Color(0xFF1A3A6B)),
+          Icon(Icons.people_outline, size: r.fs18, color: Colors.white70),
           SizedBox(width: r.sp8),
           Text('Passengers',
-              style: TextStyle(fontSize: r.fs13, color: Colors.grey)),
+              style: TextStyle(fontSize: r.fs13, color: Colors.white70)),
           const Spacer(),
           IconButton(
             onPressed: _passengers > 1 ? () => setState(() => _passengers--) : null,
             icon: Icon(Icons.remove_circle_outline, size: r.fs20),
-            color: const Color(0xFF1A3A6B),
+            color: Colors.white,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -636,12 +655,14 @@ class _RailwayBookingPageState extends State<RailwayBookingPage> {
             padding: EdgeInsets.symmetric(horizontal: r.sp12),
             child: Text('$_passengers',
                 style: TextStyle(
-                    fontSize: r.fs16, fontWeight: FontWeight.bold)),
+                    fontSize: r.fs16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white)),
           ),
           IconButton(
             onPressed: _passengers < 4 ? () => setState(() => _passengers++) : null,
             icon: Icon(Icons.add_circle_outline, size: r.fs20),
-            color: const Color(0xFF1A3A6B),
+            color: Colors.white,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
